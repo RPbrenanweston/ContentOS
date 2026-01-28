@@ -1,0 +1,116 @@
+feeds:
+  # Tech News - Company Growth Signals
+  tech_news:
+    - name: "TechCrunch"
+      url: "https://techcrunch.com/feed/"
+      category: "tech_news"
+      signal_types: ["COMPANY", "HIRING"]
+      priority: "high"
+      confidence_boost: 10
+
+    - name: "CRN"
+      url: "https://www.crn.com/feed"
+      category: "tech_news"
+      signal_types: ["COMPANY"]
+      priority: "medium"
+      confidence_boost: 5
+
+    - name: "VentureBeat"
+      url: "https://venturebeat.com/feed/"
+      category: "tech_news"
+      signal_types: ["COMPANY"]
+      priority: "high"
+      confidence_boost: 10
+
+  # Security Industry - Sector-Specific
+  security_industry:
+    - name: "Bleeping Computer"
+      url: "https://www.bleepingcomputer.com/feed/"
+      category: "security"
+      signal_types: ["COMPANY", "INDIVIDUAL"]
+      priority: "high"
+      confidence_boost: 15  # Most relevant to AI security
+
+    - name: "SecurityWeek"
+      url: "https://www.securityweek.com/feed/"
+      category: "security"
+      signal_types: ["COMPANY", "HIRING"]
+      priority: "high"
+      confidence_boost: 15
+
+    - name: "Dark Reading"
+      url: "https://www.darkreading.com/rss_simple.asp"
+      category: "security"
+      signal_types: ["COMPANY"]
+      priority: "medium"
+      confidence_boost: 10
+
+    - name: "The Hacker News"
+      url: "https://feeds.feedburner.com/TheHackersNews"
+      category: "security"
+      signal_types: ["COMPANY", "INDIVIDUAL"]
+      priority: "medium"
+      confidence_boost: 10
+
+  # LinkedIn Company Pages (if available via RSS)
+  # Note: LinkedIn RSS may require authentication or alternative approach
+  linkedin:
+    - name: "LinkedIn Pulse"
+      url: "https://www.linkedin.com/pulse/rss"
+      category: "linkedin"
+      signal_types: ["COMPANY", "HIRING", "INDIVIDUAL"]
+      priority: "high"
+      confidence_boost: 20
+      notes: "May require alternative scraping approach if RSS unavailable"
+
+# Keywords for signal detection
+keywords:
+  hiring_signals:
+    - "hiring"
+    - "job opening"
+    - "now hiring"
+    - "join our team"
+    - "we're hiring"
+    - "careers"
+    - "positions available"
+    - "recruiting"
+    - "talent acquisition"
+
+  expansion_signals:
+    - "expands"
+    - "opens new office"
+    - "growth"
+    - "scales team"
+    - "new market"
+    - "international expansion"
+
+  funding_signals:
+    - "raises"
+    - "funding round"
+    - "series a"
+    - "series b"
+    - "series c"
+    - "investment"
+    - "venture capital"
+    - "acquires"
+    - "acquisition"
+
+  leadership_signals:
+    - "appoints"
+    - "hires"
+    - "names"
+    - "promotes"
+    - "new ceo"
+    - "new cto"
+    - "chief"
+    - "executive"
+    - "joins as"
+
+  product_signals:
+    - "launches"
+    - "releases"
+    - "announces"
+    - "unveils"
+    - "introduces"
+    - "new product"
+    - "new feature"
