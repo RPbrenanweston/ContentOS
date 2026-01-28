@@ -104,6 +104,8 @@
 
 **Goal:** Connect to Attio, build Slack digest reporter
 
+**Plans:** 3 plans
+
 **Requirements Covered:**
 - AGT-04: Reporter agent synthesizes findings and prepares daily Slack digest
 - DATA-03: Daily sync to Attio CRM as account notes and prospect enrichment (no auto-lead creation)
@@ -123,6 +125,11 @@
 8. Daily digest generated for all 10 pilot accounts without errors
 9. Slack digest includes feedback link (one-click thumbs up/down)
 10. Cost basis: Attio API calls (~$10/month), Slack API free tier, no new infrastructure
+
+**Plans:**
+- [ ] 04-01-PLAN.md — Reporter agent core (synthesizer, ranker, formatter)
+- [ ] 04-02-PLAN.md — Slack integration with timezone-aware scheduling
+- [ ] 04-03-PLAN.md — Attio CRM integration and E2E testing
 
 ---
 
