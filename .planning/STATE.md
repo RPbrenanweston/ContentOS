@@ -13,14 +13,27 @@ See: `.planning/PROJECT.md` (updated 2025-01-27)
 
 ## Progress
 
-**Phase 1:** 1/3 plans complete (33%)
-**Overall:** 1/12 plans complete (8%)
+**Phase 1:** 2/3 plans complete (67%)
+**Overall:** 2/12 plans complete (17%)
 
-Progress: ██░░░░░░░░░░ 8%
+Progress: ███░░░░░░░░░ 17%
 
-**Last activity:** 2026-01-28 - Completed 01-01-PLAN.md (Supabase Schema Design & Setup)
+**Last activity:** 2026-01-28 - Completed 01-02-PLAN.md (CSV Upload & Mapping Interface)
 
 ## Recent Work
+
+### Phase 1, Plan 02: CSV Upload & Mapping Interface (Completed 2026-01-28)
+- ✅ Python CLI for uploading Apollo exports and candidate CSVs to Supabase
+- ✅ Smart merge logic (preserve-existing, fill-blanks strategy)
+- ✅ Pydantic validation engine with email, domain, URL format checking
+- ✅ Field mapping profiles (Apollo contact exports, candidate CSVs)
+- ✅ Dry-run mode for validation before database changes
+- ✅ Data provenance tracking (source, timestamp, merge history in metadata)
+- ✅ Comprehensive test suite (12 unit tests for parsing, validation, merge logic)
+- ✅ Complete documentation with field mapping tables and CLI usage guide
+- ✅ Sample Apollo export CSV with 10 example rows
+
+**Duration:** 5.7 minutes | **Commits:** 1 | **Files:** 10 created (1,948 lines)
 
 ### Phase 1, Plan 01: Supabase Schema Design & Setup (Completed 2026-01-28)
 - ✅ Complete 6-table database schema (companies, prospects, candidates, signals, matches, feedback)
@@ -39,6 +52,13 @@ Progress: ██░░░░░░░░░░ 8%
 - Config: interactive mode, standard depth, parallel execution, budget model profile
 
 ## Key Decisions Made
+
+### Phase 1 (CSV Upload Interface)
+16. **Preserve-existing merge strategy** - New data fills blanks only, existing data never overwritten (protects manually verified data)
+17. **Array field union merge** - Departments and skills accumulate over time via union + deduplication
+18. **Email + company_id uniqueness for prospects** - Allows tracking same person across companies (career progression)
+19. **CLI interface (not web UI)** - MVP optimization for single-user tool, developer-friendly
+20. **Dry-run validation before upload** - Validates entire CSV before database changes (prevents partial uploads)
 
 ### Phase 1 (Database Design)
 8. **Separate candidates and prospects tables** - Supply vs demand independence, flexible matching
@@ -61,17 +81,12 @@ Progress: ██░░░░░░░░░░ 8%
 
 ## Next Steps
 
-**→ Execute Plan 01-02:** CSV Upload Interface
-- Build CSV upload and mapping interface
-- Map CSV columns to database fields
-- Implement deduplication logic (domain for companies, email for prospects)
-- Test with sample company and prospect data
-
 **→ Execute Plan 01-03:** RSS Feed Aggregator
 - Set up RSS feed polling infrastructure
 - Extract signals from TechCrunch, VentureBeat, etc.
 - Map RSS items to signals table
 - Classify signals by type (HIRING, COMPANY, INDIVIDUAL)
+- Complete Phase 1 (Data Foundation)
 
 ---
 
@@ -79,7 +94,7 @@ Progress: ██░░░░░░░░░░ 8%
 
 | Phase | Name | Plans | Status |
 |-------|------|-------|--------|
-| 1 | Data Foundation | 1/3 | ◐ In Progress |
+| 1 | Data Foundation | 2/3 | ◑ In Progress |
 | 2 | Agent Architecture | 0/3 | ○ Pending |
 | 3 | Agent Learning Loop | 0/2 | ○ Pending |
 | 4 | Integration & Digests | 0/3 | ○ Pending |
@@ -93,8 +108,8 @@ None at this stage.
 
 ## Session Continuity
 
-**Last session:** 2026-01-28T08:51:26Z
-**Stopped at:** Completed 01-01-PLAN.md (Supabase Schema Design & Setup)
+**Last session:** 2026-01-28T08:51:51Z
+**Stopped at:** Completed 01-02-PLAN.md (CSV Upload & Mapping Interface)
 **Resume file:** None
 
 ---
