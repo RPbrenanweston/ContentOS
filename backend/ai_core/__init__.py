@@ -25,6 +25,7 @@ from .models import get_model, get_default_model, calculate_cost
 from .billing import get_remaining_credits, check_credits
 from .keys import resolve_key, save_key, delete_key, validate_key, encrypt, decrypt
 from .usage import log_usage
+from .sync import sync_openrouter_models
 
 __all__ = [
     # Client
@@ -61,4 +62,6 @@ __all__ = [
     'decrypt',
     # Usage
     'log_usage',
+    # Sync
+    'sync_openrouter_models',
 ]
