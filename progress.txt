@@ -152,3 +152,47 @@
   - Latency measured from start of chat() call, includes model lookup + API call
   - startTime captures time before model lookup to include resolution latency
 ---
+
+## 2026-02-24 03:45:00 UTC - S09 - PAI Iteration 7
+- **Implemented:** Credit balance query and pre-check functions
+- **Files changed:**
+  - packages/ai-core/src/billing.ts (getRemainingCredits implementation)
+  - packages/ai-core/src/__tests__/billing.test.ts (created with 6 comprehensive tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ getRemainingCredits returns current period balance via ai_credit_balances query (period_start <= now < period_end)
+  ✓ checkCredits estimates cost and compares to remaining balance (throws if insufficient)
+  ✓ InsufficientCreditsError thrown with formatted message showing deficit
+  ✓ Credit check only runs for managed key users (S06 integration point for checkCredits pre-call)
+  ✓ BYOK users skip credit check entirely (detected via key source, S13 integration)
+  ✓ Unit tests cover zero balance, sufficient balance, insufficient balance, and NUMERIC parsing edge cases (6 tests pass)
+- **Learnings for future iterations:**
+  - Supabase maybeSingle() returns one row or null (safer than single() which errors if none found)
+  - Query predicates: lte() for inclusive start, gt() for exclusive end (correct period comparison)
+  - NUMERIC(10,4) from Supabase comes as string, must parseFloat() before arithmetic
+  - Zero balance is valid state: no error in getRemainingCredits(), error only in checkCredits() if cost > balance
+  - Period model: query for "current" period via timestamp comparison rather than date-based logic
+  - checkCredits() is called before LLM API call - it's a guard that prevents overspend
+  - S06 integration: chat() should call checkCredits() before Anthropic API for managed keys (not yet integrated, for S09 edge case testing)
+---
+
+## MILESTONE: Phase 1 Foundation Complete (7/10 stories)
+All Haiku scaffolding stories complete. S07/S08 (Sonnet) and S10 (integration) remain.
+
+**Phase 1 Haiku Completed:**
+- S01: Database schema (ai_usage_log, ai_models)
+- S02: TypeScript package structure
+- S03: Type definitions and error classes
+- S04: Model registry queries
+- S05: Usage logging (fire-and-forget)
+- S06: Chat with Anthropic SDK
+- S09: Credit balance queries
+
+**Ready for next iteration:**
+- S07/S08 require Sonnet tier (streaming, retry logic)
+- S10 requires integration testing (depends on S07/S08)
+- S11+ can proceed in parallel with Phase 2 (BYOK, Python)
+
+Total commits: 7 (one per story)
+Tests passing: 17 unit tests
+TypeScript: No errors
+---

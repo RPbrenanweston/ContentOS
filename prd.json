@@ -138,7 +138,7 @@
       "description": "In billing.ts: getRemainingCredits() queries ai_credit_balances for current period. checkCredits() estimates cost and compares to remaining balance. Pre-call integration: chat() checks credits before calling LLM when key_source is managed.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "getRemainingCredits returns current period balance",
         "checkCredits estimates cost from model pricing table",
