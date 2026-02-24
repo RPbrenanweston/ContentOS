@@ -203,7 +203,7 @@
       "description": "Create sync_openrouter_models() function in backend/ai_core/sync.py that mirrors the TypeScript sync function. Fetches GET https://openrouter.ai/api/v1/models, maps fields to ai_models table columns, upserts via Supabase client. Uses httpx or requests for the HTTP call. Returns summary dict { inserted, updated, deactivated }.",
       "model_tier": "haiku",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "New file backend/ai_core/sync.py exists with sync_openrouter_models() function",
         "Fetches GET https://openrouter.ai/api/v1/models (no auth needed)",

@@ -184,3 +184,27 @@
   - resolve_key() in error handling also needs best-effort wrapping to handle edge cases
   - Provider branching pattern mirrors chat() non-streaming implementation for consistency
 ---
+## 2026-02-24 16:00 - S09 - PAI Iteration 7
+- **Implemented:** Python OpenRouter model auto-sync function
+- **Files changed:**
+  - backend/ai_core/sync.py (created new file with sync_openrouter_models)
+  - backend/ai_core/__init__.py (exported sync_openrouter_models)
+  - prd.json (S09 passes: true)
+- **ISC Status:** All 8 acceptance criteria passed
+  - ✅ New file backend/ai_core/sync.py exists with sync_openrouter_models() function
+  - ✅ Fetches GET https://openrouter.ai/api/v1/models (no auth needed)
+  - ✅ Maps OpenRouter fields to ai_models columns identically to TypeScript version
+  - ✅ Upserts: new models inserted, existing updated, removed models set is_active=False
+  - ✅ Returns dict: {'inserted': N, 'updated': N, 'deactivated': N}
+  - ✅ Uses requests package (already in requirements.txt)
+  - ✅ Handles API errors gracefully with try/except blocks
+  - ✅ sync.py importable from backend.ai_core package
+  - ✅ All 39 Python tests pass (no regressions)
+- **Learnings for future iterations:**
+  - Python supabase client type should be `Any` to avoid circular import issues (pattern from AIClientConfig)
+  - requests package already in requirements.txt, no new dependencies needed
+  - Python upsert pattern: `supabase.from_('ai_models').upsert(row, on_conflict='id').execute()`
+  - Deactivation uses `.in_('id', list_of_ids)` for batch update (matches TypeScript `.in()`)
+  - safe_parse_float() helper mirrors TypeScript implementation
+  - Python dict comprehension for building model_to_deactivate list: `[id for id in existing if id not in api_ids]`
+---
