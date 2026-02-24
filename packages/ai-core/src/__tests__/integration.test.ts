@@ -178,7 +178,10 @@ describe('Integration Tests - AI Core', () => {
                     gt: vi.fn(() => ({
                       maybeSingle: vi.fn().mockResolvedValue({
                         data: {
-                          credits_remaining_usd: '10.0000'
+                          credits_remaining_usd: '10.0000',
+                          credits_used_usd: '0.0000',
+                          period_start: new Date().toISOString(),
+                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                         },
                         error: null
                       })
@@ -297,7 +300,10 @@ describe('Integration Tests - AI Core', () => {
                     gt: vi.fn(() => ({
                       maybeSingle: vi.fn().mockResolvedValue({
                         data: {
-                          credits_remaining_usd: '0.0000'
+                          credits_remaining_usd: '0.0000',
+                          credits_used_usd: '100.0000',
+                          period_start: new Date().toISOString(),
+                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
                         },
                         error: null
                       })

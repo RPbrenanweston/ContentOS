@@ -7,6 +7,17 @@ import { ModelInfo } from './types';
 import { ModelNotFoundError } from './errors';
 
 /**
+ * Safely parse a float value, throwing if NaN
+ */
+function safeParseFloat(value: string | number, fieldName: string): number {
+  const parsed = parseFloat(String(value));
+  if (isNaN(parsed)) {
+    throw new Error(`Invalid numeric value for ${fieldName}: "${value}"`);
+  }
+  return parsed;
+}
+
+/**
  * Get a specific model by ID
  */
 export async function getModel(
@@ -65,8 +76,8 @@ function mapDatabaseToModel(row: any): ModelInfo {
     id: row.id,
     provider: row.provider,
     displayName: row.display_name,
-    costPerInputToken: parseFloat(row.cost_per_input_token),
-    costPerOutputToken: parseFloat(row.cost_per_output_token),
+    costPerInputToken: safeParseFloat(row.cost_per_input_token, 'cost_per_input_token'),
+    costPerOutputToken: safeParseFloat(row.cost_per_output_token, 'cost_per_output_token'),
     maxContextTokens: row.max_context_tokens,
     maxOutputTokens: row.max_output_tokens,
     supportsStreaming: row.supports_streaming,

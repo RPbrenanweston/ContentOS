@@ -1,5 +1,25 @@
 /**
  * Core AI client for calling LLM providers
+ *
+ * FUTURE ENHANCEMENT: AbortController Timeout Support
+ * ────────────────────────────────────────────────────
+ * Currently, API calls to provider SDKs (Anthropic, OpenAI) do not implement
+ * AbortController-based timeouts. Consider adding timeout protection:
+ *
+ * 1. Wrap provider API calls with AbortSignal.timeout(ms)
+ * 2. Default timeout: 60 seconds for chat, 300 seconds for streaming
+ * 3. Allow configurable timeout via ChatParams/GenerateParams
+ * 4. Properly clean up AbortController instances after use
+ * 5. Test that timeouts don't break existing retry logic
+ *
+ * Example pattern:
+ *   const abortController = new AbortController();
+ *   const timeoutId = setTimeout(() => abortController.abort(), 60000);
+ *   try {
+ *     const result = await client.messages.create({ signal: abortController.signal });
+ *   } finally {
+ *     clearTimeout(timeoutId);
+ *   }
  */
 
 import Anthropic from '@anthropic-ai/sdk';

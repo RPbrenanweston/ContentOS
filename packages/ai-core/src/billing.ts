@@ -1,5 +1,6 @@
 /**
  * Billing and credit management
+ * Supports both user-level and org-level credit balances
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -9,12 +10,109 @@ import { InsufficientCreditsError, SpendingCapExceededError } from './errors';
 import { calculateCost } from './models';
 
 /**
+ * Safely parse a float value, throwing if NaN
+ */
+function safeParseFloat(value: string | number, fieldName: string): number {
+  const parsed = parseFloat(String(value));
+  if (isNaN(parsed)) {
+    throw new Error(`Invalid numeric value for ${fieldName}: "${value}"`);
+  }
+  return parsed;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Org-Level Billing Helpers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Get user's org ID if they belong to an organization
+ *
+ * @returns orgId if user is org member, null otherwise
+ *
+ * Note: If org_members table doesn't exist (org feature not enabled),
+ * this gracefully returns null.
+ */
+export async function getUserOrgId(
+  userId: string,
+  supabase: SupabaseClient
+): Promise<string | null> {
+  try {
+    // Query org_members table to find user's organization
+    const { data, error } = await supabase
+      .from('org_members')
+      .select('org_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return data.org_id;
+  } catch (err) {
+    // If org_members table doesn't exist or query fails, treat as non-org user
+    return null;
+  }
+}
+
+/**
+ * Get org-level credit balance for shared credit pool
+ */
+export async function getOrgBalance(
+  orgId: string,
+  supabase: SupabaseClient
+): Promise<CreditBalance> {
+  const now = new Date();
+
+  // Query for org balance row where period_start <= now < period_end
+  const { data, error } = await supabase
+    .from('ai_credit_balances')
+    .select('*')
+    .eq('org_id', orgId)
+    .is('user_id', null) // Org-level balance has null user_id
+    .lte('period_start', now.toISOString())
+    .gt('period_end', now.toISOString())
+    .maybeSingle();
+
+  // If no row found, return zero balance
+  if (!data || error) {
+    return {
+      remainingUsd: 0,
+      usedUsd: 0,
+      periodStart: now.toISOString(),
+      periodEnd: now.toISOString(),
+    };
+  }
+
+  return {
+    remainingUsd: safeParseFloat(data.credits_remaining_usd, 'credits_remaining_usd'),
+    usedUsd: safeParseFloat(data.credits_used_usd, 'credits_used_usd'),
+    periodStart: data.period_start,
+    periodEnd: data.period_end,
+    spendingCapUsd: data.admin_cap_usd ? safeParseFloat(data.admin_cap_usd, 'admin_cap_usd') : undefined,
+    orgId: data.org_id,
+  };
+}
+
+/**
  * Get remaining credits for current period
+ *
+ * Checks org membership first. If user belongs to org with shared credit pool,
+ * returns org-level balance. Otherwise returns user-level balance.
  */
 export async function getRemainingCredits(
   userId: string,
   supabase: SupabaseClient
 ): Promise<CreditBalance> {
+  // Check if user belongs to an organization
+  const orgId = await getUserOrgId(userId, supabase);
+
+  // If user is org member, return org-level balance
+  if (orgId) {
+    return getOrgBalance(orgId, supabase);
+  }
+
+  // Otherwise, return user-level balance
   const now = new Date();
 
   // Query for balance row where period_start <= now < period_end
@@ -22,6 +120,7 @@ export async function getRemainingCredits(
     .from('ai_credit_balances')
     .select('*')
     .eq('user_id', userId)
+    .is('org_id', null) // User-level balance has null org_id
     .lte('period_start', now.toISOString())
     .gt('period_end', now.toISOString())
     .maybeSingle();
@@ -37,11 +136,11 @@ export async function getRemainingCredits(
   }
 
   return {
-    remainingUsd: parseFloat(data.credits_remaining_usd),
-    usedUsd: parseFloat(data.credits_used_usd),
+    remainingUsd: safeParseFloat(data.credits_remaining_usd, 'credits_remaining_usd'),
+    usedUsd: safeParseFloat(data.credits_used_usd, 'credits_used_usd'),
     periodStart: data.period_start,
     periodEnd: data.period_end,
-    spendingCapUsd: data.spending_cap_usd ? parseFloat(data.spending_cap_usd) : undefined,
+    spendingCapUsd: data.spending_cap_usd ? safeParseFloat(data.spending_cap_usd, 'spending_cap_usd') : undefined,
   };
 }
 
@@ -65,8 +164,8 @@ export async function checkCredits(
 /**
  * Check spending caps before making a call
  *
- * Enforces both user-configured spending cap and admin-enforced cap.
- * The lower of the two caps wins.
+ * For org members: enforces org-level admin cap (user caps ignored)
+ * For individual users: enforces both user and admin caps (lower wins)
  *
  * @throws SpendingCapExceededError if spending cap would be exceeded
  */
@@ -77,36 +176,65 @@ export async function checkSpendingCap(
 ): Promise<void> {
   const now = new Date();
 
-  // Query for balance row where period_start <= now < period_end
-  const { data, error } = await supabase
-    .from('ai_credit_balances')
-    .select('*')
-    .eq('user_id', userId)
-    .lte('period_start', now.toISOString())
-    .gt('period_end', now.toISOString())
-    .maybeSingle();
+  // Check if user belongs to org
+  const orgId = await getUserOrgId(userId, supabase);
 
-  // If no balance row exists, no spending cap configured
-  if (!data || error) {
-    return;
+  let balanceData;
+  let isOrgBalance = false;
+
+  if (orgId) {
+    // User is org member - query org-level balance
+    const { data, error } = await supabase
+      .from('ai_credit_balances')
+      .select('*')
+      .eq('org_id', orgId)
+      .is('user_id', null)
+      .lte('period_start', now.toISOString())
+      .gt('period_end', now.toISOString())
+      .maybeSingle();
+
+    if (!data || error) {
+      return; // No org balance configured
+    }
+
+    balanceData = data;
+    isOrgBalance = true;
+  } else {
+    // Individual user - query user-level balance
+    const { data, error } = await supabase
+      .from('ai_credit_balances')
+      .select('*')
+      .eq('user_id', userId)
+      .is('org_id', null)
+      .lte('period_start', now.toISOString())
+      .gt('period_end', now.toISOString())
+      .maybeSingle();
+
+    if (!data || error) {
+      return; // No balance row configured
+    }
+
+    balanceData = data;
   }
 
-  const currentUsed = parseFloat(data.credits_used_usd || '0');
-  const userCap = data.spending_cap_usd ? parseFloat(data.spending_cap_usd) : null;
-  const adminCap = data.admin_cap_usd ? parseFloat(data.admin_cap_usd) : null;
+  const currentUsed = safeParseFloat(balanceData.credits_used_usd || '0', 'credits_used_usd');
+  const userCap = balanceData.spending_cap_usd ? safeParseFloat(balanceData.spending_cap_usd, 'spending_cap_usd') : null;
+  const adminCap = balanceData.admin_cap_usd ? safeParseFloat(balanceData.admin_cap_usd, 'admin_cap_usd') : null;
 
-  // Determine the effective cap (lower of user and admin cap)
   let effectiveCap: number | null = null;
 
-  if (userCap !== null && adminCap !== null) {
-    // Both caps set - use the lower one
-    effectiveCap = Math.min(userCap, adminCap);
-  } else if (userCap !== null) {
-    // Only user cap set
-    effectiveCap = userCap;
-  } else if (adminCap !== null) {
-    // Only admin cap set
+  if (isOrgBalance) {
+    // Org members: only admin cap applies (user caps ignored)
     effectiveCap = adminCap;
+  } else {
+    // Individual users: lower of user cap and admin cap
+    if (userCap !== null && adminCap !== null) {
+      effectiveCap = Math.min(userCap, adminCap);
+    } else if (userCap !== null) {
+      effectiveCap = userCap;
+    } else if (adminCap !== null) {
+      effectiveCap = adminCap;
+    }
   }
 
   // If no cap configured, allow the call
@@ -118,22 +246,19 @@ export async function checkSpendingCap(
   const projectedUsed = currentUsed + estimatedCostUsd;
 
   if (projectedUsed > effectiveCap) {
-    const capType = (userCap !== null && adminCap !== null && userCap < adminCap)
-      ? 'user spending cap'
-      : (adminCap !== null && userCap !== null && adminCap < userCap)
-      ? 'admin spending cap'
-      : userCap !== null
-      ? 'spending cap'
-      : 'admin spending cap';
+    const capType = isOrgBalance ? 'Org admin cap' : 'Spending cap';
 
     throw new SpendingCapExceededError(
-      `${capType.charAt(0).toUpperCase() + capType.slice(1)} exceeded: ${currentUsed.toFixed(4)} used + ${estimatedCostUsd.toFixed(4)} estimated = ${projectedUsed.toFixed(4)}, cap is ${effectiveCap.toFixed(4)}`
+      `${capType} exceeded: ${currentUsed.toFixed(4)} used + ${estimatedCostUsd.toFixed(4)} estimated = ${projectedUsed.toFixed(4)}, cap is ${effectiveCap.toFixed(4)}`
     );
   }
 }
 
 /**
  * Deduct credits after a successful call
+ *
+ * For org members: deducts from org-level shared pool
+ * For individual users: deducts from user-level balance
  *
  * Updates both credits_used_usd (increment) and credits_remaining_usd (decrement)
  */
@@ -144,22 +269,47 @@ export async function deductCredits(
 ): Promise<void> {
   const now = new Date();
 
-  // Query for balance row where period_start <= now < period_end
-  const { data, error } = await supabase
-    .from('ai_credit_balances')
-    .select('*')
-    .eq('user_id', userId)
-    .lte('period_start', now.toISOString())
-    .gt('period_end', now.toISOString())
-    .maybeSingle();
+  // Check if user belongs to org
+  const orgId = await getUserOrgId(userId, supabase);
 
-  // If no balance row exists, nothing to deduct (credit system not active)
-  if (!data || error) {
-    return;
+  let balanceData;
+
+  if (orgId) {
+    // User is org member - query org-level balance
+    const { data, error } = await supabase
+      .from('ai_credit_balances')
+      .select('*')
+      .eq('org_id', orgId)
+      .is('user_id', null)
+      .lte('period_start', now.toISOString())
+      .gt('period_end', now.toISOString())
+      .maybeSingle();
+
+    if (!data || error) {
+      return; // No org balance to deduct from
+    }
+
+    balanceData = data;
+  } else {
+    // Individual user - query user-level balance
+    const { data, error } = await supabase
+      .from('ai_credit_balances')
+      .select('*')
+      .eq('user_id', userId)
+      .is('org_id', null)
+      .lte('period_start', now.toISOString())
+      .gt('period_end', now.toISOString())
+      .maybeSingle();
+
+    if (!data || error) {
+      return; // No balance to deduct from
+    }
+
+    balanceData = data;
   }
 
-  const currentUsed = parseFloat(data.credits_used_usd || '0');
-  const currentRemaining = parseFloat(data.credits_remaining_usd || '0');
+  const currentUsed = safeParseFloat(balanceData.credits_used_usd || '0', 'credits_used_usd');
+  const currentRemaining = safeParseFloat(balanceData.credits_remaining_usd || '0', 'credits_remaining_usd');
 
   // Update the balance row
   await supabase
@@ -168,7 +318,7 @@ export async function deductCredits(
       credits_used_usd: currentUsed + costUsd,
       credits_remaining_usd: Math.max(0, currentRemaining - costUsd), // Floor at 0
     })
-    .eq('id', data.id);
+    .eq('id', balanceData.id);
 }
 
 /**
@@ -176,11 +326,12 @@ export async function deductCredits(
  *
  * Supports preset amounts of $5, $10, $25, $50
  * Links Stripe customer ID to Supabase user ID
+ * Optional orgId parameter for org-level credit purchases
  */
 export async function createCheckoutSession(
   params: CreateCheckoutSessionParams
 ): Promise<CheckoutSession> {
-  const { userId, amountUsd, successUrl, cancelUrl, supabase } = params;
+  const { userId, amountUsd, successUrl, cancelUrl, supabase, orgId } = params;
 
   // Validate amount is one of the preset values
   const PRESET_AMOUNTS = [5, 10, 25, 50];
@@ -239,6 +390,16 @@ export async function createCheckoutSession(
   }
 
   // Create checkout session
+  const metadata: Record<string, string> = {
+    supabase_user_id: userId,
+    credit_amount_usd: amountUsd.toString(),
+  };
+
+  // Add org_id to metadata if this is org-level purchase
+  if (orgId) {
+    metadata.org_id = orgId;
+  }
+
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'payment',
@@ -247,8 +408,10 @@ export async function createCheckoutSession(
         price_data: {
           currency: 'usd',
           product_data: {
-            name: `AI Credits - $${amountUsd}`,
-            description: `Add $${amountUsd} to your AI credit balance`,
+            name: orgId ? `Org AI Credits - $${amountUsd}` : `AI Credits - $${amountUsd}`,
+            description: orgId
+              ? `Add $${amountUsd} to organization AI credit balance`
+              : `Add $${amountUsd} to your AI credit balance`,
           },
           unit_amount: amountUsd * 100, // Convert to cents
         },
@@ -257,10 +420,7 @@ export async function createCheckoutSession(
     ],
     success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: cancelUrl,
-    metadata: {
-      supabase_user_id: userId,
-      credit_amount_usd: amountUsd.toString(),
-    },
+    metadata,
   });
 
   return {
@@ -321,6 +481,7 @@ export async function handleStripeWebhook(
     // Extract metadata
     const userId = session.metadata?.supabase_user_id;
     const creditAmountStr = session.metadata?.credit_amount_usd;
+    const orgId = session.metadata?.org_id; // Optional: for org-level purchases
 
     if (!userId || !creditAmountStr) {
       return {
@@ -329,7 +490,7 @@ export async function handleStripeWebhook(
       };
     }
 
-    const creditAmount = parseFloat(creditAmountStr);
+    const creditAmount = safeParseFloat(creditAmountStr, 'credit_amount_usd');
 
     // Idempotency: check if this session has already been processed
     const { data: existingLog } = await supabase
@@ -352,17 +513,24 @@ export async function handleStripeWebhook(
     const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
 
     // Get or create balance row for current period
-    const { data: balanceRow } = await supabase
+    // If orgId is present, credit the org balance; otherwise credit user balance
+    const query = supabase
       .from('ai_credit_balances')
       .select('*')
-      .eq('user_id', userId)
       .lte('period_start', now.toISOString())
-      .gt('period_end', now.toISOString())
-      .maybeSingle();
+      .gt('period_end', now.toISOString());
+
+    if (orgId) {
+      query.eq('org_id', orgId).is('user_id', null);
+    } else {
+      query.eq('user_id', userId).is('org_id', null);
+    }
+
+    const { data: balanceRow } = await query.maybeSingle();
 
     if (balanceRow) {
       // Update existing balance
-      const currentRemaining = parseFloat(balanceRow.credits_remaining_usd || '0');
+      const currentRemaining = safeParseFloat(balanceRow.credits_remaining_usd || '0', 'credits_remaining_usd');
       await supabase
         .from('ai_credit_balances')
         .update({
@@ -371,13 +539,22 @@ export async function handleStripeWebhook(
         .eq('id', balanceRow.id);
     } else {
       // Create new balance row for current period
-      await supabase.from('ai_credit_balances').insert({
-        user_id: userId,
+      const insertData: Record<string, unknown> = {
         period_start: periodStart,
         period_end: periodEnd,
         credits_remaining_usd: creditAmount,
         credits_used_usd: 0,
-      });
+      };
+
+      if (orgId) {
+        insertData.org_id = orgId;
+        insertData.user_id = null;
+      } else {
+        insertData.user_id = userId;
+        insertData.org_id = null;
+      }
+
+      await supabase.from('ai_credit_balances').insert(insertData);
     }
 
     // Log payment for idempotency tracking

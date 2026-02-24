@@ -114,6 +114,7 @@ export interface CreditBalance {
   periodStart: string;
   periodEnd: string;
   spendingCapUsd?: number;
+  orgId?: string; // Present if this is an org-level balance
 }
 
 /**
@@ -150,6 +151,7 @@ export interface CreateCheckoutSessionParams {
   successUrl: string;
   cancelUrl: string;
   supabase: SupabaseClient;
+  orgId?: string; // Optional: for org-level credit purchases
 }
 
 /**
