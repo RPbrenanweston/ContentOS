@@ -9,6 +9,7 @@ import os
 import time
 from typing import Any, AsyncIterable, Optional
 from anthropic import Anthropic
+from openai import OpenAI
 from .types import ChatParams, ChatResult, ChatChunk, ChatChunkDelta, GenerateParams, AIClientConfig, UsageInfo, PartialTokens
 from .models import get_model, calculate_cost
 from .usage import log_usage
@@ -40,51 +41,148 @@ class AIClient:
         try:
             # Resolve the model info
             model = get_model(model_id, self.supabase)
+            provider = model.provider
 
             # Resolve API key (BYOK or managed)
-            resolved = await resolve_key(params.user_id, 'anthropic', self.supabase)
+            resolved = await resolve_key(params.user_id, provider, self.supabase)
             api_key = resolved.api_key
             key_source = resolved.source
 
-            # Create Anthropic client
-            client = Anthropic(api_key=api_key)
+            # Branch based on provider
+            if provider == 'anthropic':
+                # Anthropic branch (preserved exactly as-is)
+                client = Anthropic(api_key=api_key)
 
-            # Convert our Message format to Anthropic format
-            messages = [
-                {'role': msg.role, 'content': msg.content}
-                for msg in params.messages
-            ]
-
-            # Build request parameters
-            request_params = {
-                'model': model_id,
-                'max_tokens': params.max_tokens or model.max_output_tokens,
-                'messages': messages,
-            }
-
-            if params.temperature is not None:
-                request_params['temperature'] = params.temperature
-
-            if params.tools:
-                request_params['tools'] = [
-                    {
-                        'name': tool.name,
-                        'description': tool.description,
-                        'input_schema': tool.input_schema,
-                    }
-                    for tool in params.tools
+                # Convert our Message format to Anthropic format
+                messages = [
+                    {'role': msg.role, 'content': msg.content}
+                    for msg in params.messages
                 ]
 
-            # Make the API call
-            response = client.messages.create(**request_params)
+                # Build request parameters
+                request_params = {
+                    'model': model_id,
+                    'max_tokens': params.max_tokens or model.max_output_tokens,
+                    'messages': messages,
+                }
 
-            # Extract text from response
-            content_blocks = [block for block in response.content if block.type == 'text']
-            content = ' '.join([block.text for block in content_blocks])
+                if params.temperature is not None:
+                    request_params['temperature'] = params.temperature
 
-            # Calculate cost
-            tokens_in = response.usage.input_tokens
-            tokens_out = response.usage.output_tokens
+                if params.tools:
+                    request_params['tools'] = [
+                        {
+                            'name': tool.name,
+                            'description': tool.description,
+                            'input_schema': tool.input_schema,
+                        }
+                        for tool in params.tools
+                    ]
+
+                # Make the API call
+                response = client.messages.create(**request_params)
+
+                # Extract text from response
+                content_blocks = [block for block in response.content if block.type == 'text']
+                content = ' '.join([block.text for block in content_blocks])
+
+                # Calculate cost
+                tokens_in = response.usage.input_tokens
+                tokens_out = response.usage.output_tokens
+
+            elif provider == 'openai':
+                # OpenAI branch
+                client = OpenAI(api_key=api_key)
+
+                # Convert our Message format to OpenAI format
+                messages = [
+                    {'role': msg.role, 'content': msg.content}
+                    for msg in params.messages
+                ]
+
+                # Build request parameters
+                request_params = {
+                    'model': model_id,
+                    'max_tokens': params.max_tokens or model.max_output_tokens,
+                    'messages': messages,
+                }
+
+                if params.temperature is not None:
+                    request_params['temperature'] = params.temperature
+
+                if params.tools:
+                    request_params['tools'] = [
+                        {
+                            'type': 'function',
+                            'function': {
+                                'name': tool.name,
+                                'description': tool.description,
+                                'parameters': tool.input_schema,
+                            }
+                        }
+                        for tool in params.tools
+                    ]
+
+                # Make the API call
+                response = client.chat.completions.create(**request_params)
+
+                # Extract text from response
+                content = response.choices[0].message.content or ''
+
+                # Calculate cost
+                tokens_in = response.usage.prompt_tokens
+                tokens_out = response.usage.completion_tokens
+
+            elif provider == 'openrouter':
+                # OpenRouter branch (uses OpenAI SDK with custom base_url)
+                client = OpenAI(
+                    api_key=api_key,
+                    base_url='https://openrouter.ai/api/v1'
+                )
+
+                # Convert our Message format to OpenAI format
+                messages = [
+                    {'role': msg.role, 'content': msg.content}
+                    for msg in params.messages
+                ]
+
+                # Build request parameters
+                request_params = {
+                    'model': model_id,
+                    'max_tokens': params.max_tokens or model.max_output_tokens,
+                    'messages': messages,
+                }
+
+                if params.temperature is not None:
+                    request_params['temperature'] = params.temperature
+
+                if params.tools:
+                    request_params['tools'] = [
+                        {
+                            'type': 'function',
+                            'function': {
+                                'name': tool.name,
+                                'description': tool.description,
+                                'parameters': tool.input_schema,
+                            }
+                        }
+                        for tool in params.tools
+                    ]
+
+                # Make the API call
+                response = client.chat.completions.create(**request_params)
+
+                # Extract text from response
+                content = response.choices[0].message.content or ''
+
+                # Calculate cost
+                tokens_in = response.usage.prompt_tokens
+                tokens_out = response.usage.completion_tokens
+
+            else:
+                raise ValueError(f'Unsupported provider: {provider}')
+
+            # Calculate cost (common across all providers)
             cost_usd = calculate_cost(model, tokens_in, tokens_out)
 
             # Calculate latency
@@ -96,7 +194,7 @@ class AIClient:
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
-                provider='anthropic',
+                provider=provider,
                 model=model_id,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
@@ -133,13 +231,20 @@ class AIClient:
                 elif status >= 500:
                     error_code = 'PROVIDER_ERROR'
 
+            # Get model info for error logging (best effort)
+            try:
+                model = get_model(model_id, self.supabase)
+                provider = model.provider
+            except:
+                provider = 'unknown'
+
             # Log failed usage
             log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
-                provider='anthropic',
+                provider=provider,
                 model=model_id,
                 tokens_in=0,
                 tokens_out=0,

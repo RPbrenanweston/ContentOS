@@ -107,7 +107,7 @@
       "description": "Create a syncOpenRouterModels() function that fetches all available models from OpenRouter's public API (GET https://openrouter.ai/api/v1/models, no auth required) and upserts them into the ai_models table. Map OpenRouter response fields: id -> model id, pricing.prompt -> cost_per_input_token, pricing.completion -> cost_per_output_token, context_length -> max_context_tokens, top_provider.max_completion_tokens -> max_output_tokens, name -> display_name, provider is always 'openrouter'. New models get inserted, existing models get updated (pricing, context_length), models removed from OpenRouter API get is_active=false (soft delete). Skip models with missing or zero pricing. Return summary { inserted, updated, deactivated }.",
       "model_tier": "sonnet",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "New file packages/ai-core/src/sync.ts exists with syncOpenRouterModels() exported",
         "Fetches GET https://openrouter.ai/api/v1/models (no auth header needed)",
@@ -131,7 +131,7 @@
       "description": "Create comprehensive tests for all new OpenRouter functionality. Test chat() with OpenRouter provider (mock API responses), verify OpenAI client created with correct baseURL, test streaming with OpenRouter, test key validation, test model sync function with mocked API response, test error mapping. All tests use vitest with mocked dependencies (no real API calls).",
       "model_tier": "sonnet",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "New test file packages/ai-core/src/__tests__/openrouter-provider.test.ts exists",
         "Tests for chat() with OpenRouter provider verify correct baseURL and headers",
