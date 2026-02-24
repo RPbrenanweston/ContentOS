@@ -10,7 +10,7 @@
       "description": "Create Supabase migration file with ai_usage_log table (with all indexes) and ai_models table (with seed data for Claude Sonnet 4 and Haiku 4.5). See design doc Section 4.1 and 4.4 for exact schemas.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Migration file exists in supabase/migrations directory",
         "ai_usage_log table has all columns from design",
