@@ -90,3 +90,23 @@
   - JSDoc comments should describe purpose, not just reiterate type signature
   - @types/node needed at workspace root for TypeScript to resolve 'process' in keys.ts
 ---
+
+## 2026-02-24 03:30:00 UTC - S04 - PAI Iteration 4
+- **Implemented:** Model registry query functions with cost calculation
+- **Files changed:**
+  - packages/ai-core/src/models.ts (already complete from S02)
+  - packages/ai-core/src/__tests__/models.test.ts (created with 4 comprehensive tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ getModel(modelId, supabase): Returns model by ID, throws ModelNotFoundError if not found
+  ✓ getDefaultModel(supabase): Returns the single is_default=true, is_active=true model row
+  ✓ calculateCost(model, tokensIn, tokensOut): Returns USD (verified with math tests for Sonnet and Haiku)
+  ✓ Functions handle model-not-found with ModelNotFoundError (typed error class)
+  ✓ All functions accept SupabaseClient as required parameter
+  ✓ Unit tests pass: 4 tests verify cost calculation math including zero tokens, large counts, and model type variations
+- **Learnings for future iterations:**
+  - S02 scaffolding was thorough - included complete, tested implementations for models.ts
+  - Cost calculation uses floating-point multiplication; tests use toBeCloseTo() for precision safety
+  - Database query pattern: single() method for guaranteed one row, throws error if none or multiple found
+  - mapDatabaseToModel() pattern is reusable for other Supabase table queries
+  - Test organization: group related tests with describe blocks, use mock objects matching real type shapes
+---

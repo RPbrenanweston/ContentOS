@@ -58,7 +58,7 @@
       "description": "Implement getModel() and getDefaultModel() functions that query ai_models table. Include cost calculation helper: calculateCost(model, tokensIn, tokensOut) \u2192 USD.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "getModel returns model by ID from database",
         "getDefaultModel returns the is_default model row",
