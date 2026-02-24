@@ -346,7 +346,7 @@
       "description": "Handle checkout.session.completed webhook. Verify Stripe signature. Credit user's ai_credit_balances. Idempotency: don't double-credit on webhook retry.",
       "model_tier": "sonnet",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Webhook verifies Stripe signature before processing",
         "checkout.session.completed event credits user balance",
@@ -362,7 +362,7 @@
       "description": "Test full billing flow: purchase credits \u2192 chat deducts balance \u2192 spending cap blocks at limit. Test Stripe webhook idempotency.",
       "model_tier": "haiku",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Test: credit purchase increases remaining balance",
         "Test: chat call deducts cost from remaining balance",
