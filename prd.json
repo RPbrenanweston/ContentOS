@@ -222,7 +222,7 @@
       "description": "Create Python tests for all new provider functionality. Test chat() with OpenAI and OpenRouter providers (mocked), test streaming with both providers, test sync function with mocked API response, verify correct base_url used for OpenRouter, verify provider detection from model registry. All tests use pytest with mocked dependencies.",
       "model_tier": "sonnet",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Tests for chat() with OpenAI provider (mocked API responses)",
         "Tests for chat() with OpenRouter provider (mocked, verify base_url)",

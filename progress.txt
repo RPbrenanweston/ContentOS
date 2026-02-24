@@ -208,3 +208,32 @@
   - safe_parse_float() helper mirrors TypeScript implementation
   - Python dict comprehension for building model_to_deactivate list: `[id for id in existing if id not in api_ids]`
 ---
+## 2026-02-24 15:56 - S10 - PAI Iteration 8
+- **Implemented:** Comprehensive Python test suite for OpenAI/OpenRouter providers, fixed critical streaming bug
+- **Files changed:**
+  - backend/ai_core/test_openrouter.py (created, 618 lines with 15 tests)
+  - backend/ai_core/client.py (fixed missing await in chat_stream line 280)
+  - prd.json (S10 passes: true)
+- **ISC Status:** All 9 acceptance criteria passed (15 tests, 54 total Python tests passing)
+  - ✅ Tests for chat() with OpenAI provider (mocked API responses)
+  - ✅ Tests for chat() with OpenRouter provider (mocked, verify base_url='https://openrouter.ai/api/v1')
+  - ✅ Tests for chat_stream() with OpenAI/OpenRouter providers (mocked streaming)
+  - ✅ Tests for sync_openrouter_models() with mocked API response
+  - ✅ Tests verify correct base_url='https://openrouter.ai/api/v1' for OpenRouter
+  - ✅ Tests verify provider detection from model registry (not hardcoded)
+  - ✅ Tests verify usage logging records correct provider
+  - ✅ All 15 new tests pass with pytest
+  - ✅ All 54 Python tests pass (39 existing + 15 new, no regressions)
+  - ✅ All 130 TypeScript tests pass (no regressions)
+- **Learnings for future iterations:**
+  - Critical bug discovered in S08: client.py line 280 was calling resolve_key() without await in chat_stream()
+  - Bug caused TypeError: 'coroutine' object is not subscriptable when streaming with OpenAI/OpenRouter
+  - Test implementation caught the bug immediately — validates TDD approach
+  - Mock pattern for OpenAI SDK: Mock() with chat.completions.create returning iterator for streaming
+  - Streaming test pattern: verify start_stream → text_delta chunks → stop_stream with final tokens
+  - sync_openrouter_models() test pattern: mock requests.get() return value with ok=True/False
+  - Provider detection tests verify get_model() is called (not hardcoded provider)
+  - Field mapping tests use side_effect to capture upsert data for assertion
+  - Python test count now: 54 total (9 BYOK, 4 client, 17 encryption, 15 openrouter, 9 package)
+---
+
