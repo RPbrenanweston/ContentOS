@@ -314,7 +314,7 @@
       "description": "In billing.ts: add spending cap check to pre-call flow. Check both user spending_cap_usd and admin_cap_usd. Lower of the two wins. Track credits_used_usd and deduct credits_remaining_usd after each call.",
       "model_tier": "sonnet",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Spending cap checked before each managed key call",
         "Lower of user cap and admin cap enforced",

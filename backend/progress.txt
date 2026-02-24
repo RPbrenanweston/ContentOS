@@ -64,3 +64,25 @@
   - ON DELETE CASCADE on user_id foreign key ensures cleanup when users are deleted
   - Comments on table and columns improve database documentation and maintainability
 ---
+
+## 2026-02-24 04:27:00 PST - S20 - PAI Iteration 20
+- **Implemented:** Spending caps enforcement (Phase 3 - Billing + Credits)
+- **Files changed:**
+  - packages/ai-core/src/billing.ts (added checkSpendingCap and deductCredits functions)
+  - packages/ai-core/src/index.ts (exported new functions)
+  - packages/ai-core/src/__tests__/spending-caps.test.ts (created with 12 tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ Spending cap checked before each managed key call (checkSpendingCap function implemented)
+  ✓ Lower of user cap and admin cap enforced (Math.min logic for effective cap)
+  ✓ SpendingCapExceededError thrown when cap reached (throws with detailed message)
+  ✓ credits_used_usd incremented after successful call (deductCredits updates both fields)
+  ✓ credits_remaining_usd decremented after successful call (Math.max(0, ...) ensures no negative)
+  ✓ Unit tests cover both cap types and no-cap scenario (12/12 tests passing: AC1-AC8 for checkSpendingCap, AC9-AC12 for deductCredits)
+- **Learnings for future iterations:**
+  - Vitest mocking requires extracting mock functions to variables for proper reuse across tests
+  - Spending cap logic needs to handle three states: no caps, user cap only, admin cap only, both caps
+  - The "lower cap wins" logic uses Math.min when both caps are set
+  - Error messages should include current usage, estimated cost, projected total, and effective cap for debugging
+  - deductCredits must floor credits_remaining_usd at 0 to prevent negative balances
+  - Fire-and-forget pattern for credit deduction: function doesn't throw on DB errors, just returns
+---
