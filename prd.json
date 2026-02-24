@@ -242,7 +242,7 @@
       "description": "Update README.md to list OpenRouter as the third provider alongside Anthropic and OpenAI. Add usage examples for OpenRouter (chat, streaming, BYOK). Document the auto-sync function with usage instructions. Update architecture diagram to show 3 providers. Ensure .env.example includes OPENROUTER_API_KEY (should already be done in S02).",
       "model_tier": "haiku",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "README.md lists OpenRouter as third provider",
         "Architecture/provider diagram updated to show 3 providers (Anthropic, OpenAI, OpenRouter)",

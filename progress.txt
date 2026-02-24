@@ -237,3 +237,30 @@
   - Python test count now: 54 total (9 BYOK, 4 client, 17 encryption, 15 openrouter, 9 package)
 ---
 
+## 2026-02-24 16:03 - S11 - PAI Iteration 9
+- **Implemented:** Comprehensive README.md documentation for OpenRouter provider integration
+- **Files changed:**
+  - README.md (created, 560 lines)
+  - prd.json (S11 passes: true)
+- **ISC Status:** All 7 acceptance criteria passed
+  - ✅ README.md created with OpenRouter listed as third provider
+  - ✅ Architecture diagram updated to show 3 providers (Anthropic, OpenAI, OpenRouter)
+  - ✅ Usage examples added for OpenRouter chat, streaming, and BYOK (TypeScript and Python)
+  - ✅ Auto-sync function documented with usage instructions (syncOpenRouterModels/sync_openrouter_models)
+  - ✅ Model registry section mentions auto-sync capability with insert/update/deactivate logic
+  - ✅ .env.example includes OPENROUTER_API_KEY (verified from S02)
+  - ✅ No broken links or formatting issues (markdown validated)
+  - ✅ All 130 TypeScript tests pass
+  - ✅ All 54 Python tests pass
+- **Learnings for future iterations:**
+  - README structure follows standard: Overview → Architecture → Quick Start → Usage → Advanced Topics
+  - Provider table format makes it easy to see feature parity across all three providers
+  - Usage examples organized by language (TypeScript, Python) then by feature (chat, stream, BYOK)
+  - OpenRouter section highlights key benefits: 100+ models, unified API, auto-sync capability
+  - Auto-sync documentation explains upsert logic: insert new, update existing, deactivate removed
+  - Cost tracking section includes SQL queries for OpenRouter spend breakdown
+  - Configuration section documents OpenRouter-specific baseURL pattern for both languages
+  - Architecture diagram shows shared Supabase layer with per-language client packages
+  - No project-level README existed before — this is the first comprehensive documentation
+---
+
