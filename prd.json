@@ -63,7 +63,7 @@
       "description": "Update chat() in packages/ai-core/src/client.ts to handle provider === 'openrouter'. The OpenRouter branch should create an OpenAI client with baseURL: 'https://openrouter.ai/api/v1' and add HTTP-Referer and X-Title headers per OpenRouter best practices. Since OpenRouter uses OpenAI-compatible API format, extract shared helper functions for message formatting and tool transformation that both 'openai' and 'openrouter' branches can reuse (DRY). Update the provider type to include 'openrouter'. Token counting, cost calculation, usage logging, credit checks, and error mapping must all work correctly for the new provider.",
       "model_tier": "sonnet",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "chat() handles provider === 'openrouter' from model registry",
         "OpenRouter branch creates OpenAI client with baseURL: 'https://openrouter.ai/api/v1'",

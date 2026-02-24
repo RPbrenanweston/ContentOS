@@ -1,0 +1,493 @@
+{
+  "project": "shared-ai-layer",
+  "description": "Reusable AI utility layer wrapping LLM provider APIs with usage tracking, BYOK, and billing. See docs/SHARED_AI_LAYER_DESIGN.md for full architecture.",
+  "version": "1.0.0",
+  "branchName": "claude/determined-grothendieck",
+  "userStories": [
+    {
+      "id": "S01",
+      "title": "Supabase migration: ai_usage_log and ai_models tables",
+      "description": "Create Supabase migration file with ai_usage_log table (with all indexes) and ai_models table (with seed data for Claude Sonnet 4 and Haiku 4.5). See design doc Section 4.1 and 4.4 for exact schemas.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "Migration file exists in supabase/migrations directory",
+        "ai_usage_log table has all columns from design",
+        "Four indexes created on ai_usage_log table",
+        "ai_models table has all columns from design",
+        "Two seed model rows inserted successfully",
+        "Migration runs without errors on fresh database"
+      ]
+    },
+    {
+      "id": "S02",
+      "title": "TypeScript package scaffolding for @org/ai-core",
+      "description": "Create packages/ai-core/ directory with package.json, tsconfig.json, src/ directory structure matching design doc Section 5.1. Export barrel file (index.ts). Add vitest config.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "packages/ai-core/package.json exists with correct dependencies",
+        "tsconfig.json configured for strict TypeScript mode",
+        "All source files created matching Section 5.1 structure",
+        "index.ts barrel file exports public API",
+        "vitest config exists and runs empty test",
+        "Package compiles without TypeScript errors"
+      ]
+    },
+    {
+      "id": "S03",
+      "title": "Define all TypeScript interfaces and types",
+      "description": "Implement types.ts and errors.ts with all interfaces from design doc Section 5.2: AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GenerateParams, Message, Tool, UsageSummary, CreditBalance, DateRange. Create AI-specific error classes.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "All interfaces from Section 5.2 defined in types.ts",
+        "ChatChunk type supports streaming delta shape",
+        "Error classes extend base AIError with code field",
+        "Types are exported from index.ts barrel",
+        "No TypeScript compilation errors in types",
+        "JSDoc comments on all public interfaces"
+      ]
+    },
+    {
+      "id": "S04",
+      "title": "Implement model registry query in models.ts",
+      "description": "Implement getModel() and getDefaultModel() functions that query ai_models table. Include cost calculation helper: calculateCost(model, tokensIn, tokensOut) \u2192 USD.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "getModel returns model by ID from database",
+        "getDefaultModel returns the is_default model row",
+        "calculateCost returns correct USD from token counts",
+        "Functions handle model-not-found with typed error",
+        "All functions accept SupabaseClient parameter",
+        "Unit tests pass for cost calculation math"
+      ]
+    },
+    {
+      "id": "S05",
+      "title": "Implement usage logging in usage.ts",
+      "description": "Implement logUsage() function matching design doc Section 5.4 exactly. Insert row to ai_usage_log. Fire-and-forget pattern (don't await in hot path, but handle errors).",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "logUsage inserts complete row to ai_usage_log",
+        "All columns from design doc Section 4.1 populated",
+        "Fire-and-forget: does not block calling code",
+        "Logging errors are caught and console.warned",
+        "Function signature matches design doc exactly",
+        "Unit test verifies insert payload shape"
+      ]
+    },
+    {
+      "id": "S06",
+      "title": "Implement basic chat() in client.ts with Anthropic SDK",
+      "description": "Implement createAIClient factory and AIClient.chat() method. Call Anthropic messages.create(), log usage automatically, return ChatResult. Single provider only (Anthropic). No streaming yet. No BYOK \u2014 use env var key.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "createAIClient returns AIClient with chat method",
+        "chat() calls Anthropic SDK messages.create correctly",
+        "Usage logged automatically after successful call",
+        "Usage logged on error with success=false and error_code",
+        "ChatResult includes content tokens cost and latency",
+        "Managed API key read from environment variable"
+      ]
+    },
+    {
+      "id": "S07",
+      "title": "Implement SSE streaming via chatStream()",
+      "description": "Add chatStream() method to AIClient. Returns AsyncIterable<ChatChunk>. Uses Anthropic SDK stream mode. Logs usage on stream completion with final token counts. Handle abort/error mid-stream.",
+      "model_tier": "sonnet",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "chatStream returns AsyncIterable of ChatChunk objects",
+        "Chunks contain delta text and partial token counts",
+        "Usage logged once on stream completion with totals",
+        "AbortController support cancels in-flight stream",
+        "Error mid-stream logs usage with success=false",
+        "Streaming response starts within reasonable latency"
+      ]
+    },
+    {
+      "id": "S08",
+      "title": "Implement retry with exponential backoff",
+      "description": "Add retry logic to chat() and chatStream(). Retry on 429 (rate limit) and 5xx errors. Exponential backoff with jitter. Max 3 retries. Non-retryable errors (400, 401, 403) fail immediately.",
+      "model_tier": "sonnet",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "Retries on 429 and 5xx status codes only",
+        "Exponential backoff with jitter between retries",
+        "Maximum three retry attempts before final failure",
+        "400 and 401 and 403 errors fail immediately",
+        "Usage logged only on final attempt not retries",
+        "Unit tests verify retry behavior with mock SDK"
+      ]
+    },
+    {
+      "id": "S09",
+      "title": "Implement credit balance query and pre-check",
+      "description": "In billing.ts: getRemainingCredits() queries ai_credit_balances for current period. checkCredits() estimates cost and compares to remaining balance. Pre-call integration: chat() checks credits before calling LLM when key_source is managed.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "getRemainingCredits returns current period balance",
+        "checkCredits estimates cost from model pricing table",
+        "InsufficientCreditsError thrown when balance too low",
+        "Credit check only runs for managed key users",
+        "BYOK users skip credit check entirely",
+        "Unit tests cover zero balance and sufficient balance"
+      ]
+    },
+    {
+      "id": "S10",
+      "title": "Phase 1 integration tests",
+      "description": "Write integration tests that verify: createAIClient \u2192 chat() \u2192 usage logged, createAIClient \u2192 chatStream() \u2192 usage logged on complete, credit check blocks when balance is zero. Use Supabase test helpers or mocked client.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "Test: chat call logs usage row to database",
+        "Test: stream completion logs usage row to database",
+        "Test: zero balance blocks managed key call",
+        "Test: retry logic fires on 429 status code",
+        "All integration tests pass in CI environment",
+        "Test helpers documented for future test authors"
+      ]
+    },
+    {
+      "id": "S11",
+      "title": "Supabase migration: ai_api_keys table",
+      "description": "Create migration for ai_api_keys table from design doc Section 4.2. Include unique constraint, indexes, and RLS policy (users see only their own keys).",
+      "model_tier": "haiku",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "Migration creates ai_api_keys table with all columns",
+        "Unique constraint on user_id and provider enforced",
+        "Index on user_id and is_active exists",
+        "RLS policy restricts access to own records only",
+        "Migration runs without errors after Phase 1 migrations",
+        "Rollback migration drops table cleanly"
+      ]
+    },
+    {
+      "id": "S12",
+      "title": "Implement AES-256-GCM encryption module",
+      "description": "In keys.ts: encrypt(plaintext, encryptionKey) and decrypt(ciphertext, encryptionKey) using Node crypto AES-256-GCM. Random IV per encryption. Encryption key from environment variable. Handle key derivation, IV prepend, auth tag.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "encrypt produces ciphertext with prepended IV and tag",
+        "decrypt recovers original plaintext from ciphertext",
+        "Random IV generated for each encryption call",
+        "Auth tag validated during decryption prevents tampering",
+        "InvalidKeyError thrown on wrong decryption key",
+        "Unit tests verify roundtrip and tamper detection"
+      ]
+    },
+    {
+      "id": "S13",
+      "title": "Implement key resolution with BYOK fallback",
+      "description": "Implement resolveKey() matching design doc Section 5.3. Query ai_api_keys for active BYOK key, decrypt if found, fall back to managed env var. Update last_used_at on BYOK usage.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "BYOK key returned when active key exists for user",
+        "Managed key returned when no BYOK key found",
+        "Encrypted BYOK key decrypted before returning",
+        "last_used_at timestamp updated on BYOK key usage",
+        "Source field correctly set to byok or managed",
+        "Integration into chat and chatStream works seamlessly"
+      ]
+    },
+    {
+      "id": "S14",
+      "title": "Implement BYOK key management functions",
+      "description": "Add saveKey(userId, provider, apiKey), deleteKey(userId, provider), validateKey(provider, apiKey) to keys.ts. saveKey encrypts and stores. validateKey makes a minimal API call to verify key works. Generate key_hint from last 4 chars.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "saveKey encrypts and inserts key to ai_api_keys",
+        "key_hint generated from last four characters of key",
+        "deleteKey deactivates key without deleting row",
+        "validateKey makes minimal API call to test key",
+        "Duplicate user-provider pair handled with upsert",
+        "Unit tests cover save validate and delete flows"
+      ]
+    },
+    {
+      "id": "S15",
+      "title": "Python ai_core package scaffolding",
+      "description": "Create backend/ai_core/ with __init__.py, client.py, usage.py, keys.py, billing.py, models.py, types.py. Use Pydantic for types. Add pytest config.",
+      "model_tier": "haiku",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "All Python module files created matching Section 6 structure",
+        "Pydantic models mirror TypeScript interfaces exactly",
+        "__init__.py exports create_ai_client function",
+        "pytest config exists and discovers test files",
+        "Type hints on all public functions",
+        "Module imports without errors"
+      ]
+    },
+    {
+      "id": "S16",
+      "title": "Python client.py with Anthropic SDK and usage logging",
+      "description": "Implement create_ai_client() and AIClient.chat() in Python. Uses anthropic Python SDK. Automatic usage logging to same ai_usage_log table. Same key resolution pattern (BYOK \u2192 managed).",
+      "model_tier": "haiku",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "create_ai_client returns AIClient with chat method",
+        "chat calls anthropic Python SDK messages.create",
+        "Usage logged to same ai_usage_log Supabase table",
+        "Key resolution follows same BYOK then managed pattern",
+        "ChatResult dataclass matches TypeScript ChatResult shape",
+        "Python unit tests pass for chat and usage logging"
+      ]
+    },
+    {
+      "id": "S17",
+      "title": "Python encryption and key management",
+      "description": "Port AES-256-GCM encryption from TypeScript to Python using cryptography library. Same IV prepend, auth tag pattern. Port saveKey, deleteKey, validateKey.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "Python encrypt produces same format as TypeScript encrypt",
+        "Cross-language: TS-encrypted key decryptable in Python",
+        "Python key management mirrors TypeScript API exactly",
+        "cryptography library used for AES-256-GCM operations",
+        "Unit tests verify roundtrip and cross-language compat",
+        "validateKey calls Anthropic API with test request"
+      ]
+    },
+    {
+      "id": "S18",
+      "title": "Phase 2 integration tests",
+      "description": "Test BYOK flow end-to-end: save key \u2192 chat uses BYOK \u2192 usage logged with key_source=byok. Test managed fallback when no BYOK key. Test Python-TypeScript encryption interop.",
+      "model_tier": "haiku",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "Test: saved BYOK key used for subsequent chat calls",
+        "Test: managed fallback works when no BYOK key exists",
+        "Test: usage log shows correct key_source value",
+        "Test: Python decrypts key encrypted by TypeScript",
+        "Test: deactivated BYOK key triggers managed fallback",
+        "All Phase 2 integration tests pass alongside Phase 1"
+      ]
+    },
+    {
+      "id": "S19",
+      "title": "Supabase migration: ai_credit_balances table",
+      "description": "Create migration for ai_credit_balances table from design doc Section 4.3. Include unique constraint, RLS policy, and trigger for updated_at.",
+      "model_tier": "haiku",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Migration creates ai_credit_balances with all columns",
+        "Unique constraint on user_id and period_start enforced",
+        "RLS policy restricts access to own records only",
+        "updated_at trigger fires on row modification",
+        "Migration runs after Phase 1 and 2 migrations cleanly",
+        "Default credits_remaining_usd is zero"
+      ]
+    },
+    {
+      "id": "S20",
+      "title": "Implement spending caps enforcement",
+      "description": "In billing.ts: add spending cap check to pre-call flow. Check both user spending_cap_usd and admin_cap_usd. Lower of the two wins. Track credits_used_usd and deduct credits_remaining_usd after each call.",
+      "model_tier": "sonnet",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Spending cap checked before each managed key call",
+        "Lower of user cap and admin cap enforced",
+        "SpendingCapExceededError thrown when cap reached",
+        "credits_used_usd incremented after successful call",
+        "credits_remaining_usd decremented after successful call",
+        "Unit tests cover both cap types and no-cap scenario"
+      ]
+    },
+    {
+      "id": "S21",
+      "title": "Stripe Checkout session for credit top-ups",
+      "description": "Create Stripe Checkout session endpoint for purchasing AI credits. Support preset amounts ($5, $10, $25, $50). On successful payment, increment credits_remaining_usd.",
+      "model_tier": "sonnet",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Checkout session created with correct amount and metadata",
+        "Success URL redirects back to app with session ID",
+        "Cancel URL returns user to credits page",
+        "Preset credit amounts of 5 10 25 50 supported",
+        "Stripe customer ID linked to Supabase user ID",
+        "Test mode checkout completes with Stripe test card"
+      ]
+    },
+    {
+      "id": "S22",
+      "title": "Stripe webhook handler for payment confirmation",
+      "description": "Handle checkout.session.completed webhook. Verify Stripe signature. Credit user's ai_credit_balances. Idempotency: don't double-credit on webhook retry.",
+      "model_tier": "sonnet",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Webhook verifies Stripe signature before processing",
+        "checkout.session.completed event credits user balance",
+        "Idempotency key prevents double crediting on retry",
+        "Invalid signature returns 400 status code",
+        "Unknown event types return 200 without processing",
+        "Integration test with Stripe CLI webhook forwarding"
+      ]
+    },
+    {
+      "id": "S23",
+      "title": "Phase 3 integration tests",
+      "description": "Test full billing flow: purchase credits \u2192 chat deducts balance \u2192 spending cap blocks at limit. Test Stripe webhook idempotency.",
+      "model_tier": "haiku",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "Test: credit purchase increases remaining balance",
+        "Test: chat call deducts cost from remaining balance",
+        "Test: spending cap blocks call when limit reached",
+        "Test: duplicate webhook does not double credit",
+        "Test: BYOK users unaffected by credit system",
+        "All Phase 3 tests pass alongside Phase 1 and 2"
+      ]
+    },
+    {
+      "id": "S24",
+      "title": "Add OpenAI provider support",
+      "description": "Extend client.ts to support OpenAI via openai SDK. Provider resolved from model ID prefix or explicit param. Same usage logging, same key resolution. Add OpenAI models to ai_models seed data.",
+      "model_tier": "haiku",
+      "phase": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "OpenAI chat completions called via official SDK",
+        "Provider auto-detected from model ID in registry",
+        "Usage logging works identically for OpenAI calls",
+        "BYOK key resolution supports openai provider",
+        "GPT-4o seed data added to ai_models migration",
+        "Unit tests cover OpenAI provider selection path"
+      ]
+    },
+    {
+      "id": "S25",
+      "title": "Implement org-level billing and admin controls",
+      "description": "Add org_id support to credit balances and spending caps. Admin can set org-wide caps that override individual caps. Shared credit pool for org members.",
+      "model_tier": "sonnet",
+      "phase": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "Org-level credit balance shared across org members",
+        "Admin cap overrides individual user spending caps",
+        "Org members see shared pool remaining credits",
+        "Admin can set per-user caps within org pool",
+        "Usage logged with org_id for org-level reporting",
+        "Unit tests cover org cap overriding user cap"
+      ]
+    },
+    {
+      "id": "S26",
+      "title": "Sonnet refactoring pass on Haiku scaffolding",
+      "description": "Review all Haiku-generated code. Add: error handling edge cases, AbortController timeouts on all async ops, proper cleanup in error paths, consistent error messages, null safety on optional fields.",
+      "model_tier": "sonnet",
+      "phase": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "All async operations have timeout via AbortController",
+        "Error paths clean up resources and close connections",
+        "Consistent error message format across all modules",
+        "Optional fields have null checks where accessed",
+        "No TypeScript strict mode warnings in any file",
+        "All existing tests still pass after refactoring"
+      ]
+    }
+  ],
+  "config": {
+    "default_model_tier": "haiku",
+    "phase_model_overrides": {
+      "sonnet_stories": [
+        "S07",
+        "S08",
+        "S12",
+        "S13",
+        "S14",
+        "S17",
+        "S20",
+        "S21",
+        "S22",
+        "S25",
+        "S26"
+      ]
+    },
+    "reference_doc": "docs/SHARED_AI_LAYER_DESIGN.md",
+    "test_command": "npx vitest run",
+    "lint_command": "npx tsc --noEmit",
+    "phases": {
+      "1": {
+        "name": "Core Client + Usage",
+        "stories": [
+          "S01",
+          "S02",
+          "S03",
+          "S04",
+          "S05",
+          "S06",
+          "S07",
+          "S08",
+          "S09",
+          "S10"
+        ]
+      },
+      "2": {
+        "name": "BYOK + Python",
+        "stories": [
+          "S11",
+          "S12",
+          "S13",
+          "S14",
+          "S15",
+          "S16",
+          "S17",
+          "S18"
+        ]
+      },
+      "3": {
+        "name": "Billing + Credits",
+        "stories": [
+          "S19",
+          "S20",
+          "S21",
+          "S22",
+          "S23"
+        ]
+      },
+      "4": {
+        "name": "Multi-Provider + Polish",
+        "stories": [
+          "S24",
+          "S25",
+          "S26"
+        ]
+      }
+    }
+  }
+}

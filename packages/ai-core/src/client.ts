@@ -25,7 +25,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GenerateParams, CreditBalance, UsageSummary, DateRange } from './types';
+import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GenerateParams, CreditBalance, UsageSummary, DateRange, Tool } from './types';
 import { getModel, calculateCost } from './models';
 import { logUsage } from './usage';
 import { resolveKey } from './keys';
@@ -67,6 +67,30 @@ function calculateBackoffDelay(attemptNumber: number, baseDelayMs: number, jitte
  */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Shared helper: Format messages for OpenAI-compatible APIs (OpenAI, OpenRouter)
+ */
+function formatOpenAIMessages(messages: { role: string; content: string }[]) {
+  return messages.map((msg) => ({
+    role: msg.role as 'user' | 'assistant',
+    content: msg.content,
+  }));
+}
+
+/**
+ * Shared helper: Transform tools to OpenAI function calling format
+ */
+function formatOpenAITools(tools: Tool[]) {
+  return tools.map((tool) => ({
+    type: 'function' as const,
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.input_schema,
+    },
+  }));
 }
 
 /**
@@ -138,7 +162,7 @@ class AIClientImpl implements AIClient {
       const model = await getModel(modelId, this.supabase);
 
       // Detect provider from model registry
-      const provider = model.provider as 'anthropic' | 'openai';
+      const provider = model.provider as 'anthropic' | 'openai' | 'openrouter';
       detectedProvider = provider; // Store for error logging
 
       // Resolve API key for the detected provider
@@ -207,11 +231,8 @@ class AIClientImpl implements AIClient {
         // Create OpenAI client with resolved key
         const client = new OpenAI({ apiKey: key });
 
-        // Convert our Message format to OpenAI format
-        const messages = params.messages.map((msg) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        }));
+        // Use shared helper for message formatting
+        const messages = formatOpenAIMessages(params.messages);
 
         // Build request parameters
         const requestParams: any = {
@@ -221,18 +242,50 @@ class AIClientImpl implements AIClient {
           messages,
         };
 
+        // Use shared helper for tool formatting
         if (params.tools && params.tools.length > 0) {
-          requestParams.tools = params.tools.map((tool) => ({
-            type: 'function' as const,
-            function: {
-              name: tool.name,
-              description: tool.description,
-              parameters: tool.input_schema,
-            },
-          }));
+          requestParams.tools = formatOpenAITools(params.tools);
         }
 
         // Call OpenAI API with retry logic
+        const response = await retryWithBackoff(
+          () => client.chat.completions.create(requestParams),
+          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+        );
+
+        tokensIn = response.usage?.prompt_tokens || 0;
+        tokensOut = response.usage?.completion_tokens || 0;
+
+        // Extract text content from response
+        content = response.choices[0]?.message?.content || '';
+      } else if (provider === 'openrouter') {
+        // Create OpenAI client with OpenRouter baseURL and headers
+        const client = new OpenAI({
+          apiKey: key,
+          baseURL: 'https://openrouter.ai/api/v1',
+          defaultHeaders: {
+            'HTTP-Referer': 'https://shared-ai-layer.app',
+            'X-Title': 'Shared AI Layer',
+          },
+        });
+
+        // Use shared helper for message formatting
+        const messages = formatOpenAIMessages(params.messages);
+
+        // Build request parameters
+        const requestParams: any = {
+          model: modelId,
+          max_tokens: params.maxTokens || model.maxOutputTokens,
+          temperature: params.temperature,
+          messages,
+        };
+
+        // Use shared helper for tool formatting
+        if (params.tools && params.tools.length > 0) {
+          requestParams.tools = formatOpenAITools(params.tools);
+        }
+
+        // Call OpenRouter API with retry logic (OpenAI-compatible)
         const response = await retryWithBackoff(
           () => client.chat.completions.create(requestParams),
           { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
@@ -339,7 +392,7 @@ class AIClientImpl implements AIClient {
       const model = await getModel(modelId, this.supabase);
 
       // Detect provider - currently only Anthropic supported for streaming
-      const provider = model.provider as 'anthropic' | 'openai';
+      const provider = model.provider as 'anthropic' | 'openai' | 'openrouter';
       if (provider !== 'anthropic') {
         throw new Error(`Streaming not yet supported for provider: ${provider}`);
       }

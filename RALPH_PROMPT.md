@@ -19,12 +19,14 @@ You are an autonomous coding agent working within the **PAI Algorithm** framewor
 
 ## Project Context
 
+- **PRD:** `tasks/prd-openrouter-provider.md` — Full requirements for OpenRouter provider integration
 - **Design Doc:** `docs/SHARED_AI_LAYER_DESIGN.md` — READ THIS for all implementation details
-- **Existing Project:** Python backend in `backend/`, Supabase in `supabase/`
-- **New TypeScript Code:** Goes in `packages/ai-core/src/`
-- **New Python Code:** Goes in `backend/ai_core/`
-- **Migrations:** Go in `supabase/migrations/`
-- **Branch:** `claude/determined-grothendieck`
+- **Existing Project:** Python backend in `backend/`, Supabase in `supabase/`, TypeScript in `packages/ai-core/`
+- **TypeScript Code:** `packages/ai-core/src/` — client.ts, keys.ts, models.ts already exist with Anthropic+OpenAI support
+- **Python Code:** `backend/ai_core/` — client.py currently Anthropic-only, needs provider branching
+- **Migrations:** `supabase/migrations/` — 002_ai_layer_usage_and_models.sql has existing ai_models table
+- **Branch:** `ralph/openrouter-provider`
+- **Key Architectural Insight:** OpenRouter uses the OpenAI API format. Reuse the `openai` SDK with `baseURL: 'https://openrouter.ai/api/v1'`. No new dependencies needed.
 
 ---
 
@@ -33,7 +35,7 @@ You are an autonomous coding agent working within the **PAI Algorithm** framewor
 1. Read `prd.json` — identify the highest priority story where `passes: false`
 2. Read `progress.txt` — check **Codebase Patterns** section first, then recent entries
 3. Read `docs/SHARED_AI_LAYER_DESIGN.md` — this is your implementation reference
-4. Check you're on the correct branch (`claude/determined-grothendieck`). If not, check it out.
+4. Check you're on the correct branch (`ralph/openrouter-provider`). If not, check it out.
 5. Implement that **single** user story
 6. Run quality checks:
    - `npx vitest run` (tests)
@@ -48,8 +50,8 @@ You are an autonomous coding agent working within the **PAI Algorithm** framewor
 ## Model Tier Awareness
 
 Stories have a `model_tier` field. You don't control which model runs you — that's set externally. But be aware:
-- **Haiku stories** (S01-S06, S09-S11, S15-S16, S18-S19, S23-S24): Scaffolding, types, config. Implement straightforwardly.
-- **Sonnet stories** (S07-S08, S12-S14, S17, S20-S22, S25-S26): Logic, encryption, streaming, error handling. Take extra care with edge cases.
+- **Haiku stories** (S01, S02, S06, S10, S11): SQL migrations, key validation, tests, docs. Implement straightforwardly.
+- **Sonnet stories** (S03, S04, S05, S07, S08, S09): Provider branching, streaming, auto-sync. Complex logic — take extra care with edge cases.
 
 ---
 
