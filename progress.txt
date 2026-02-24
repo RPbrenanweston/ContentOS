@@ -613,3 +613,116 @@ TypeScript: No errors
   - Stripe mock pattern: constructEvent mock must return full event object with nested data structure
   - Idempotency testing: Verify second webhook call doesn't create duplicate credit entries
 ---
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ITERATION 20 — 2026-02-24 (Ralph Agent)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Story Implemented: S24 - Add OpenAI provider support
+Commit: 0ec94b2 "feat: S24 - Add OpenAI provider support"
+Branch: claude/determined-grothendieck
+
+────────────────────────────────────────────────────────────────────────────────
+IMPLEMENTATION DETAILS
+────────────────────────────────────────────────────────────────────────────────
+
+Added multi-provider support to AI Core library, enabling both Anthropic and OpenAI
+models to be called through a unified interface. Provider detection is now automatic
+based on the model registry, requiring no client-side configuration.
+
+Files Modified:
+  • packages/ai-core/package.json
+    - Added openai@^4.80.0 dependency
+    
+  • supabase/migrations/002_ai_layer_usage_and_models.sql
+    - Added GPT-4o model seed (2.50/1M in, 10/1M out, 128k context)
+    - Added GPT-4o-mini model seed (0.15/1M in, 0.60/1M out, 128k context)
+    
+  • packages/ai-core/src/client.ts
+    - Removed Anthropic client from constructor (now per-request instantiation)
+    - Added provider detection from model.provider field in registry
+    - Refactored chat() to support both 'anthropic' | 'openai' providers
+    - Implemented OpenAI chat.completions.create() with retry logic
+    - Added OpenAI-specific tool format transformation (function wrapper)
+    - Mapped OpenAI token counts (prompt_tokens → tokensIn, completion_tokens → tokensOut)
+    - Updated chatStream() to throw error for non-Anthropic providers (streaming support pending)
+    - Key resolution now provider-aware via resolveKey(userId, provider, supabase)
+    
+  • packages/ai-core/src/__tests__/openai-provider.test.ts (NEW)
+    - Created 4 test cases covering OpenAI provider path
+    - Tests: provider detection, API call format, usage logging, tools support
+    - Module-level mock for OpenAI SDK with mockOpenAICreate
+    - Table-specific Supabase mock pattern matching client.test.ts
+    - Environment variable setup for OPENAI_API_KEY in beforeEach
+
+────────────────────────────────────────────────────────────────────────────────
+TECHNICAL DECISIONS
+────────────────────────────────────────────────────────────────────────────────
+
+1. Provider Detection: Auto-detect from model.provider field in ai_models table
+   - No client configuration required
+   - Single source of truth in database
+   - Simplifies adding future providers
+
+2. Tool Format Transformation: Different API shapes require translation
+   - Anthropic: { name, description, input_schema }
+   - OpenAI: { type: 'function', function: { name, description, parameters } }
+   - Mapping implemented in chat() method
+
+3. Token Count Fields: Provider-specific response shapes
+   - Anthropic: usage.input_tokens, usage.output_tokens
+   - OpenAI: usage.prompt_tokens, usage.completion_tokens
+   - Normalized to tokensIn/tokensOut in ChatResult
+
+4. Streaming Support: Deferred to future iteration
+   - chatStream() currently throws for non-Anthropic providers
+   - OpenAI streaming requires different event handling pattern
+   - Comment added to method documenting current limitation
+
+────────────────────────────────────────────────────────────────────────────────
+TESTING STRATEGY
+────────────────────────────────────────────────────────────────────────────────
+
+Test Coverage:
+  ✓ Provider detection from model registry (gpt-4o → openai)
+  ✓ OpenAI API called with correct parameters (model, messages, temperature, max_tokens)
+  ✓ Usage logging captures provider='openai' correctly
+  ✓ Tools transformed to OpenAI function format
+  ✓ Token counts extracted from response.usage correctly
+  ✓ All 101 tests passing (15 test files)
+  ✓ TypeScript strict mode passes with no errors
+
+Mock Pattern Learned:
+  - Module-level vi.fn() for SDK method mocks (not extracting from constructor mock)
+  - Table-specific Supabase mock logic matching established pattern
+  - Environment variable setup in beforeEach for key resolution
+
+────────────────────────────────────────────────────────────────────────────────
+ERRORS ENCOUNTERED & FIXES
+────────────────────────────────────────────────────────────────────────────────
+
+1. Module not found: 'openai'
+   → Added openai dependency, ran npm install
+
+2. Cannot read properties of undefined (reading 'mockClear')
+   → Moved mockOpenAICreate to module-level scope instead of extracting from mock
+
+3. supabase.from(...).select(...).eq(...).single is not a function
+   → Implemented table-specific mock logic matching client.test.ts pattern
+
+4. No API key found for provider: openai
+   → Added process.env.OPENAI_API_KEY setup in beforeEach
+
+────────────────────────────────────────────────────────────────────────────────
+LEARNINGS FOR NEXT ITERATION
+────────────────────────────────────────────────────────────────────────────────
+
+• Multi-provider patterns are cleaner with runtime detection vs compile-time generics
+• Table-specific mocking pattern scales well—should be documented in test utils
+• Fire-and-forget operations (deductCredits, logUsage) gracefully fail in test env
+• Provider-specific API differences can be normalized at the ChatResult boundary
+• Streaming implementations vary significantly between providers (not just parameter mapping)
+
+────────────────────────────────────────────────────────────────────────────────
+STATUS: ✅ S24 COMPLETE
+────────────────────────────────────────────────────────────────────────────────

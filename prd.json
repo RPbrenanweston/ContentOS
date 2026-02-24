@@ -378,7 +378,7 @@
       "description": "Extend client.ts to support OpenAI via openai SDK. Provider resolved from model ID prefix or explicit param. Same usage logging, same key resolution. Add OpenAI models to ai_models seed data.",
       "model_tier": "haiku",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "OpenAI chat completions called via official SDK",
         "Provider auto-detected from model ID in registry",
