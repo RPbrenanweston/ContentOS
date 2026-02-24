@@ -38,3 +38,33 @@
   - Index naming convention: idx_{table}_{purpose} for consistency
   - NUMERIC(12,10) chosen for token costs to preserve precision (fits $0.0000008 to $0.0000015)
 ---
+
+## 2026-02-24 03:20:00 UTC - S02 - PAI Iteration 2
+- **Implemented:** TypeScript package scaffolding for @org/ai-core with complete module structure
+- **Files changed:**
+  - packages/ai-core/package.json (with Anthropic SDK, Supabase, vitest, TypeScript deps)
+  - packages/ai-core/tsconfig.json (strict mode, ES2020 target)
+  - packages/ai-core/vitest.config.ts (node environment, v8 coverage)
+  - packages/ai-core/src/types.ts (all 9 public interfaces from design Section 5.2)
+  - packages/ai-core/src/errors.ts (8 error classes extending AIError)
+  - packages/ai-core/src/client.ts (AIClientImpl scaffolding)
+  - packages/ai-core/src/models.ts (getModel, getDefaultModel, calculateCost functions)
+  - packages/ai-core/src/usage.ts (logUsage fire-and-forget pattern)
+  - packages/ai-core/src/billing.ts (getRemainingCredits, checkCredits stubs)
+  - packages/ai-core/src/keys.ts (resolveKey function scaffolding)
+  - packages/ai-core/src/index.ts (complete barrel file exports)
+  - packages/ai-core/__tests__/index.test.ts (basic test infrastructure)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ package.json exists with correct dependencies (@anthropic-ai/sdk, @supabase/supabase-js)
+  ✓ tsconfig.json configured for strict TypeScript mode
+  ✓ All source files created matching Section 5.1 structure (8 files total)
+  ✓ index.ts barrel file exports all public API types and functions
+  ✓ vitest config exists and empty test passes successfully
+  ✓ Package compiles without TypeScript errors (npx tsc --noEmit)
+- **Learnings for future iterations:**
+  - Error classes need proper prototype chain setup with Object.setPrototypeOf for instanceof checks
+  - Supabase insert() doesn't return full Promise; use Promise.resolve() wrapper for proper Promise handling
+  - TypeScript strict mode: noUnusedParameters/noUnusedLocals disabled for scaffolding files with stubs
+  - Fire-and-forget logging uses void Promise.resolve().then().catch() pattern for type safety
+  - Barrel files should re-export both types and values for complete API surface
+---

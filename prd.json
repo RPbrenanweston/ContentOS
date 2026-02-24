@@ -26,7 +26,7 @@
       "description": "Create packages/ai-core/ directory with package.json, tsconfig.json, src/ directory structure matching design doc Section 5.1. Export barrel file (index.ts). Add vitest config.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "packages/ai-core/package.json exists with correct dependencies",
         "tsconfig.json configured for strict TypeScript mode",
