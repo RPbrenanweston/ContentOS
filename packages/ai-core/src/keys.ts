@@ -88,6 +88,106 @@ export function decrypt(encryptedData: string, encryptionKey: string): string {
 }
 
 /**
+ * Save a BYOK API key for a user (encrypt and store)
+ *
+ * Upserts to ai_api_keys table - replaces existing key for same user+provider
+ */
+export async function saveKey(
+  userId: string,
+  provider: string,
+  apiKey: string,
+  supabase: SupabaseClient
+): Promise<void> {
+  // Get encryption key from environment
+  const encryptionKey = process.env.ENCRYPTION_KEY;
+  if (!encryptionKey) {
+    throw new InvalidKeyError('ENCRYPTION_KEY environment variable not set');
+  }
+
+  // Encrypt the API key
+  const encryptedKey = encrypt(apiKey, encryptionKey);
+
+  // Generate key hint from last 4 characters
+  const keyHint = apiKey.length >= 4 ? `...${apiKey.slice(-4)}` : apiKey;
+
+  // Upsert to database (handles duplicate user+provider)
+  const { error } = await supabase
+    .from('ai_api_keys')
+    .upsert(
+      {
+        user_id: userId,
+        provider,
+        encrypted_key: encryptedKey,
+        key_hint: keyHint,
+        is_active: true,
+        created_at: new Date().toISOString(),
+      },
+      {
+        onConflict: 'user_id,provider',
+      }
+    );
+
+  if (error) {
+    throw new Error(`Failed to save API key: ${error.message}`);
+  }
+}
+
+/**
+ * Delete (deactivate) a BYOK API key for a user
+ *
+ * Soft delete - sets is_active=false to maintain audit trail
+ */
+export async function deleteKey(
+  userId: string,
+  provider: string,
+  supabase: SupabaseClient
+): Promise<void> {
+  const { error } = await supabase
+    .from('ai_api_keys')
+    .update({ is_active: false })
+    .eq('user_id', userId)
+    .eq('provider', provider);
+
+  if (error) {
+    throw new Error(`Failed to delete API key: ${error.message}`);
+  }
+}
+
+/**
+ * Validate an API key by making a minimal API call
+ *
+ * Currently supports Anthropic provider only
+ * Throws InvalidKeyError if key is invalid
+ */
+export async function validateKey(provider: string, apiKey: string): Promise<boolean> {
+  if (provider !== 'anthropic') {
+    throw new Error(`Unsupported provider for validation: ${provider}`);
+  }
+
+  try {
+    // Make minimal Anthropic API call to test key validity
+    const Anthropic = require('@anthropic-ai/sdk');
+    const client = new Anthropic({ apiKey });
+
+    // Use messages.create with minimal parameters to test auth
+    await client.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1,
+      messages: [{ role: 'user', content: 'test' }],
+    });
+
+    return true;
+  } catch (error: any) {
+    // 401 = invalid API key
+    if (error.status === 401) {
+      throw new InvalidKeyError('Invalid API key');
+    }
+    // Other errors (network, rate limit, etc.) - still throw but different message
+    throw new Error(`Failed to validate API key: ${error.message}`);
+  }
+}
+
+/**
  * Resolve which API key to use (BYOK or managed)
  */
 export async function resolveKey(

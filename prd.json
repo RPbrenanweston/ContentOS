@@ -202,7 +202,7 @@
       "description": "Implement resolveKey() matching design doc Section 5.3. Query ai_api_keys for active BYOK key, decrypt if found, fall back to managed env var. Update last_used_at on BYOK usage.",
       "model_tier": "sonnet",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "BYOK key returned when active key exists for user",
         "Managed key returned when no BYOK key found",

@@ -417,3 +417,25 @@ TypeScript: No errors
   - Encryption key from ENCRYPTION_KEY env var enables key rotation without code changes
   - Base64 encoding for database storage: binary data → text-safe format for Supabase TEXT column
 ---
+## 2026-02-24 11:44:00 UTC - S13 - PAI Iteration 13
+- **Implemented:** Key resolution with BYOK fallback and last_used_at timestamp updates
+- **Files changed:**
+  - packages/ai-core/src/keys.ts (added last_used_at fire-and-forget update)
+  - packages/ai-core/src/client.ts (integrated resolved key source into chat and chatStream)
+  - packages/ai-core/src/__tests__/keys.test.ts (created with 7 comprehensive tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ BYOK key returned when active key exists for user (query ai_api_keys with user_id + provider + is_active)
+  ✓ Managed key returned when no BYOK key found (fallback to ANTHROPIC_API_KEY env var)
+  ✓ Encrypted BYOK key decrypted before returning (using decrypt() from S12)
+  ✓ last_used_at timestamp updated on BYOK key usage (fire-and-forget update pattern)
+  ✓ Source field correctly set to 'byok' or 'managed' (returned in ResolvedKey interface)
+  ✓ Integration into chat() and chatStream() works seamlessly (both methods use resolveKey and log correct source)
+- **Learnings for future iterations:**
+  - resolveKey() was already scaffolded in S12 but missing last_used_at update - S13 completed integration
+  - Fire-and-forget pattern for last_used_at: doesn't block key resolution, errors logged but not thrown
+  - Key source tracking: chat() and chatStream() now log actual source (byok/managed) not hardcoded 'managed'
+  - Integration tests from S10 already covered BYOK path with mocked Supabase queries
+  - Environment variable naming: ${PROVIDER.toUpperCase()}_API_KEY pattern supports future multi-provider (OpenAI, etc.)
+  - Decryption failure throws InvalidKeyError - wrong encryption key or tampered data detected via auth tag
+  - Test pattern: mock full Supabase query chain (.from().select().eq().single()) for realistic integration
+---

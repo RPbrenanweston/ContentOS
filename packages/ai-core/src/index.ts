@@ -40,5 +40,5 @@ export { getModel, getDefaultModel, calculateCost } from './models';
 export { logUsage } from './usage';
 export type { LogUsageParams } from './usage';
 export { getRemainingCredits, checkCredits } from './billing';
-export { resolveKey } from './keys';
+export { resolveKey, saveKey, deleteKey, validateKey } from './keys';
 export type { ResolvedKey } from './keys';
