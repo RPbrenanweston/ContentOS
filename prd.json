@@ -90,7 +90,7 @@
       "description": "Implement createAIClient factory and AIClient.chat() method. Call Anthropic messages.create(), log usage automatically, return ChatResult. Single provider only (Anthropic). No streaming yet. No BYOK \u2014 use env var key.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "createAIClient returns AIClient with chat method",
         "chat() calls Anthropic SDK messages.create correctly",

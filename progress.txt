@@ -130,3 +130,25 @@
   - orgId and errorCode are optional - pass null when not provided (not undefined)
   - Fire-and-forget is critical for user-facing code paths - logging should never block chat responses
 ---
+
+## 2026-02-24 03:40:00 UTC - S06 - PAI Iteration 6
+- **Implemented:** Basic chat() method with Anthropic SDK integration
+- **Files changed:**
+  - packages/ai-core/src/client.ts (complete implementation)
+  - packages/ai-core/src/__tests__/client.test.ts (created with structural tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ createAIClient returns AIClient with chat method (factory pattern)
+  ✓ chat() calls Anthropic SDK messages.create() correctly (with retry placeholder for S08)
+  ✓ Usage logged automatically after successful call (via logUsage fire-and-forget)
+  ✓ Usage logged on error with success=false and error_code (401→AUTHENTICATION_ERROR, 429→RATE_LIMIT, 5xx→PROVIDER_ERROR)
+  ✓ ChatResult includes content + usage (tokensIn, tokensOut, costUsd) + model + latencyMs
+  ✓ Managed API key read from process.env.ANTHROPIC_API_KEY (env var only, BYOK comes in S13)
+- **Learnings for future iterations:**
+  - Anthropic SDK requires tools to have full InputSchema (type field), not just Record<string, unknown>
+  - Error mapping pattern: check error.status to determine error type, re-throw as typed error classes
+  - Message format conversion: role stays same ('user'|'assistant'), content passes through
+  - Text extraction from response: filter for type='text' blocks, map text field
+  - Model resolution must happen before API call to get maxOutputTokens default
+  - Latency measured from start of chat() call, includes model lookup + API call
+  - startTime captures time before model lookup to include resolution latency
+---
