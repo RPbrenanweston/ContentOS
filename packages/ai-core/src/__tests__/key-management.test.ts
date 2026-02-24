@@ -148,8 +148,8 @@ describe('BYOK Key Management', () => {
 
   describe('validateKey', () => {
     it('should reject unsupported providers', async () => {
-      await expect(validateKey('openai', 'sk-test')).rejects.toThrow(
-        'Unsupported provider for validation: openai'
+      await expect(validateKey('unsupported-provider' as any, 'sk-test')).rejects.toThrow(
+        'Unsupported provider for validation: unsupported-provider'
       );
     });
 

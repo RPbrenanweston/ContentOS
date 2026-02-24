@@ -85,7 +85,7 @@
       "description": "Update chatStream() in packages/ai-core/src/client.ts to support OpenAI and OpenRouter providers (currently throws 'Streaming only supported for Anthropic' at line 343). Use client.chat.completions.create({ stream: true }) for OpenAI-format streaming. Map OpenAI stream chunks to existing ChatChunk interface: emit start_stream, text_delta (from chunk.choices[0].delta.content), and stop_stream. Capture final token counts from stream usage. OpenRouter uses identical streaming format.",
       "model_tier": "sonnet",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "chatStream() no longer throws for non-Anthropic providers",
         "OpenAI streaming uses client.chat.completions.create({ stream: true, stream_options: { include_usage: true } })",
