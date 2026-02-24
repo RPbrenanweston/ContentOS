@@ -70,6 +70,13 @@ describe('Phase 3 Integration: Billing Flow', () => {
     const createMockChain = (returnData: any) => ({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
+          is: vi.fn().mockReturnValue({  // Add .is() support for user-level queries
+            lte: vi.fn().mockReturnValue({
+              gt: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue(returnData),
+              }),
+            }),
+          }),
           eq: vi.fn().mockReturnValue({
             eq: vi.fn().mockReturnValue({
               single: vi.fn().mockResolvedValue(returnData),
@@ -88,6 +95,11 @@ describe('Phase 3 Integration: Billing Flow', () => {
         }),
         lte: vi.fn().mockReturnValue({
           gt: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({  // Add .eq().is() for webhook pattern: .lte().gt().eq().is()
+              is: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue(returnData),
+              }),
+            }),
             maybeSingle: vi.fn().mockResolvedValue(returnData),
           }),
         }),
@@ -112,6 +124,10 @@ describe('Phase 3 Integration: Billing Flow', () => {
             },
             error: null,
           });
+        }
+        if (table === 'org_members') {
+          // getUserOrgId query - return null (not org member)
+          return createMockChain({ data: null, error: null });
         }
         if (table === 'ai_api_keys') {
           return createMockChain({ data: null, error: null }); // No BYOK key
@@ -191,6 +207,11 @@ describe('Phase 3 Integration: Billing Flow', () => {
           }),
           lte: vi.fn().mockReturnValue({
             gt: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
               maybeSingle: vi.fn().mockResolvedValue(returnData),
             }),
           }),
@@ -269,9 +290,21 @@ describe('Phase 3 Integration: Billing Flow', () => {
                 maybeSingle: vi.fn().mockResolvedValue(returnData),
               }),
             }),
+            is: vi.fn().mockReturnValue({  // Add .is() for user-level balance queries
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+            }),
           }),
           lte: vi.fn().mockReturnValue({
             gt: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
               maybeSingle: vi.fn().mockResolvedValue(returnData),
             }),
           }),
@@ -351,6 +384,13 @@ describe('Phase 3 Integration: Billing Flow', () => {
       const createMockChain = (returnData: any) => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
+            is: vi.fn().mockReturnValue({  // Add .is() for user-level queries
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+            }),
             eq: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue(returnData),
@@ -369,6 +409,11 @@ describe('Phase 3 Integration: Billing Flow', () => {
           }),
           lte: vi.fn().mockReturnValue({
             gt: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({  // Add .eq().is() for webhook pattern
+                is: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
               maybeSingle: vi.fn().mockResolvedValue(returnData),
             }),
           }),
@@ -438,7 +483,24 @@ describe('Phase 3 Integration: Billing Flow', () => {
       const createMockChain = (returnData: any) => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
+            is: vi.fn().mockReturnValue({  // Add .is() support
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+            }),
             maybeSingle: vi.fn().mockResolvedValue(returnData),
+          }),
+          lte: vi.fn().mockReturnValue({  // Add webhook pattern support
+            gt: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+              maybeSingle: vi.fn().mockResolvedValue(returnData),
+            }),
           }),
         }),
       });
@@ -473,6 +535,13 @@ describe('Phase 3 Integration: Billing Flow', () => {
       const createMockChain = (returnData: any) => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
+            is: vi.fn().mockReturnValue({  // Add .is() for user-level queries
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+            }),
             eq: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue(returnData),
@@ -483,6 +552,16 @@ describe('Phase 3 Integration: Billing Flow', () => {
             }),
             single: vi.fn().mockResolvedValue(returnData),
             maybeSingle: vi.fn().mockResolvedValue(returnData),
+          }),
+          lte: vi.fn().mockReturnValue({  // Add webhook pattern
+            gt: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+              maybeSingle: vi.fn().mockResolvedValue(returnData),
+            }),
           }),
         }),
         insert: vi.fn().mockResolvedValue({ data: null, error: null }),
@@ -565,9 +644,21 @@ describe('Phase 3 Integration: Billing Flow', () => {
                 maybeSingle: vi.fn().mockResolvedValue(returnData),
               }),
             }),
+            is: vi.fn().mockReturnValue({
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
+            }),
           }),
           lte: vi.fn().mockReturnValue({
             gt: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                is: vi.fn().mockReturnValue({
+                  maybeSingle: vi.fn().mockResolvedValue(returnData),
+                }),
+              }),
               maybeSingle: vi.fn().mockResolvedValue(returnData),
             }),
           }),

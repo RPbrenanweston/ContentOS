@@ -34,6 +34,15 @@ describe('handleStripeWebhook', () => {
     mockSupabase = {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
+          lte: vi.fn(() => ({  // .lte() can be called directly after .select()
+            gt: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                is: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                })),
+              })),
+            })),
+          })),
           eq: vi.fn(() => ({
             maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
             lte: vi.fn(() => ({
@@ -104,6 +113,16 @@ describe('handleStripeWebhook', () => {
 
     // Mock no existing balance row
     const balanceSelectMock = vi.fn(() => ({
+      lte: vi.fn(() => ({  // Support .select().lte() for webhook pattern
+        gt: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            is: vi.fn(() => ({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            })),
+          })),
+          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+        })),
+      })),
       eq: vi.fn(() => ({
         lte: vi.fn(() => ({
           gt: vi.fn(() => ({
@@ -227,6 +246,16 @@ describe('handleStripeWebhook', () => {
       }
       // Balance query - return existing row
       return {
+        lte: vi.fn(() => ({  // Support .select().lte() for webhook pattern
+          gt: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              is: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
+              })),
+            })),
+            maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
+          })),
+        })),
         eq: vi.fn(() => ({
           lte: vi.fn(() => ({
             gt: vi.fn(() => ({

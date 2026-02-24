@@ -24,11 +24,19 @@ describe('Spending Cap Enforcement', () => {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
+            is: vi.fn(() => ({  // Add .is() support for user-level queries
+              lte: vi.fn(() => ({
+                gt: vi.fn(() => ({
+                  maybeSingle: mockMaybeSingle
+                }))
+              }))
+            })),
             lte: vi.fn(() => ({
               gt: vi.fn(() => ({
                 maybeSingle: mockMaybeSingle
               }))
-            }))
+            })),
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })  // For getUserOrgId
           }))
         })),
         update: mockUpdate

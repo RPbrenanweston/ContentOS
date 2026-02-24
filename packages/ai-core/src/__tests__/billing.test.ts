@@ -23,9 +23,20 @@ describe('billing', () => {
 
       const mockGt = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockLte = vi.fn().mockReturnValue({ gt: mockGt });
-      const mockEq = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockIs = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockFrom = vi.fn()
+        // First call: getUserOrgId returns null (not org member)
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+            })
+          })
+        })
+        // Second call: user balance query
+        .mockReturnValueOnce({ select: mockSelect });
 
       const mockSupabase = { from: mockFrom };
 
@@ -46,9 +57,20 @@ describe('billing', () => {
 
       const mockGt = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockLte = vi.fn().mockReturnValue({ gt: mockGt });
-      const mockEq = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockIs = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockFrom = vi.fn()
+        // First call: getUserOrgId returns null
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+            })
+          })
+        })
+        // Second call: user balance query
+        .mockReturnValueOnce({ select: mockSelect });
 
       const mockSupabase = { from: mockFrom };
 
@@ -73,9 +95,20 @@ describe('billing', () => {
 
       const mockGt = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockLte = vi.fn().mockReturnValue({ gt: mockGt });
-      const mockEq = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockIs = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockFrom = vi.fn()
+        // First call: getUserOrgId returns null
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+            })
+          })
+        })
+        // Second call: user balance query
+        .mockReturnValueOnce({ select: mockSelect });
 
       const mockSupabase = { from: mockFrom };
 
@@ -101,9 +134,20 @@ describe('billing', () => {
 
       const mockGt = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockLte = vi.fn().mockReturnValue({ gt: mockGt });
-      const mockEq = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockIs = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockFrom = vi.fn()
+        // First call: getUserOrgId returns null
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+            })
+          })
+        })
+        // Second call: user balance query
+        .mockReturnValueOnce({ select: mockSelect });
 
       const mockSupabase = { from: mockFrom };
 
@@ -125,9 +169,20 @@ describe('billing', () => {
 
       const mockGt = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockLte = vi.fn().mockReturnValue({ gt: mockGt });
-      const mockEq = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockIs = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockFrom = vi.fn()
+        // First call: getUserOrgId returns null
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+            })
+          })
+        })
+        // Second call: user balance query
+        .mockReturnValueOnce({ select: mockSelect });
 
       const mockSupabase = { from: mockFrom };
 
@@ -144,9 +199,20 @@ describe('billing', () => {
 
       const mockGt = vi.fn().mockReturnValue({ maybeSingle: mockMaybeSingle });
       const mockLte = vi.fn().mockReturnValue({ gt: mockGt });
-      const mockEq = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockIs = vi.fn().mockReturnValue({ lte: mockLte });
+      const mockEq = vi.fn().mockReturnValue({ is: mockIs });
       const mockSelect = vi.fn().mockReturnValue({ eq: mockEq });
-      const mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
+      const mockFrom = vi.fn()
+        // First call: getUserOrgId returns null
+        .mockReturnValueOnce({
+          select: vi.fn().mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })
+            })
+          })
+        })
+        // Second call: user balance query
+        .mockReturnValueOnce({ select: mockSelect });
 
       const mockSupabase = { from: mockFrom };
 

@@ -64,6 +64,19 @@ describe('OpenAI Provider Support', () => {
             }),
           };
         }
+        if (table === 'org_members') {
+          // getUserOrgId query - return null (not org member)
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: null,
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
         if (table === 'ai_api_keys') {
           return {
             select: vi.fn().mockReturnValue({
@@ -89,11 +102,13 @@ describe('OpenAI Provider Support', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                lte: vi.fn().mockReturnValue({
-                  gt: vi.fn().mockReturnValue({
-                    maybeSingle: vi.fn().mockResolvedValue({
-                      data: { credits_remaining_usd: '100.00' },
-                      error: null,
+                is: vi.fn().mockReturnValue({  // Add .is() support
+                  lte: vi.fn().mockReturnValue({
+                    gt: vi.fn().mockReturnValue({
+                      maybeSingle: vi.fn().mockResolvedValue({
+                        data: { credits_remaining_usd: '100.00' },
+                        error: null,
+                      }),
                     }),
                   }),
                 }),

@@ -155,18 +155,34 @@ describe('Integration Tests - AI Core', () => {
           };
         }
 
+        if (table === 'org_members') {
+          // getUserOrgId query - return null (not org member)
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: null,
+                  error: null
+                })
+              }))
+            }))
+          };
+        }
+
         if (table === 'ai_credit_balances') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                lte: vi.fn(() => ({
-                  gt: vi.fn(() => ({
-                    maybeSingle: vi.fn().mockResolvedValue({
-                      data: {
-                        credits_remaining_usd: '10.0000'
-                      },
-                      error: null
-                    })
+                is: vi.fn(() => ({  // Add .is() support for user-level queries
+                  lte: vi.fn(() => ({
+                    gt: vi.fn(() => ({
+                      maybeSingle: vi.fn().mockResolvedValue({
+                        data: {
+                          credits_remaining_usd: '10.0000'
+                        },
+                        error: null
+                      })
+                    }))
                   }))
                 }))
               }))
@@ -259,18 +275,33 @@ describe('Integration Tests - AI Core', () => {
     // Mock zero balance
     const zeroBalanceSupabase = {
       from: vi.fn((table: string) => {
+        if (table === 'org_members') {
+          // getUserOrgId query - return null (not org member)
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                maybeSingle: vi.fn().mockResolvedValue({
+                  data: null,
+                  error: null
+                })
+              }))
+            }))
+          };
+        }
         if (table === 'ai_credit_balances') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                lte: vi.fn(() => ({
-                  gt: vi.fn(() => ({
-                    maybeSingle: vi.fn().mockResolvedValue({
-                      data: {
-                        credits_remaining_usd: '0.0000'
-                      },
-                      error: null
-                    })
+                is: vi.fn(() => ({  // Add .is() support
+                  lte: vi.fn(() => ({
+                    gt: vi.fn(() => ({
+                      maybeSingle: vi.fn().mockResolvedValue({
+                        data: {
+                          credits_remaining_usd: '0.0000'
+                        },
+                        error: null
+                      })
+                    }))
                   }))
                 }))
               }))
