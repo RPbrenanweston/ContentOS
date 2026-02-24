@@ -277,9 +277,9 @@ class AIClient:
             provider = model.provider
 
             # Resolve API key (BYOK or managed)
-            key_result = resolve_key(self.supabase, params.user_id, provider)
-            api_key = key_result['key']
-            key_source = key_result['source']
+            resolved = await resolve_key(params.user_id, provider, self.supabase)
+            api_key = resolved.api_key
+            key_source = resolved.source
 
             # Provider branching
             tokens_in = 0
