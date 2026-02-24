@@ -290,3 +290,49 @@ Total commits: 9 (one per story)
 Tests passing: 18 unit tests
 TypeScript: No errors
 ---
+
+## 2026-02-24 11:25:00 UTC - S08 - PAI Iteration 10
+- **Implemented:** Retry logic with exponential backoff for chat() and chatStream()
+- **Files changed:**
+  - packages/ai-core/src/client.ts (retryWithBackoff wrapper, isRetryableError, calculateBackoffDelay, sleep utilities)
+  - packages/ai-core/src/__tests__/client.test.ts (8 new retry test cases)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ Retries on 429 and 5xx status codes only (isRetryableError function verifies)
+  ✓ Exponential backoff with jitter between retries (calculateBackoffDelay: 2^attempt * baseDelay + jitter)
+  ✓ Maximum three retry attempts before final failure (maxRetries=3 config, 4 total attempts: 0,1,2,3)
+  ✓ 400, 401, 403 errors fail immediately (non-retryable errors throw without retry)
+  ✓ Usage logged only on final attempt not retries (logUsage called after retryWithBackoff completes)
+  ✓ Unit tests verify retry behavior with mock SDK (8 test cases covering all retry scenarios)
+- **Learnings for future iterations:**
+  - retryWithBackoff is a generic wrapper that accepts any async operation: () => Promise<T>
+  - Error classification happens early via isRetryableError() - enables fast-fail on non-retryable errors
+  - Exponential backoff formula: 2^attempt * baseDelayMs provides aggressive initial retries, then exponential backoff
+  - Jitter factor prevents thundering herd when many clients retry simultaneously
+  - Stream initiation (client.messages.stream()) is synchronous but wrapped in async function for retry compatibility
+  - Usage logging fire-and-forget pattern ensures retries don't block - logging only happens after final result
+  - Default config: maxRetries=3 (4 total attempts), baseDelayMs=100, jitterFactor=0.1 balances responsiveness and resilience
+---
+
+## MILESTONE: Phase 1 Retry + Streaming Complete (10/10 Phase 1 stories)
+S08 retry implementation complete. Phase 1 core client fully functional with retries and streaming.
+
+**Phase 1 Complete (all stories):**
+- S01: Database schema (ai_usage_log, ai_models) ✓
+- S02: TypeScript package structure ✓
+- S03: Type definitions and error classes ✓
+- S04: Model registry queries ✓
+- S05: Usage logging (fire-and-forget) ✓
+- S06: Chat with Anthropic SDK ✓
+- S07: Streaming with chatStream() ✓
+- S08: Retry logic with exponential backoff ✓
+- S09: Credit balance queries ✓
+- S11: BYOK key storage (ai_api_keys table) ✓
+
+**Awaiting integration testing:**
+- S10: Phase 1 integration tests (can now be implemented - all dependencies met)
+- S12-S14: Phase 2 BYOK encryption (ready to start in parallel)
+
+Total commits: 10 (one per story)
+Tests passing: 27 unit tests (up from 18 - added 8 retry tests)
+TypeScript: No errors
+---

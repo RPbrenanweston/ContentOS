@@ -8,6 +8,7 @@ import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GeneratePa
 import { getModel, calculateCost } from './models';
 import { logUsage } from './usage';
 import { resolveKey } from './keys';
+import { checkCredits } from './billing';
 import { ProviderError, AuthenticationError, RateLimitError } from './errors';
 
 /**
@@ -120,7 +121,18 @@ class AIClientImpl implements AIClient {
       const model = await getModel(modelId, this.supabase);
 
       // Resolve API key (managed only for S06 - no BYOK yet)
-      const { key } = await resolveKey(params.userId, 'anthropic', this.supabase);
+      const { key, source } = await resolveKey(params.userId, 'anthropic', this.supabase);
+
+      // Check credits BEFORE API call (managed keys only)
+      if (source === 'managed') {
+        // Estimate cost for pre-check (rough estimate based on input message length)
+        const estimatedInputTokens = params.messages.reduce((sum, msg) =>
+          sum + (typeof msg.content === 'string' ? msg.content.length / 4 : 100), 0
+        );
+        const estimatedOutputTokens = params.maxTokens || model.maxOutputTokens || 1000;
+        const estimatedCost = calculateCost(model, estimatedInputTokens, estimatedOutputTokens);
+        await checkCredits(params.userId, estimatedCost, this.supabase);
+      }
 
       // Create Anthropic client with resolved key
       const client = new Anthropic({ apiKey: key });
