@@ -119,3 +119,56 @@ class AIClientConfig(BaseModel):
     app_id: str
     supabase_client: Any  # Cannot type SupabaseClient without circular dependency
     default_model: Optional[str] = None
+
+
+# --- Error Classes ---
+
+
+class AIError(Exception):
+    """Base error class for AI-related errors"""
+    def __init__(self, message: str, code: str):
+        super().__init__(message)
+        self.message = message
+        self.code = code
+
+
+class InvalidKeyError(AIError):
+    """Error when API key is invalid or missing"""
+    def __init__(self, message: str = "Invalid API key"):
+        super().__init__(message, "INVALID_KEY")
+
+
+class InsufficientCreditsError(AIError):
+    """Error when user has insufficient credits"""
+    def __init__(self, message: str = "Insufficient credits"):
+        super().__init__(message, "INSUFFICIENT_CREDITS")
+
+
+class SpendingCapExceededError(AIError):
+    """Error when spending cap is exceeded"""
+    def __init__(self, message: str = "Spending cap exceeded"):
+        super().__init__(message, "SPENDING_CAP_EXCEEDED")
+
+
+class ModelNotFoundError(AIError):
+    """Error when requested model is not found"""
+    def __init__(self, message: str = "Model not found"):
+        super().__init__(message, "MODEL_NOT_FOUND")
+
+
+class ProviderError(AIError):
+    """Error from the LLM provider"""
+    def __init__(self, message: str = "Provider error"):
+        super().__init__(message, "PROVIDER_ERROR")
+
+
+class RateLimitError(AIError):
+    """Error when rate limit is exceeded"""
+    def __init__(self, message: str = "Rate limit exceeded"):
+        super().__init__(message, "RATE_LIMIT")
+
+
+class AuthenticationError(AIError):
+    """Error during authentication"""
+    def __init__(self, message: str = "Authentication failed"):
+        super().__init__(message, "AUTHENTICATION_ERROR")
