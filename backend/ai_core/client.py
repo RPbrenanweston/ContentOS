@@ -41,14 +41,10 @@ class AIClient:
             # Resolve the model info
             model = get_model(model_id, self.supabase)
 
-            # Resolve API key (S17 will add BYOK support, for now use env var)
-            # resolved = await resolve_key(params.user_id, 'anthropic', self.supabase)
-            # For S16: use managed key from environment variable
-            api_key = os.getenv('ANTHROPIC_API_KEY')
-            if not api_key:
-                raise ValueError('ANTHROPIC_API_KEY environment variable not set')
-
-            key_source = 'managed'  # Will be resolved.source in S17
+            # Resolve API key (BYOK or managed)
+            resolved = await resolve_key(params.user_id, 'anthropic', self.supabase)
+            api_key = resolved.api_key
+            key_source = resolved.source
 
             # Create Anthropic client
             client = Anthropic(api_key=api_key)
