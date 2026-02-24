@@ -42,7 +42,7 @@
       "description": "Implement types.ts and errors.ts with all interfaces from design doc Section 5.2: AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GenerateParams, Message, Tool, UsageSummary, CreditBalance, DateRange. Create AI-specific error classes.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "All interfaces from Section 5.2 defined in types.ts",
         "ChatChunk type supports streaming delta shape",
@@ -55,7 +55,7 @@
     {
       "id": "S04",
       "title": "Implement model registry query in models.ts",
-      "description": "Implement getModel() and getDefaultModel() functions that query ai_models table. Include cost calculation helper: calculateCost(model, tokensIn, tokensOut) → USD.",
+      "description": "Implement getModel() and getDefaultModel() functions that query ai_models table. Include cost calculation helper: calculateCost(model, tokensIn, tokensOut) \u2192 USD.",
       "model_tier": "haiku",
       "phase": 1,
       "passes": false,
@@ -87,7 +87,7 @@
     {
       "id": "S06",
       "title": "Implement basic chat() in client.ts with Anthropic SDK",
-      "description": "Implement createAIClient factory and AIClient.chat() method. Call Anthropic messages.create(), log usage automatically, return ChatResult. Single provider only (Anthropic). No streaming yet. No BYOK — use env var key.",
+      "description": "Implement createAIClient factory and AIClient.chat() method. Call Anthropic messages.create(), log usage automatically, return ChatResult. Single provider only (Anthropic). No streaming yet. No BYOK \u2014 use env var key.",
       "model_tier": "haiku",
       "phase": 1,
       "passes": false,
@@ -151,7 +151,7 @@
     {
       "id": "S10",
       "title": "Phase 1 integration tests",
-      "description": "Write integration tests that verify: createAIClient → chat() → usage logged, createAIClient → chatStream() → usage logged on complete, credit check blocks when balance is zero. Use Supabase test helpers or mocked client.",
+      "description": "Write integration tests that verify: createAIClient \u2192 chat() \u2192 usage logged, createAIClient \u2192 chatStream() \u2192 usage logged on complete, credit check blocks when balance is zero. Use Supabase test helpers or mocked client.",
       "model_tier": "haiku",
       "phase": 1,
       "passes": false,
@@ -247,7 +247,7 @@
     {
       "id": "S16",
       "title": "Python client.py with Anthropic SDK and usage logging",
-      "description": "Implement create_ai_client() and AIClient.chat() in Python. Uses anthropic Python SDK. Automatic usage logging to same ai_usage_log table. Same key resolution pattern (BYOK → managed).",
+      "description": "Implement create_ai_client() and AIClient.chat() in Python. Uses anthropic Python SDK. Automatic usage logging to same ai_usage_log table. Same key resolution pattern (BYOK \u2192 managed).",
       "model_tier": "haiku",
       "phase": 2,
       "passes": false,
@@ -279,7 +279,7 @@
     {
       "id": "S18",
       "title": "Phase 2 integration tests",
-      "description": "Test BYOK flow end-to-end: save key → chat uses BYOK → usage logged with key_source=byok. Test managed fallback when no BYOK key. Test Python-TypeScript encryption interop.",
+      "description": "Test BYOK flow end-to-end: save key \u2192 chat uses BYOK \u2192 usage logged with key_source=byok. Test managed fallback when no BYOK key. Test Python-TypeScript encryption interop.",
       "model_tier": "haiku",
       "phase": 2,
       "passes": false,
@@ -359,7 +359,7 @@
     {
       "id": "S23",
       "title": "Phase 3 integration tests",
-      "description": "Test full billing flow: purchase credits → chat deducts balance → spending cap blocks at limit. Test Stripe webhook idempotency.",
+      "description": "Test full billing flow: purchase credits \u2192 chat deducts balance \u2192 spending cap blocks at limit. Test Stripe webhook idempotency.",
       "model_tier": "haiku",
       "phase": 3,
       "passes": false,
@@ -424,16 +424,70 @@
   "config": {
     "default_model_tier": "haiku",
     "phase_model_overrides": {
-      "sonnet_stories": ["S07", "S08", "S12", "S13", "S14", "S17", "S20", "S21", "S22", "S25", "S26"]
+      "sonnet_stories": [
+        "S07",
+        "S08",
+        "S12",
+        "S13",
+        "S14",
+        "S17",
+        "S20",
+        "S21",
+        "S22",
+        "S25",
+        "S26"
+      ]
     },
     "reference_doc": "docs/SHARED_AI_LAYER_DESIGN.md",
     "test_command": "npx vitest run",
     "lint_command": "npx tsc --noEmit",
     "phases": {
-      "1": { "name": "Core Client + Usage", "stories": ["S01", "S02", "S03", "S04", "S05", "S06", "S07", "S08", "S09", "S10"] },
-      "2": { "name": "BYOK + Python", "stories": ["S11", "S12", "S13", "S14", "S15", "S16", "S17", "S18"] },
-      "3": { "name": "Billing + Credits", "stories": ["S19", "S20", "S21", "S22", "S23"] },
-      "4": { "name": "Multi-Provider + Polish", "stories": ["S24", "S25", "S26"] }
+      "1": {
+        "name": "Core Client + Usage",
+        "stories": [
+          "S01",
+          "S02",
+          "S03",
+          "S04",
+          "S05",
+          "S06",
+          "S07",
+          "S08",
+          "S09",
+          "S10"
+        ]
+      },
+      "2": {
+        "name": "BYOK + Python",
+        "stories": [
+          "S11",
+          "S12",
+          "S13",
+          "S14",
+          "S15",
+          "S16",
+          "S17",
+          "S18"
+        ]
+      },
+      "3": {
+        "name": "Billing + Credits",
+        "stories": [
+          "S19",
+          "S20",
+          "S21",
+          "S22",
+          "S23"
+        ]
+      },
+      "4": {
+        "name": "Multi-Provider + Polish",
+        "stories": [
+          "S24",
+          "S25",
+          "S26"
+        ]
+      }
     }
   }
 }
