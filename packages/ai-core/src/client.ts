@@ -11,6 +11,78 @@ import { resolveKey } from './keys';
 import { ProviderError, AuthenticationError, RateLimitError } from './errors';
 
 /**
+ * Retry configuration
+ */
+interface RetryConfig {
+  maxRetries: number;
+  baseDelayMs: number;
+  jitterFactor: number;
+}
+
+/**
+ * Determines if an error is retryable
+ */
+function isRetryableError(error: any): boolean {
+  // Retry on 429 (rate limit) and 5xx (server errors)
+  if (error.status === 429) return true;
+  if (error.status && error.status >= 500) return true;
+  return false;
+}
+
+/**
+ * Calculates exponential backoff delay with jitter
+ */
+function calculateBackoffDelay(attemptNumber: number, baseDelayMs: number, jitterFactor: number): number {
+  // Exponential: 2^attempt * baseDelay
+  const exponentialDelay = Math.pow(2, attemptNumber) * baseDelayMs;
+  // Add jitter: random value between 0 and jitterFactor * exponentialDelay
+  const jitter = Math.random() * jitterFactor * exponentialDelay;
+  return exponentialDelay + jitter;
+}
+
+/**
+ * Sleep for a given number of milliseconds
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Wraps an async function with retry logic
+ */
+async function retryWithBackoff<T>(
+  operation: () => Promise<T>,
+  config: RetryConfig = { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+): Promise<T> {
+  let lastError: any;
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      lastError = error;
+
+      // Non-retryable errors fail immediately
+      if (!isRetryableError(error)) {
+        throw error;
+      }
+
+      // On last attempt, don't sleep - just throw
+      if (attempt === config.maxRetries) {
+        throw error;
+      }
+
+      // Calculate backoff and sleep
+      const delayMs = calculateBackoffDelay(attempt, config.baseDelayMs, config.jitterFactor);
+      await sleep(delayMs);
+    }
+  }
+
+  // Should never reach here, but just in case
+  throw lastError;
+}
+
+/**
  * Create and return an initialized AIClient
  */
 export function createAIClient(config: AIClientConfig): AIClient {
@@ -59,7 +131,7 @@ class AIClientImpl implements AIClient {
         content: msg.content,
       }));
 
-      // Call Anthropic API
+      // Build request parameters
       const requestParams: any = {
         model: modelId,
         max_tokens: params.maxTokens || model.maxOutputTokens,
@@ -75,7 +147,11 @@ class AIClientImpl implements AIClient {
         }));
       }
 
-      const response = await client.messages.create(requestParams);
+      // Call Anthropic API with retry logic - only log usage on final attempt
+      const response = await retryWithBackoff(
+        () => client.messages.create(requestParams),
+        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+      );
 
       const latencyMs = Date.now() - startTime;
       const tokensIn = response.usage.input_tokens;
@@ -195,8 +271,11 @@ class AIClientImpl implements AIClient {
         }));
       }
 
-      // Start streaming
-      const stream = await client.messages.stream(requestParams);
+      // Start streaming - stream() is synchronous, so we wrap it in a retry-compatible function
+      const stream = await retryWithBackoff(
+        async () => client.messages.stream(requestParams),
+        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+      );
 
       // Yield start_stream chunk
       yield {
