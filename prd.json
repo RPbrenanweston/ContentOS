@@ -394,7 +394,7 @@
       "description": "Add org_id support to credit balances and spending caps. Admin can set org-wide caps that override individual caps. Shared credit pool for org members.",
       "model_tier": "sonnet",
       "phase": 4,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Org-level credit balance shared across org members",
         "Admin cap overrides individual user spending caps",
