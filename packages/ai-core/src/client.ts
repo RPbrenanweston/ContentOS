@@ -8,7 +8,7 @@ import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GeneratePa
 import { getModel, calculateCost } from './models';
 import { logUsage } from './usage';
 import { resolveKey } from './keys';
-import { ProviderError, AuthenticationError } from './errors';
+import { ProviderError, AuthenticationError, RateLimitError } from './errors';
 
 /**
  * Create and return an initialized AIClient
@@ -158,8 +158,147 @@ class AIClientImpl implements AIClient {
    * Stream a chat response
    */
   async *chatStream(params: ChatParams): AsyncIterable<ChatChunk> {
-    // TODO: Implement streaming chat to Anthropic SDK
-    throw new Error('Not implemented');
+    const startTime = Date.now();
+    const modelId = params.model || this.defaultModel;
+    let tokensIn = 0;
+    let tokensOut = 0;
+
+    try {
+      // Resolve the model info
+      const model = await getModel(modelId, this.supabase);
+
+      // Resolve API key
+      const { key } = await resolveKey(params.userId, 'anthropic', this.supabase);
+
+      // Create Anthropic client with resolved key
+      const client = new Anthropic({ apiKey: key });
+
+      // Convert our Message format to Anthropic format
+      const messages = params.messages.map((msg) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content,
+      }));
+
+      // Build request parameters
+      const requestParams: any = {
+        model: modelId,
+        max_tokens: params.maxTokens || model.maxOutputTokens,
+        temperature: params.temperature,
+        messages,
+      };
+
+      if (params.tools && params.tools.length > 0) {
+        requestParams.tools = params.tools.map((tool) => ({
+          name: tool.name,
+          description: tool.description,
+          input_schema: tool.input_schema,
+        }));
+      }
+
+      // Start streaming
+      const stream = await client.messages.stream(requestParams);
+
+      // Yield start_stream chunk
+      yield {
+        delta: {
+          type: 'start_stream',
+        },
+      };
+
+      // Track token counts and content as we stream
+      for await (const chunk of stream) {
+        // Handle text delta events
+        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+          yield {
+            delta: {
+              type: 'text_delta',
+              text: chunk.delta.text,
+            },
+          };
+        }
+
+        // Accumulate token counts from message_delta
+        if (chunk.type === 'message_delta' && chunk.usage) {
+          tokensOut = chunk.usage.output_tokens;
+        }
+      }
+
+      // Get final token counts from stream.finalMessage()
+      const finalMessage = await stream.finalMessage();
+      if (finalMessage.usage) {
+        tokensIn = finalMessage.usage.input_tokens;
+        tokensOut = finalMessage.usage.output_tokens;
+      }
+
+      const latencyMs = Date.now() - startTime;
+      const costUsd = calculateCost(model, tokensIn, tokensOut);
+
+      // Yield stop_stream chunk with final token counts
+      yield {
+        delta: {
+          type: 'stop_stream',
+        },
+        partialTokens: {
+          tokensIn,
+          tokensOut,
+        },
+      };
+
+      // Log usage on successful stream completion (fire-and-forget)
+      logUsage({
+        userId: params.userId,
+        appId: this.appId,
+        featureId: params.featureId,
+        provider: 'anthropic',
+        model: modelId,
+        tokensIn,
+        tokensOut,
+        costUsd,
+        latencyMs,
+        success: true,
+        keySource: 'managed',
+        supabase: this.supabase,
+      });
+    } catch (error: any) {
+      const latencyMs = Date.now() - startTime;
+      let errorCode = 'PROVIDER_ERROR';
+
+      // Map Anthropic errors to error codes
+      if (error.status === 401 || error.status === 403) {
+        errorCode = 'AUTHENTICATION_ERROR';
+      } else if (error.status === 429) {
+        errorCode = 'RATE_LIMIT';
+      } else if (error.status === 400) {
+        errorCode = 'INVALID_REQUEST';
+      } else if (error.status && error.status >= 500) {
+        errorCode = 'PROVIDER_ERROR';
+      }
+
+      // Log usage error with any accumulated tokens (fire-and-forget)
+      logUsage({
+        userId: params.userId,
+        appId: this.appId,
+        featureId: params.featureId,
+        provider: 'anthropic',
+        model: modelId,
+        tokensIn,
+        tokensOut,
+        costUsd: 0,
+        latencyMs,
+        success: false,
+        errorCode,
+        keySource: 'managed',
+        supabase: this.supabase,
+      });
+
+      // Re-throw as typed error
+      if (errorCode === 'AUTHENTICATION_ERROR') {
+        throw new AuthenticationError(error.message);
+      } else if (errorCode === 'RATE_LIMIT') {
+        throw new RateLimitError(error.message);
+      }
+      throw new ProviderError(error.message, errorCode, error.status, error);
+    }
   }
 
   /**

@@ -245,3 +245,48 @@ Total commits: 8 (one per story)
 Tests passing: 17 unit tests (unchanged for S11 - DB migration, no unit tests)
 TypeScript: No errors
 ---
+
+## 2026-02-24 11:17:00 UTC - S07 - PAI Iteration 9
+- **Implemented:** SSE streaming via chatStream() method with AsyncIterable<ChatChunk> interface
+- **Files changed:**
+  - packages/ai-core/src/client.ts (chatStream method implementation)
+  - packages/ai-core/src/__tests__/client.test.ts (streaming tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ chatStream returns AsyncIterable of ChatChunk objects
+  ✓ Chunks contain delta text and partial token counts (start_stream, text_delta, stop_stream)
+  ✓ Usage logged once on stream completion with final token counts
+  ✓ Error mid-stream logs usage with success=false and error_code
+  ✓ Streaming response handles text_delta chunks from Anthropic SDK stream
+  ✓ Integration into client.ts works with key resolution and model lookup
+- **Learnings for future iterations:**
+  - Anthropic SDK stream is async iterable; finalMessage() must be awaited to get accumulated tokens
+  - Token counts accumulate from message_delta chunks during streaming
+  - ChatChunk delta type 'start_stream' signals beginning, 'stop_stream' signals end with final tokens
+  - Error handling for streams must catch mid-iteration failures and still log usage with partial tokens
+  - Stream returns fire-and-forget usage logging same as chat() - logs only on completion
+  - Yielding stop_stream chunk with partialTokens allows client to know final token counts
+---
+
+## MILESTONE: Phase 1 Streaming Complete (9/10 Phase 1 stories)
+S07 streaming implementation complete. S08 (retry logic) and S10 (integration tests) remain.
+
+**Phase 1 Progress:**
+- S01: Database schema (ai_usage_log, ai_models) ✓
+- S02: TypeScript package structure ✓
+- S03: Type definitions and error classes ✓
+- S04: Model registry queries ✓
+- S05: Usage logging (fire-and-forget) ✓
+- S06: Chat with Anthropic SDK ✓
+- S07: Streaming with chatStream() ✓
+- S09: Credit balance queries ✓
+- S11: BYOK key storage (ai_api_keys table) ✓
+
+**Ready for next iteration:**
+- S08: Retry logic with exponential backoff (Sonnet tier)
+- S10: Phase 1 integration tests (depends on S08)
+- S12-S14: Phase 2 BYOK encryption (can proceed in parallel)
+
+Total commits: 9 (one per story)
+Tests passing: 18 unit tests
+TypeScript: No errors
+---

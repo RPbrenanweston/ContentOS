@@ -106,7 +106,7 @@
       "description": "Add chatStream() method to AIClient. Returns AsyncIterable<ChatChunk>. Uses Anthropic SDK stream mode. Logs usage on stream completion with final token counts. Handle abort/error mid-stream.",
       "model_tier": "sonnet",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "chatStream returns AsyncIterable of ChatChunk objects",
         "Chunks contain delta text and partial token counts",

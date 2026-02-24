@@ -8,78 +8,63 @@ describe('AIClient', () => {
   beforeEach(() => {
     // Mock Supabase
     mockSupabase = {
-      from: vi.fn(),
-    };
-
-    // Mock getModel to return a test model
-    const mockModelSelect = vi.fn().mockReturnValue({
-      eq: vi.fn().mockReturnValue({
-        single: vi.fn().mockResolvedValue({
-          data: {
-            id: 'claude-sonnet-4-20250514',
-            provider: 'anthropic',
-            display_name: 'Claude Sonnet 4',
-            cost_per_input_token: 0.000003,
-            cost_per_output_token: 0.000015,
-            max_context_tokens: 200000,
-            max_output_tokens: 8192,
-            supports_streaming: true,
-            supports_tools: true,
-            is_default: true,
-            is_active: true,
-          },
-          error: null,
-        }),
-      }),
-    });
-
-    mockSupabase.from.mockImplementation((table: string) => {
-      if (table === 'ai_models') {
-        return {
-          select: mockModelSelect,
-        };
-      }
-      if (table === 'ai_api_keys') {
-        return {
-          select: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({
+      from: vi.fn().mockImplementation((table: string) => {
+        if (table === 'ai_models') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: {
+                    id: 'claude-sonnet-4-20250514',
+                    provider: 'anthropic',
+                    display_name: 'Claude Sonnet 4',
+                    cost_per_input_token: 0.000003,
+                    cost_per_output_token: 0.000015,
+                    max_context_tokens: 200000,
+                    max_output_tokens: 8192,
+                    supports_streaming: true,
+                    supports_tools: true,
+                    is_default: true,
+                    is_active: true,
+                  },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'ai_api_keys') {
+          return {
+            select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 eq: vi.fn().mockReturnValue({
-                  single: vi.fn().mockResolvedValue({
-                    data: null,
-                    error: new Error('Not found'),
+                  eq: vi.fn().mockReturnValue({
+                    single: vi.fn().mockResolvedValue({
+                      data: null,
+                      error: new Error('Not found'),
+                    }),
                   }),
                 }),
               }),
             }),
+          };
+        }
+        if (table === 'ai_usage_log') {
+          return {
+            insert: vi.fn().mockResolvedValue({ data: null, error: null }),
+          };
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
           }),
         };
-      }
-      if (table === 'ai_usage_log') {
-        return {
-          insert: vi.fn().mockResolvedValue({ data: null, error: null }),
-        };
-      }
-      return {
-        select: vi.fn(),
-      };
-    });
+      }),
+    };
   });
 
   describe('chat', () => {
-    it('should call Anthropic SDK messages.create correctly', async () => {
-      // This test would require mocking the Anthropic SDK
-      // For now, we verify the client structure
-      const client = createAIClient({
-        appId: 'scorecard',
-        supabaseClient: mockSupabase,
-      });
-
-      expect(client).toBeDefined();
-      expect(client.chat).toBeDefined();
-    });
-
-    it('createAIClient returns AIClient with chat method', () => {
+    it('createAIClient returns AIClient with all methods', () => {
       const client = createAIClient({
         appId: 'scorecard',
         supabaseClient: mockSupabase,
@@ -94,7 +79,6 @@ describe('AIClient', () => {
     });
 
     it('should handle missing API key gracefully', () => {
-      // Ensure ANTHROPIC_API_KEY is required
       const originalKey = process.env.ANTHROPIC_API_KEY;
       delete process.env.ANTHROPIC_API_KEY;
 
@@ -109,6 +93,45 @@ describe('AIClient', () => {
       if (originalKey) {
         process.env.ANTHROPIC_API_KEY = originalKey;
       }
+    });
+  });
+
+  describe('chatStream', () => {
+    it('returns AsyncIterable', async () => {
+      const client = createAIClient({
+        appId: 'scorecard',
+        supabaseClient: mockSupabase,
+      });
+
+      const params: ChatParams = {
+        userId: 'user-1',
+        featureId: 'test-feature',
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+
+      const stream = client.chatStream(params);
+      expect(stream).toBeDefined();
+      expect(stream[Symbol.asyncIterator]).toBeDefined();
+    });
+
+    it('stream iterator has correct shape', async () => {
+      const client = createAIClient({
+        appId: 'scorecard',
+        supabaseClient: mockSupabase,
+      });
+
+      const params: ChatParams = {
+        userId: 'user-1',
+        featureId: 'test-feature',
+        messages: [{ role: 'user', content: 'Hello' }],
+      };
+
+      const stream = client.chatStream(params);
+
+      // Verify stream is async iterable
+      expect(stream[Symbol.asyncIterator]).toBeDefined();
+      const iterator = stream[Symbol.asyncIterator]();
+      expect(iterator.next).toBeDefined();
     });
   });
 });
