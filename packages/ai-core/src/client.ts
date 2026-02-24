@@ -8,7 +8,7 @@ import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GeneratePa
 import { getModel, calculateCost } from './models';
 import { logUsage } from './usage';
 import { resolveKey } from './keys';
-import { checkCredits } from './billing';
+import { checkCredits, checkSpendingCap, deductCredits } from './billing';
 import { ProviderError, AuthenticationError, RateLimitError } from './errors';
 
 /**
@@ -123,7 +123,7 @@ class AIClientImpl implements AIClient {
       // Resolve API key (managed only for S06 - no BYOK yet)
       const { key, source } = await resolveKey(params.userId, 'anthropic', this.supabase);
 
-      // Check credits BEFORE API call (managed keys only)
+      // Check credits and spending caps BEFORE API call (managed keys only)
       if (source === 'managed') {
         // Estimate cost for pre-check (rough estimate based on input message length)
         const estimatedInputTokens = params.messages.reduce((sum, msg) =>
@@ -131,7 +131,10 @@ class AIClientImpl implements AIClient {
         );
         const estimatedOutputTokens = params.maxTokens || model.maxOutputTokens || 1000;
         const estimatedCost = calculateCost(model, estimatedInputTokens, estimatedOutputTokens);
+
+        // Check both credits balance and spending caps
         await checkCredits(params.userId, estimatedCost, this.supabase);
+        await checkSpendingCap(params.userId, estimatedCost, this.supabase);
       }
 
       // Create Anthropic client with resolved key
@@ -191,6 +194,13 @@ class AIClientImpl implements AIClient {
         keySource: source,
         supabase: this.supabase,
       });
+
+      // Deduct credits after successful call (managed keys only, fire-and-forget)
+      if (source === 'managed') {
+        void Promise.resolve(deductCredits(params.userId, costUsd, this.supabase))
+          .then(() => {})
+          .catch((err) => console.warn('Failed to deduct credits:', err));
+      }
 
       return {
         content,
