@@ -274,58 +274,110 @@ class AIClient:
         try:
             # Resolve the model info
             model = get_model(model_id, self.supabase)
+            provider = model.provider
 
-            # Use managed key from environment variable (S17 will add BYOK)
-            api_key = os.getenv('ANTHROPIC_API_KEY')
-            if not api_key:
-                raise ValueError('ANTHROPIC_API_KEY environment variable not set')
+            # Resolve API key (BYOK or managed)
+            key_result = resolve_key(self.supabase, params.user_id, provider)
+            api_key = key_result['key']
+            key_source = key_result['source']
 
-            key_source = 'managed'
+            # Provider branching
+            tokens_in = 0
+            tokens_out = 0
 
-            # Create Anthropic client
-            client = Anthropic(api_key=api_key)
+            if provider == 'anthropic':
+                # Create Anthropic client
+                client = Anthropic(api_key=api_key)
 
-            # Convert our Message format to Anthropic format
-            messages = [
-                {'role': msg.role, 'content': msg.content}
-                for msg in params.messages
-            ]
+                # Convert our Message format to Anthropic format
+                messages = [
+                    {'role': msg.role, 'content': msg.content}
+                    for msg in params.messages
+                ]
 
-            # Build request parameters
-            request_params = {
-                'model': model_id,
-                'max_tokens': params.max_tokens or model.max_output_tokens,
-                'messages': messages,
-            }
+                # Build request parameters
+                request_params = {
+                    'model': model_id,
+                    'max_tokens': params.max_tokens or model.max_output_tokens,
+                    'messages': messages,
+                }
 
-            if params.temperature is not None:
-                request_params['temperature'] = params.temperature
+                if params.temperature is not None:
+                    request_params['temperature'] = params.temperature
 
-            # Yield start signal
-            yield ChatChunk(delta=ChatChunkDelta(type='start_stream'))
+                # Yield start signal
+                yield ChatChunk(delta=ChatChunkDelta(type='start_stream'))
 
-            # Start streaming
-            partial_tokens_in = 0
-            partial_tokens_out = 0
+                # Start streaming
+                partial_tokens_in = 0
+                partial_tokens_out = 0
 
-            with client.messages.stream(**request_params) as stream:
-                for event in stream:
-                    # Handle text deltas
-                    if event.type == 'content_block_delta':
-                        if hasattr(event.delta, 'text'):
+                with client.messages.stream(**request_params) as stream:
+                    for event in stream:
+                        # Handle text deltas
+                        if event.type == 'content_block_delta':
+                            if hasattr(event.delta, 'text'):
+                                yield ChatChunk(
+                                    delta=ChatChunkDelta(type='text_delta', text=event.delta.text)
+                                )
+
+                        # Track token usage from message_delta events
+                        elif event.type == 'message_delta':
+                            if hasattr(event, 'usage'):
+                                partial_tokens_out = event.usage.output_tokens
+
+                    # Get final message for full token counts
+                    final_message = stream.get_final_message()
+                    tokens_in = final_message.usage.input_tokens
+                    tokens_out = final_message.usage.output_tokens
+
+            elif provider in ['openai', 'openrouter']:
+                # Create OpenAI client (with custom base_url for OpenRouter)
+                if provider == 'openrouter':
+                    client = OpenAI(api_key=api_key, base_url='https://openrouter.ai/api/v1')
+                else:
+                    client = OpenAI(api_key=api_key)
+
+                # Convert our Message format to OpenAI format
+                messages = [
+                    {'role': msg.role, 'content': msg.content}
+                    for msg in params.messages
+                ]
+
+                # Build request parameters
+                request_params = {
+                    'model': model_id,
+                    'max_tokens': params.max_tokens or model.max_output_tokens,
+                    'messages': messages,
+                    'stream': True,
+                    'stream_options': {'include_usage': True},
+                }
+
+                if params.temperature is not None:
+                    request_params['temperature'] = params.temperature
+
+                # Yield start signal
+                yield ChatChunk(delta=ChatChunkDelta(type='start_stream'))
+
+                # Start streaming
+                stream = client.chat.completions.create(**request_params)
+
+                for chunk in stream:
+                    # Extract text delta
+                    if chunk.choices and len(chunk.choices) > 0:
+                        delta = chunk.choices[0].delta
+                        if delta and delta.content:
                             yield ChatChunk(
-                                delta=ChatChunkDelta(type='text_delta', text=event.delta.text)
+                                delta=ChatChunkDelta(type='text_delta', text=delta.content)
                             )
 
-                    # Track token usage from message_delta events
-                    elif event.type == 'message_delta':
-                        if hasattr(event, 'usage'):
-                            partial_tokens_out = event.usage.output_tokens
+                    # Capture final usage from last chunk
+                    if hasattr(chunk, 'usage') and chunk.usage:
+                        tokens_in = chunk.usage.prompt_tokens
+                        tokens_out = chunk.usage.completion_tokens
 
-                # Get final message for full token counts
-                final_message = stream.get_final_message()
-                tokens_in = final_message.usage.input_tokens
-                tokens_out = final_message.usage.output_tokens
+            else:
+                raise ValueError(f'Unsupported provider: {provider}')
 
             # Calculate cost and latency
             cost_usd = calculate_cost(model, tokens_in, tokens_out)
@@ -343,7 +395,7 @@ class AIClient:
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
-                provider='anthropic',
+                provider=provider,
                 model=model_id,
                 tokens_in=tokens_in,
                 tokens_out=tokens_out,
@@ -368,13 +420,27 @@ class AIClient:
                 elif status >= 500:
                     error_code = 'PROVIDER_ERROR'
 
+            # Get model info for error logging (best effort)
+            try:
+                model = get_model(model_id, self.supabase)
+                provider = model.provider
+            except:
+                provider = 'unknown'
+
+            # Get key source (best effort)
+            try:
+                key_result = resolve_key(self.supabase, params.user_id, provider)
+                key_source = key_result['source']
+            except:
+                key_source = 'unknown'
+
             # Log failed usage
             log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
-                provider='anthropic',
+                provider=provider,
                 model=model_id,
                 tokens_in=0,
                 tokens_out=0,
@@ -382,7 +448,7 @@ class AIClient:
                 latency_ms=latency_ms,
                 success=False,
                 error_code=error_code,
-                key_source='managed',
+                key_source=key_source,
             )
 
             # Re-raise the error
