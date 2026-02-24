@@ -45,7 +45,7 @@
       "description": "Update validateKey() in packages/ai-core/src/keys.ts to support 'openai' and 'openrouter' providers (currently only supports 'anthropic'). For OpenAI validation, make a minimal API call using the openai package. For OpenRouter validation, use the OpenAI SDK with baseURL='https://openrouter.ai/api/v1'. Also add OPENROUTER_API_KEY to .env.example. Note: resolveKey() already works generically (uses provider.toUpperCase()+'_API_KEY' pattern) — no changes needed there.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "validateKey() supports provider 'anthropic' (existing, no regression)",
         "validateKey() supports provider 'openai' using OpenAI SDK minimal API call",

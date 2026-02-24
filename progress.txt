@@ -43,3 +43,24 @@
   - The ai_models.provider column is TEXT (unconstrained), so 'openrouter' works without schema changes
   - Verification block in migration ensures exactly 8 models inserted successfully
 ---
+
+## 2026-02-24 07:45 - S02 - PAI Iteration 2
+- **Implemented:** OpenRouter and OpenAI key validation in TypeScript, updated .env.example
+- **Files changed:**
+  - packages/ai-core/src/keys.ts (updated validateKey function)
+  - .env.example (added OPENAI_API_KEY and OPENROUTER_API_KEY)
+  - prd.json (S02 passes: true)
+- **ISC Status:** All acceptance criteria passed
+  - ✅ validateKey() supports 'anthropic' (existing, no regression)
+  - ✅ validateKey() supports 'openai' using minimal chat.completions.create() call
+  - ✅ validateKey() supports 'openrouter' using OpenAI SDK with baseURL
+  - ✅ InvalidKeyError thrown for 401 responses from all providers
+  - ✅ Generic errors thrown for network/other failures
+  - ✅ .env.example includes OPENROUTER_API_KEY=sk-or-your-key
+  - ✅ TypeScript compiles with zero errors (npx tsc --noEmit passed)
+- **Learnings for future iterations:**
+  - OpenRouter uses OpenAI SDK client with custom baseURL — no new package needed
+  - validateKey() follows provider-specific patterns: Anthropic uses messages.create(), OpenAI/OpenRouter use chat.completions.create()
+  - OpenRouter requires a valid model ID in validation call (used google/gemini-2.0-flash-001 as cheap option)
+  - resolveKey() already handles OPENROUTER_API_KEY via generic ${provider.toUpperCase()}_API_KEY pattern — confirmed no changes needed
+---
