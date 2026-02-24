@@ -170,7 +170,7 @@
       "description": "Create migration for ai_api_keys table from design doc Section 4.2. Include unique constraint, indexes, and RLS policy (users see only their own keys).",
       "model_tier": "haiku",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Migration creates ai_api_keys table with all columns",
         "Unique constraint on user_id and provider enforced",

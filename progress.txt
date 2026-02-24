@@ -196,3 +196,52 @@ Total commits: 7 (one per story)
 Tests passing: 17 unit tests
 TypeScript: No errors
 ---
+
+## 2026-02-24 03:50:00 UTC - S11 - PAI Iteration 8
+- **Implemented:** Supabase migration 003_ai_api_keys.sql with full BYOK key storage infrastructure
+- **Files changed:** supabase/migrations/003_ai_api_keys.sql
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ Migration file exists in supabase/migrations directory with sequential naming (003)
+  ✓ ai_api_keys table has all 10 columns from design (id, user_id, provider, encrypted_key, key_hint, is_active, last_used_at, last_validated_at, created_at, updated_at)
+  ✓ Two indexes created: idx_api_keys_user_active (user_id, is_active, provider) and idx_api_keys_user (user_id, is_active)
+  ✓ UNIQUE(user_id, provider) constraint enforces one key per provider per user
+  ✓ RLS enabled with four policies (SELECT/INSERT/UPDATE/DELETE) restricting all operations to auth.uid() = user_id
+  ✓ Trigger created for auto-update of updated_at timestamp on row modification
+- **Learnings for future iterations:**
+  - BYOK key storage uses encrypted_key TEXT field (will contain IV + ciphertext + auth tag post-encryption in S12)
+  - key_hint extracted from plaintext before encryption, used for UI display ("...xK7m" format)
+  - RLS at database level provides first layer of security; app-level decryption in S12 provides second layer
+  - Index strategy: composite key (user_id, is_active, provider) optimized for S13 key resolution queries
+  - Soft-delete via is_active flag rather than hard delete maintains audit trail
+  - last_used_at and last_validated_at for diagnostic tracking of key health (integration point with S14 key management)
+  - Design reference verified: Section 4.2 ai_api_keys schema matches 1:1
+---
+
+## MILESTONE: Phase 1 Foundation + Phase 2 Preparation (8/10 Phase 1 stories)
+Phase 1 Haiku scaffolding 100% complete. Phase 2 BYOK infrastructure foundation established.
+
+**Phase 1 Complete:**
+- S01: Database schema (ai_usage_log, ai_models)
+- S02: TypeScript package structure
+- S03: Type definitions and error classes
+- S04: Model registry queries
+- S05: Usage logging (fire-and-forget)
+- S06: Chat with Anthropic SDK
+- S09: Credit balance queries
+- S11: BYOK key storage (ai_api_keys table)
+
+**Blocked on Sonnet Tier (S07/S08):**
+- S07: Implement SSE streaming via chatStream() method
+- S08: Implement retry logic with exponential backoff
+- S10: Phase 1 integration tests (depends on S07/S08)
+
+**Ready for Next Phase:**
+- S12: AES-256-GCM encryption module (Sonnet) — can start immediately
+- S13: Key resolution with BYOK fallback (Sonnet) — depends on S12
+- S14: BYOK key management functions (Sonnet) — depends on S13
+- S15-S18: Python package scaffolding (parallel track, Haiku + Sonnet)
+
+Total commits: 8 (one per story)
+Tests passing: 17 unit tests (unchanged for S11 - DB migration, no unit tests)
+TypeScript: No errors
+---
