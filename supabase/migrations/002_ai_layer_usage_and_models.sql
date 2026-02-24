@@ -121,6 +121,32 @@ INSERT INTO ai_models (
     true,
     false,         -- not default, but available
     true
+  ),
+  (
+    'gpt-4o',
+    'openai',
+    'GPT-4o',
+    0.0000025,     -- $2.50 per 1M input tokens
+    0.00001,       -- $10 per 1M output tokens
+    128000,
+    16384,
+    true,
+    true,
+    false,         -- not default
+    true
+  ),
+  (
+    'gpt-4o-mini',
+    'openai',
+    'GPT-4o Mini',
+    0.00000015,    -- $0.15 per 1M input tokens
+    0.0000006,     -- $0.60 per 1M output tokens
+    128000,
+    16384,
+    true,
+    true,
+    false,         -- not default
+    true
   );
 
 -- Comments for documentation

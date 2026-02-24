@@ -3,6 +3,7 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GenerateParams, CreditBalance, UsageSummary, DateRange } from './types';
 import { getModel, calculateCost } from './models';
@@ -97,16 +98,11 @@ class AIClientImpl implements AIClient {
   private appId: string;
   private supabase: SupabaseClient;
   private defaultModel: string;
-  private anthropic: Anthropic;
 
   constructor(config: AIClientConfig) {
     this.appId = config.appId;
     this.supabase = config.supabaseClient;
     this.defaultModel = config.defaultModel || 'claude-sonnet-4-20250514';
-    // Initialize Anthropic client - uses ANTHROPIC_API_KEY env var by default
-    this.anthropic = new Anthropic({
-      apiKey: process.env.ANTHROPIC_API_KEY,
-    });
   }
 
   /**
@@ -115,13 +111,18 @@ class AIClientImpl implements AIClient {
   async chat(params: ChatParams): Promise<ChatResult> {
     const startTime = Date.now();
     const modelId = params.model || this.defaultModel;
+    let detectedProvider: string = 'unknown'; // Track provider for error logging
 
     try {
       // Resolve the model info
       const model = await getModel(modelId, this.supabase);
 
-      // Resolve API key (managed only for S06 - no BYOK yet)
-      const { key, source } = await resolveKey(params.userId, 'anthropic', this.supabase);
+      // Detect provider from model registry
+      const provider = model.provider as 'anthropic' | 'openai';
+      detectedProvider = provider; // Store for error logging
+
+      // Resolve API key for the detected provider
+      const { key, source } = await resolveKey(params.userId, provider, this.supabase);
 
       // Check credits and spending caps BEFORE API call (managed keys only)
       if (source === 'managed') {
@@ -137,54 +138,104 @@ class AIClientImpl implements AIClient {
         await checkSpendingCap(params.userId, estimatedCost, this.supabase);
       }
 
-      // Create Anthropic client with resolved key
-      const client = new Anthropic({ apiKey: key });
+      // Provider-specific API call logic
+      let tokensIn: number;
+      let tokensOut: number;
+      let content: string;
 
-      // Convert our Message format to Anthropic format
-      const messages = params.messages.map((msg) => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content,
-      }));
+      if (provider === 'anthropic') {
+        // Create Anthropic client with resolved key
+        const client = new Anthropic({ apiKey: key });
 
-      // Build request parameters
-      const requestParams: any = {
-        model: modelId,
-        max_tokens: params.maxTokens || model.maxOutputTokens,
-        temperature: params.temperature,
-        messages,
-      };
-
-      if (params.tools && params.tools.length > 0) {
-        requestParams.tools = params.tools.map((tool) => ({
-          name: tool.name,
-          description: tool.description,
-          input_schema: tool.input_schema,
+        // Convert our Message format to Anthropic format
+        const messages = params.messages.map((msg) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
         }));
+
+        // Build request parameters
+        const requestParams: any = {
+          model: modelId,
+          max_tokens: params.maxTokens || model.maxOutputTokens,
+          temperature: params.temperature,
+          messages,
+        };
+
+        if (params.tools && params.tools.length > 0) {
+          requestParams.tools = params.tools.map((tool) => ({
+            name: tool.name,
+            description: tool.description,
+            input_schema: tool.input_schema,
+          }));
+        }
+
+        // Call Anthropic API with retry logic
+        const response = await retryWithBackoff(
+          () => client.messages.create(requestParams),
+          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+        );
+
+        tokensIn = response.usage.input_tokens;
+        tokensOut = response.usage.output_tokens;
+
+        // Extract text content from response
+        content = response.content
+          .filter((block) => block.type === 'text')
+          .map((block) => ('text' in block ? block.text : ''))
+          .join('');
+      } else if (provider === 'openai') {
+        // Create OpenAI client with resolved key
+        const client = new OpenAI({ apiKey: key });
+
+        // Convert our Message format to OpenAI format
+        const messages = params.messages.map((msg) => ({
+          role: msg.role as 'user' | 'assistant',
+          content: msg.content,
+        }));
+
+        // Build request parameters
+        const requestParams: any = {
+          model: modelId,
+          max_tokens: params.maxTokens || model.maxOutputTokens,
+          temperature: params.temperature,
+          messages,
+        };
+
+        if (params.tools && params.tools.length > 0) {
+          requestParams.tools = params.tools.map((tool) => ({
+            type: 'function' as const,
+            function: {
+              name: tool.name,
+              description: tool.description,
+              parameters: tool.input_schema,
+            },
+          }));
+        }
+
+        // Call OpenAI API with retry logic
+        const response = await retryWithBackoff(
+          () => client.chat.completions.create(requestParams),
+          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+        );
+
+        tokensIn = response.usage?.prompt_tokens || 0;
+        tokensOut = response.usage?.completion_tokens || 0;
+
+        // Extract text content from response
+        content = response.choices[0]?.message?.content || '';
+      } else {
+        throw new Error(`Unsupported provider: ${provider}`);
       }
 
-      // Call Anthropic API with retry logic - only log usage on final attempt
-      const response = await retryWithBackoff(
-        () => client.messages.create(requestParams),
-        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-      );
-
       const latencyMs = Date.now() - startTime;
-      const tokensIn = response.usage.input_tokens;
-      const tokensOut = response.usage.output_tokens;
       const costUsd = calculateCost(model, tokensIn, tokensOut);
-
-      // Extract text content from response
-      const content = response.content
-        .filter((block) => block.type === 'text')
-        .map((block) => ('text' in block ? block.text : ''))
-        .join('');
 
       // Log usage (fire-and-forget)
       logUsage({
         userId: params.userId,
         appId: this.appId,
         featureId: params.featureId,
-        provider: 'anthropic',
+        provider,
         model: modelId,
         tokensIn,
         tokensOut,
@@ -228,12 +279,12 @@ class AIClientImpl implements AIClient {
       }
 
       // Log usage error (fire-and-forget)
-      // Note: if error happens before key resolution, source will be undefined - fallback to 'managed'
+      // Note: if error happens before provider detection, use 'unknown'
       logUsage({
         userId: params.userId,
         appId: this.appId,
         featureId: params.featureId,
-        provider: 'anthropic',
+        provider: detectedProvider,
         model: params.model || this.defaultModel,
         tokensIn: 0,
         tokensOut: 0,
@@ -255,6 +306,7 @@ class AIClientImpl implements AIClient {
 
   /**
    * Stream a chat response
+   * NOTE: Currently only supports Anthropic provider. OpenAI streaming support to be added in future iteration.
    */
   async *chatStream(params: ChatParams): AsyncIterable<ChatChunk> {
     const startTime = Date.now();
@@ -266,8 +318,14 @@ class AIClientImpl implements AIClient {
       // Resolve the model info
       const model = await getModel(modelId, this.supabase);
 
+      // Detect provider - currently only Anthropic supported for streaming
+      const provider = model.provider as 'anthropic' | 'openai';
+      if (provider !== 'anthropic') {
+        throw new Error(`Streaming not yet supported for provider: ${provider}`);
+      }
+
       // Resolve API key
-      const { key, source } = await resolveKey(params.userId, 'anthropic', this.supabase);
+      const { key, source } = await resolveKey(params.userId, provider, this.supabase);
 
       // Create Anthropic client with resolved key
       const client = new Anthropic({ apiKey: key });
