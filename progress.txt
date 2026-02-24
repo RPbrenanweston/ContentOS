@@ -110,3 +110,23 @@
   - mapDatabaseToModel() pattern is reusable for other Supabase table queries
   - Test organization: group related tests with describe blocks, use mock objects matching real type shapes
 ---
+
+## 2026-02-24 03:35:00 UTC - S05 - PAI Iteration 5
+- **Implemented:** Usage logging with fire-and-forget pattern
+- **Files changed:**
+  - packages/ai-core/src/usage.ts (already complete from S02)
+  - packages/ai-core/src/__tests__/usage.test.ts (created with 4 comprehensive tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ logUsage inserts complete row to ai_usage_log with all required fields
+  ✓ All 14 columns from design doc Section 4.1 populated: user_id, org_id, app_id, feature_id, provider, model, tokens_in, tokens_out, cost_usd, latency_ms, success, error_code, key_source, created_at
+  ✓ Fire-and-forget: logUsage returns void immediately, async insert via Promise.resolve().then()
+  ✓ Logging errors caught and console.warned, never throws (error path tested)
+  ✓ Function signature matches design doc exactly with LogUsageParams interface
+  ✓ Unit tests verify insert payload shape, success/error paths, and fire-and-forget behavior (4 tests pass)
+- **Learnings for future iterations:**
+  - Fire-and-forget pattern: void Promise.resolve().then().catch() ensures type safety and doesn't block
+  - Test mocking: vi.fn().mockResolvedValue() and mockRejectedValue() for async database mocks
+  - created_at should always use new Date().toISOString() for consistency
+  - orgId and errorCode are optional - pass null when not provided (not undefined)
+  - Fire-and-forget is critical for user-facing code paths - logging should never block chat responses
+---

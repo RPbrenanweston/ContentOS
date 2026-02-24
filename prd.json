@@ -74,7 +74,7 @@
       "description": "Implement logUsage() function matching design doc Section 5.4 exactly. Insert row to ai_usage_log. Fire-and-forget pattern (don't await in hot path, but handle errors).",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "logUsage inserts complete row to ai_usage_log",
         "All columns from design doc Section 4.1 populated",
