@@ -157,3 +157,30 @@
   - Error handling needs best-effort provider resolution when model lookup fails
   - Python package install required before tests can run (pip3 install openai)
 ---
+## 2026-02-24 15:46 - S08 - PAI Iteration 6
+- **Implemented:** Python streaming support for OpenAI and OpenRouter providers in chat_stream()
+- **Files changed:**
+  - backend/ai_core/client.py (refactored chat_stream method with provider branching)
+  - prd.json (S08 passes: true)
+- **ISC Status:** All 11 acceptance criteria passed
+  - ✅ chat_stream() detects provider from model registry via get_model() return value
+  - ✅ Anthropic streaming preserved exactly as-is (no regressions)
+  - ✅ OpenAI streaming uses client.chat.completions.create(stream=True, stream_options={'include_usage': True})
+  - ✅ OpenRouter streaming uses same OpenAI streaming logic with base_url='https://openrouter.ai/api/v1'
+  - ✅ start_stream, text_delta, stop_stream chunks emitted correctly for OpenAI/OpenRouter
+  - ✅ text_delta extracted from chunk.choices[0].delta.content
+  - ✅ Final token counts captured from stream usage data (prompt_tokens, completion_tokens)
+  - ✅ Usage logging records correct provider (not hardcoded 'anthropic')
+  - ✅ Key resolution uses resolve_key() with provider from model registry
+  - ✅ OPENROUTER_API_KEY env var used as managed fallback for openrouter provider
+  - ✅ All 39 existing Python tests pass (no regressions)
+  - ✅ All 130 TypeScript tests pass
+- **Learnings for future iterations:**
+  - Python OpenAI streaming pattern: `for chunk in stream: if chunk.choices[0].delta.content: yield text_delta`
+  - Stream chunks have structure: chunk.choices[0].delta.content for text, chunk.usage for final token counts
+  - include_usage in stream_options ensures final chunk contains usage data (prompt_tokens, completion_tokens)
+  - OpenRouter streaming is identical to OpenAI streaming except for base_url parameter
+  - Error handling needs best-effort provider resolution when model lookup fails in exception handler
+  - resolve_key() in error handling also needs best-effort wrapping to handle edge cases
+  - Provider branching pattern mirrors chat() non-streaming implementation for consistency
+---

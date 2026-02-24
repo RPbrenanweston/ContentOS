@@ -181,7 +181,7 @@
       "description": "Update chat_stream() in backend/ai_core/client.py to support OpenAI and OpenRouter providers (currently hardcoded Anthropic-only with os.getenv('ANTHROPIC_API_KEY')). Use openai package streaming: client.chat.completions.create(stream=True). Map OpenAI stream chunks to existing ChatChunk/ChatChunkDelta types. OpenRouter uses same logic with custom base_url. Update key resolution to use provider from model registry.",
       "model_tier": "sonnet",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "chat_stream() detects provider from model registry",
         "Anthropic streaming preserved exactly as-is (no regressions)",
