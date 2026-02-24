@@ -44,3 +44,5 @@ export type { LogUsageParams } from './usage';
 export { getRemainingCredits, checkCredits, checkSpendingCap, deductCredits, createCheckoutSession, handleStripeWebhook, getUserOrgId, getOrgBalance } from './billing';
 export { resolveKey, saveKey, deleteKey, validateKey } from './keys';
 export type { ResolvedKey } from './keys';
+export { syncOpenRouterModels } from './sync';
+export type { SyncResult } from './sync';
