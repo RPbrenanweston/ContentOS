@@ -156,35 +156,87 @@ export async function deleteKey(
 /**
  * Validate an API key by making a minimal API call
  *
- * Currently supports Anthropic provider only
+ * Supports: anthropic, openai, openrouter
  * Throws InvalidKeyError if key is invalid
  */
 export async function validateKey(provider: string, apiKey: string): Promise<boolean> {
-  if (provider !== 'anthropic') {
-    throw new Error(`Unsupported provider for validation: ${provider}`);
-  }
+  if (provider === 'anthropic') {
+    try {
+      // Make minimal Anthropic API call to test key validity
+      const Anthropic = require('@anthropic-ai/sdk');
+      const client = new Anthropic({ apiKey });
 
-  try {
-    // Make minimal Anthropic API call to test key validity
-    const Anthropic = require('@anthropic-ai/sdk');
-    const client = new Anthropic({ apiKey });
+      // Use messages.create with minimal parameters to test auth
+      await client.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'test' }],
+      });
 
-    // Use messages.create with minimal parameters to test auth
-    await client.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 1,
-      messages: [{ role: 'user', content: 'test' }],
-    });
-
-    return true;
-  } catch (error: any) {
-    // 401 = invalid API key
-    if (error.status === 401) {
-      throw new InvalidKeyError('Invalid API key');
+      return true;
+    } catch (error: any) {
+      // 401 = invalid API key
+      if (error.status === 401) {
+        throw new InvalidKeyError('Invalid API key');
+      }
+      // Other errors (network, rate limit, etc.) - still throw but different message
+      throw new Error(`Failed to validate API key: ${error.message}`);
     }
-    // Other errors (network, rate limit, etc.) - still throw but different message
-    throw new Error(`Failed to validate API key: ${error.message}`);
   }
+
+  if (provider === 'openai') {
+    try {
+      // Make minimal OpenAI API call to test key validity
+      const OpenAI = require('openai');
+      const client = new OpenAI({ apiKey });
+
+      // Use chat.completions.create with minimal parameters
+      await client.chat.completions.create({
+        model: 'gpt-4o-mini',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'test' }],
+      });
+
+      return true;
+    } catch (error: any) {
+      // 401 = invalid API key
+      if (error.status === 401) {
+        throw new InvalidKeyError('Invalid API key');
+      }
+      // Other errors (network, rate limit, etc.) - still throw but different message
+      throw new Error(`Failed to validate API key: ${error.message}`);
+    }
+  }
+
+  if (provider === 'openrouter') {
+    try {
+      // OpenRouter uses OpenAI SDK with custom baseURL
+      const OpenAI = require('openai');
+      const client = new OpenAI({
+        apiKey,
+        baseURL: 'https://openrouter.ai/api/v1',
+      });
+
+      // Use chat.completions.create with minimal parameters
+      // OpenRouter requires a valid model, use a cheap one
+      await client.chat.completions.create({
+        model: 'google/gemini-2.0-flash-001',
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'test' }],
+      });
+
+      return true;
+    } catch (error: any) {
+      // 401 = invalid API key
+      if (error.status === 401) {
+        throw new InvalidKeyError('Invalid API key');
+      }
+      // Other errors (network, rate limit, etc.) - still throw but different message
+      throw new Error(`Failed to validate API key: ${error.message}`);
+    }
+  }
+
+  throw new Error(`Unsupported provider for validation: ${provider}`);
 }
 
 /**
