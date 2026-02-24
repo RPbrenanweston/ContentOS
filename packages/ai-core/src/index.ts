@@ -21,6 +21,8 @@ export type {
   CreditBalance,
   DateRange,
   ModelInfo,
+  CreateCheckoutSessionParams,
+  CheckoutSession,
 } from './types';
 
 // Export all errors
@@ -39,6 +41,6 @@ export {
 export { getModel, getDefaultModel, calculateCost } from './models';
 export { logUsage } from './usage';
 export type { LogUsageParams } from './usage';
-export { getRemainingCredits, checkCredits, checkSpendingCap, deductCredits } from './billing';
+export { getRemainingCredits, checkCredits, checkSpendingCap, deductCredits, createCheckoutSession } from './billing';
 export { resolveKey, saveKey, deleteKey, validateKey } from './keys';
 export type { ResolvedKey } from './keys';

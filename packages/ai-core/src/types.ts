@@ -140,3 +140,23 @@ export interface ModelInfo {
   isDefault: boolean;
   isActive: boolean;
 }
+
+/**
+ * Stripe checkout session creation parameters
+ */
+export interface CreateCheckoutSessionParams {
+  userId: string;
+  amountUsd: number;
+  successUrl: string;
+  cancelUrl: string;
+  supabase: SupabaseClient;
+}
+
+/**
+ * Stripe checkout session result
+ */
+export interface CheckoutSession {
+  sessionId: string;
+  url: string;
+  customerId?: string;
+}

@@ -3,7 +3,8 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { CreditBalance, ModelInfo } from './types';
+import Stripe from 'stripe';
+import { CreditBalance, ModelInfo, CreateCheckoutSessionParams, CheckoutSession } from './types';
 import { InsufficientCreditsError, SpendingCapExceededError } from './errors';
 import { calculateCost } from './models';
 
@@ -168,4 +169,103 @@ export async function deductCredits(
       credits_remaining_usd: Math.max(0, currentRemaining - costUsd), // Floor at 0
     })
     .eq('id', data.id);
+}
+
+/**
+ * Create Stripe checkout session for credit top-up
+ *
+ * Supports preset amounts of $5, $10, $25, $50
+ * Links Stripe customer ID to Supabase user ID
+ */
+export async function createCheckoutSession(
+  params: CreateCheckoutSessionParams
+): Promise<CheckoutSession> {
+  const { userId, amountUsd, successUrl, cancelUrl, supabase } = params;
+
+  // Validate amount is one of the preset values
+  const PRESET_AMOUNTS = [5, 10, 25, 50];
+  if (!PRESET_AMOUNTS.includes(amountUsd)) {
+    throw new Error(
+      `Invalid amount: ${amountUsd}. Must be one of: ${PRESET_AMOUNTS.join(', ')}`
+    );
+  }
+
+  // Initialize Stripe
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY environment variable not set');
+  }
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: '2026-01-28.clover',
+  });
+
+  // Get user's email from Supabase auth
+  const { data: userData, error: userError } = await supabase.auth.getUser();
+  if (userError || !userData.user) {
+    throw new Error('User not authenticated');
+  }
+
+  const userEmail = userData.user.email;
+
+  // Check if user already has a Stripe customer ID
+  const { data: existingCustomer } = await supabase
+    .from('users')
+    .select('stripe_customer_id')
+    .eq('id', userId)
+    .maybeSingle();
+
+  let customerId = existingCustomer?.stripe_customer_id;
+
+  // Create Stripe customer if doesn't exist
+  if (!customerId) {
+    const customer = await stripe.customers.create({
+      email: userEmail,
+      metadata: {
+        supabase_user_id: userId,
+      },
+    });
+    customerId = customer.id;
+
+    // Store Stripe customer ID in Supabase (if users table exists)
+    // This is fire-and-forget - if it fails, we'll create a new customer next time
+    void Promise.resolve(
+      supabase
+        .from('users')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', userId)
+    )
+      .then(() => {})
+      .catch((err: unknown) => console.warn('Failed to store Stripe customer ID:', err));
+  }
+
+  // Create checkout session
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    mode: 'payment',
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: `AI Credits - $${amountUsd}`,
+            description: `Add $${amountUsd} to your AI credit balance`,
+          },
+          unit_amount: amountUsd * 100, // Convert to cents
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: `${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: cancelUrl,
+    metadata: {
+      supabase_user_id: userId,
+      credit_amount_usd: amountUsd.toString(),
+    },
+  });
+
+  return {
+    sessionId: session.id,
+    url: session.url || '',
+    customerId,
+  };
 }
