@@ -8,7 +8,14 @@ from typing import Any
 from .types import ModelInfo
 
 
-async def get_model(model_id: str, supabase: Any) -> ModelInfo:
+class ModelNotFoundError(Exception):
+    """Raised when a model is not found in the registry"""
+    def __init__(self, model_id: str):
+        self.model_id = model_id
+        super().__init__(f'Model not found: {model_id}')
+
+
+def get_model(model_id: str, supabase: Any) -> ModelInfo:
     """
     Get model information by ID
 
@@ -22,10 +29,15 @@ async def get_model(model_id: str, supabase: Any) -> ModelInfo:
     Raises:
         ModelNotFoundError: If model not found or not active
     """
-    raise NotImplementedError("get_model() will be implemented in S16")
+    response = supabase.table('ai_models').select('*').eq('id', model_id).eq('is_active', True).single().execute()
+
+    if not response.data:
+        raise ModelNotFoundError(model_id)
+
+    return ModelInfo(**response.data)
 
 
-async def get_default_model(supabase: Any) -> ModelInfo:
+def get_default_model(supabase: Any) -> ModelInfo:
     """
     Get the default model
 
@@ -38,7 +50,12 @@ async def get_default_model(supabase: Any) -> ModelInfo:
     Raises:
         ModelNotFoundError: If no default model configured
     """
-    raise NotImplementedError("get_default_model() will be implemented in S16")
+    response = supabase.table('ai_models').select('*').eq('is_default', True).eq('is_active', True).single().execute()
+
+    if not response.data:
+        raise ModelNotFoundError('default')
+
+    return ModelInfo(**response.data)
 
 
 def calculate_cost(model: ModelInfo, tokens_in: int, tokens_out: int) -> float:
