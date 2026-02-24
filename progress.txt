@@ -124,3 +124,36 @@
   - Billing mock data must include `credits_used_usd`, `period_start`, and `period_end` fields
   - Pragmatic approach: 2 validateKey tests skipped with TODO comments after extensive debugging (401 test passing proves implementation correct)
 ---
+
+## 2026-02-24 15:42 - S07 - PAI Iteration 5
+- **Implemented:** Python provider branching for OpenAI and OpenRouter in chat() method
+- **Files changed:**
+  - backend/requirements.txt (added openai>=1.0.0)
+  - backend/ai_core/client.py (added provider branching logic)
+  - prd.json (S07 passes: true)
+- **ISC Status:** All 14 acceptance criteria passed
+  - ✅ openai Python package imported (from openai import OpenAI)
+  - ✅ chat() detects provider from model registry via get_model() return value
+  - ✅ Anthropic branch preserved exactly as-is (no regressions)
+  - ✅ OpenAI branch creates OpenAI(api_key=key) client
+  - ✅ OpenRouter branch creates OpenAI(api_key=key, base_url='https://openrouter.ai/api/v1') client
+  - ✅ Message formatting converts to OpenAI format for openai/openrouter: [{'role': 'user', 'content': '...'}]
+  - ✅ Tool/function calling format works for OpenAI/OpenRouter (tools parameter)
+  - ✅ Token counting extracts from OpenAI response: response.usage.prompt_tokens/completion_tokens
+  - ✅ Cost calculation uses existing calculate_cost() function
+  - ✅ Usage logging records correct provider string (not hardcoded 'anthropic')
+  - ✅ resolve_key() called with provider from model registry (not hardcoded 'anthropic')
+  - ✅ OPENROUTER_API_KEY env var used as managed fallback for openrouter provider
+  - ✅ Error mapping works for OpenAI/OpenRouter status codes
+  - ✅ openai package added to requirements.txt
+  - ✅ All 39 existing Python tests pass (no regressions)
+  - ✅ All 130 TypeScript tests pass
+- **Learnings for future iterations:**
+  - Python OpenAI SDK uses response.choices[0].message.content for text extraction
+  - OpenAI token counts are in response.usage.prompt_tokens and response.usage.completion_tokens (different from Anthropic's input_tokens/output_tokens)
+  - OpenRouter branch is nearly identical to OpenAI branch except for base_url parameter
+  - Tool/function format differs: OpenAI uses {"type": "function", "function": {...}} while Anthropic uses flat {"name":, "description":, "input_schema":}
+  - Provider detection pattern: model = get_model(model_id, supabase); provider = model.provider
+  - Error handling needs best-effort provider resolution when model lookup fails
+  - Python package install required before tests can run (pip3 install openai)
+---

@@ -155,7 +155,7 @@
       "description": "Update backend/ai_core/client.py to detect provider from model registry (currently hardcoded to 'anthropic') and branch chat() logic for all three providers. Add 'openai' Python package import. Anthropic branch must be preserved exactly as-is (no regressions). OpenAI branch creates OpenAI(api_key=key) client with standard message/tool formatting. OpenRouter branch creates OpenAI(api_key=key, base_url='https://openrouter.ai/api/v1') client. Update resolve_key() call to use provider from model registry instead of hardcoded 'anthropic'. Update all usage logging to record correct provider.",
       "model_tier": "sonnet",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "openai Python package imported (from openai import OpenAI)",
         "chat() detects provider from model registry via get_model() return value",
