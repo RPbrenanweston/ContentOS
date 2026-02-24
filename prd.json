@@ -154,7 +154,7 @@
       "description": "Write integration tests that verify: createAIClient \u2192 chat() \u2192 usage logged, createAIClient \u2192 chatStream() \u2192 usage logged on complete, credit check blocks when balance is zero. Use Supabase test helpers or mocked client.",
       "model_tier": "haiku",
       "phase": 1,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Test: chat call logs usage row to database",
         "Test: stream completion logs usage row to database",

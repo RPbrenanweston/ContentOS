@@ -336,3 +336,60 @@ Total commits: 10 (one per story)
 Tests passing: 27 unit tests (up from 18 - added 8 retry tests)
 TypeScript: No errors
 ---
+
+## 2026-02-24 11:36:00 UTC - S10 - PAI Iteration 11
+- **Implemented:** Phase 1 integration tests with comprehensive end-to-end coverage
+- **Files changed:**
+  - packages/ai-core/src/__tests__/integration.test.ts (created with 4 integration tests)
+  - packages/ai-core/src/client.ts (added credit pre-check integration)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ Test: chat call logs usage row to database (verified userId, appId, featureId, tokens, cost, success=true)
+  ✓ Test: stream completion logs usage row to database (verified streaming tokens logged after finalMessage())
+  ✓ Test: zero balance blocks managed key call (InsufficientCreditsError thrown before API call)
+  ✓ Test: retry logic fires on 429 status code (verified 3 attempts made, only 1 usage log entry)
+  ✓ All integration tests pass in CI environment (33 total tests pass including 4 integration tests)
+  ✓ Test helpers documented for future test authors (Anthropic SDK mocked at module level, Supabase client fully mocked)
+- **Learnings for future iterations:**
+  - **Integration test mocking strategy:** Mock Anthropic SDK at module level using vi.mock() to intercept constructor calls made inside client.ts
+  - **Supabase mock chaining:** Mock must replicate full method chain: from().select().eq().eq().eq().single() for BYOK key queries
+  - **Fire-and-forget testing:** Use setTimeout(50ms) to allow async logging to complete before assertions in tests
+  - **Credit check integration gap:** S09 deferred checkCredits() integration into chat(). S10 completed this integration to enable zero balance test.
+  - **Credit estimation for pre-check:** Estimate input tokens as message.content.length / 4 (rough char-to-token ratio), use maxTokens for output
+  - **Test structure for integration:** Mock all external dependencies (Supabase + Anthropic SDK), verify full flow including side effects (usage logging)
+  - **ChatChunk structure:** Client yields `{ delta: { type, text }, partialTokens }` not flat `{ type, text }` - test assertions must access nested structure
+  - **BYOK vs managed key paths:** resolveKey() returns source field - credit check only runs for source='managed'
+---
+
+## MILESTONE: Phase 1 COMPLETE (10/10 stories)
+All Phase 1 stories complete with full integration test coverage.
+
+**Phase 1 Complete (all stories):**
+- S01: Database schema (ai_usage_log, ai_models) ✓
+- S02: TypeScript package structure ✓
+- S03: Type definitions and error classes ✓
+- S04: Model registry queries ✓
+- S05: Usage logging (fire-and-forget) ✓
+- S06: Chat with Anthropic SDK ✓
+- S07: Streaming with chatStream() ✓
+- S08: Retry logic with exponential backoff ✓
+- S09: Credit balance queries ✓
+- S10: Integration tests ✓
+- S11: BYOK key storage (ai_api_keys table) ✓
+
+**Phase 1 Deliverables:**
+- Complete TypeScript AI client library
+- Usage tracking to Supabase
+- Credit balance system with pre-checks
+- Streaming support with SSE
+- Retry logic with exponential backoff
+- 33 passing tests (27 unit + 4 integration + 2 package)
+- Zero TypeScript errors
+
+**Ready for Phase 2:**
+- S12-S14: BYOK encryption (S12 AES-256-GCM, S13 key resolution, S14 key management) — Sonnet tier
+- S15-S18: Python package (parallel track) — Haiku + Sonnet
+
+Total commits: 11 (one per story)
+Tests passing: 33 tests (27 unit + 4 integration + 2 package)
+TypeScript: No errors
+---
