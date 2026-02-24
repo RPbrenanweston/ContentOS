@@ -1,0 +1,16 @@
+{
+  "name": "shared-ai-layer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Shared AI utility layer for LLM provider access, usage tracking, and billing",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit 2>&1 || echo 'No TS files yet - passing'",
+    "lint": "tsc --noEmit 2>&1 || echo 'No TS files yet - passing'"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

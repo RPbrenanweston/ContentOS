@@ -1,0 +1,52 @@
+## 2026-02-24 09:30 - S03 - PAI Iteration 3
+- **Implemented:** OpenRouter provider support in TypeScript chat() method with shared OpenAI helpers
+- **Files changed:**
+  - packages/ai-core/src/client.ts (added OpenRouter branch, extracted shared helpers)
+  - prd.json (S03 passes: true)
+- **ISC Status:** All acceptance criteria passed
+  - ✅ chat() handles provider === 'openrouter' from model registry
+  - ✅ OpenRouter branch creates OpenAI client with baseURL: 'https://openrouter.ai/api/v1'
+  - ✅ HTTP-Referer and X-Title headers added via defaultHeaders
+  - ✅ Shared formatOpenAIMessages() and formatOpenAITools() extracted (DRY)
+  - ✅ OpenAI branch refactored to use shared helpers (no duplication)
+  - ✅ resolveKey() called with provider from model registry (not hardcoded)
+  - ✅ Usage logging records provider: 'openrouter' correctly
+  - ✅ Credit pre-check and post-deduction work for managed keys (inherited from existing logic)
+  - ✅ Error mapping (401, 429, 5xx) works for OpenRouter (shared with OpenAI)
+  - ✅ Provider type updated to 'anthropic' | 'openai' | 'openrouter'
+  - ✅ TypeScript compiles with zero errors (npx tsc --noEmit passed)
+- **Learnings for future iterations:**
+  - OpenRouter and OpenAI share identical API format — shared helpers eliminate duplication
+  - OpenRouter requires HTTP-Referer and X-Title headers (best practice, not strictly required)
+  - OpenAI client defaultHeaders option cleanly handles custom headers
+  - Token extraction pattern is identical: response.usage.prompt_tokens / completion_tokens
+  - Cost calculation, credit checks, and usage logging all work automatically via existing infrastructure
+  - Provider detection from model.provider is clean and extensible — adding providers is straightforward
+---
+
+
+## 2026-02-24 15:14 - S04 - PAI Iteration 4
+- **Implemented:** OpenAI and OpenRouter streaming support in chatStream() method
+- **Files changed:**
+  - packages/ai-core/src/client.ts (added OpenAI/OpenRouter streaming branches)
+  - packages/ai-core/src/__tests__/key-management.test.ts (updated outdated test)
+  - prd.json (S04 passes: true)
+- **ISC Status:** All acceptance criteria passed
+  - ✅ chatStream() no longer throws for non-Anthropic providers
+  - ✅ OpenAI streaming uses client.chat.completions.create({ stream: true, stream_options: { include_usage: true } })
+  - ✅ OpenRouter streaming uses same OpenAI streaming logic with custom baseURL
+  - ✅ start_stream chunk emitted at stream start
+  - ✅ text_delta chunks emitted for each content delta from choices[0].delta.content
+  - ✅ stop_stream chunk emitted with final token counts (tokensIn, tokensOut)
+  - ✅ Token counts captured from stream usage data
+  - ✅ Usage logged on stream completion with correct provider
+  - ✅ Error handling uses detected provider (not hardcoded)
+  - ✅ Existing Anthropic streaming tests still pass (113 tests passed)
+  - ✅ TypeScript compiles with zero errors
+- **Learnings for future iterations:**
+  - OpenAI SDK streaming returns AsyncIterable<ChatCompletionChunk> when stream: true
+  - TypeScript type inference needs explicit cast: `as any` then `as AsyncIterable<...>`
+  - OpenRouter uses identical streaming format to OpenAI (same SDK, different baseURL)
+  - Usage data appears in final chunk when stream_options.include_usage is set
+  - Error handling now properly detects provider from model registry for accurate logging
+---

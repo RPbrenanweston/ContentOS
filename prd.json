@@ -1,0 +1,258 @@
+{
+  "project": "shared-ai-layer",
+  "description": "Add OpenRouter as a third LLM provider to the Shared AI Layer. OpenRouter uses an OpenAI-compatible API (same SDK, just different baseURL: https://openrouter.ai/api/v1). Includes auto-sync function to fetch models from OpenRouter's API. See tasks/prd-openrouter-provider.md for full PRD.",
+  "version": "2.0.0",
+  "branchName": "ralph/openrouter-provider",
+  "config": {
+    "phases": [
+      { "id": 1, "name": "Schema & Keys", "description": "SQL migration and key validation updates" },
+      { "id": 2, "name": "TypeScript Core", "description": "TypeScript chat, streaming, and sync" },
+      { "id": 3, "name": "Python Core", "description": "Python provider branching, streaming, and sync" },
+      { "id": 4, "name": "Tests & Docs", "description": "Comprehensive tests and documentation" }
+    ],
+    "model_tiers": {
+      "haiku": "Fast, simple stories (SQL, config, docs)",
+      "sonnet": "Complex logic stories (provider branching, streaming, refactoring)"
+    },
+    "commands": {
+      "typecheck": "cd packages/ai-core && npx tsc --noEmit",
+      "test_ts": "cd packages/ai-core && npx vitest run",
+      "test_python": "cd backend && python -m pytest ai_core/",
+      "lint": "cd packages/ai-core && npx tsc --noEmit"
+    }
+  },
+  "userStories": [
+    {
+      "id": "S01",
+      "title": "SQL migration: Seed OpenRouter models into ai_models registry",
+      "description": "Create migration file 007_openrouter_models.sql that INSERTs 8-12 popular OpenRouter models spanning different providers and price tiers. Each row: id (e.g. 'google/gemini-2.0-flash-001'), provider='openrouter', display_name, pricing from OpenRouter's actual rates, context/output token limits, supports_streaming, supports_tools, is_default=false, is_active=true. Do NOT modify existing model rows.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "Migration file exists at supabase/migrations/007_openrouter_models.sql",
+        "Seeds 8-12 models spanning budget (gemini-flash, deepseek), mid-tier (gemini-pro, mistral-large), and premium (llama-405b, qwen-72b) tiers",
+        "Each model row includes: id, provider='openrouter', display_name, cost_per_input_token, cost_per_output_token, max_context_tokens, max_output_tokens, supports_streaming, supports_tools, is_default=false, is_active=true",
+        "Pricing reflects OpenRouter's actual rates (check https://openrouter.ai/api/v1/models for current pricing)",
+        "No existing model rows from previous migrations are modified",
+        "Migration SQL is syntactically valid"
+      ],
+      "notes": "Reference existing seed data format in 002_ai_layer_usage_and_models.sql. OpenRouter pricing is per-token (not per-million), so values will be very small decimals. The ai_models.provider column is TEXT (unconstrained), so 'openrouter' works without schema changes."
+    },
+    {
+      "id": "S02",
+      "title": "TypeScript: Add OpenRouter key validation and update .env.example",
+      "description": "Update validateKey() in packages/ai-core/src/keys.ts to support 'openai' and 'openrouter' providers (currently only supports 'anthropic'). For OpenAI validation, make a minimal API call using the openai package. For OpenRouter validation, use the OpenAI SDK with baseURL='https://openrouter.ai/api/v1'. Also add OPENROUTER_API_KEY to .env.example. Note: resolveKey() already works generically (uses provider.toUpperCase()+'_API_KEY' pattern) — no changes needed there.",
+      "model_tier": "haiku",
+      "phase": 1,
+      "passes": true,
+      "acceptance_criteria": [
+        "validateKey() supports provider 'anthropic' (existing, no regression)",
+        "validateKey() supports provider 'openai' using OpenAI SDK minimal API call",
+        "validateKey() supports provider 'openrouter' using OpenAI SDK with baseURL='https://openrouter.ai/api/v1'",
+        "InvalidKeyError thrown for 401 responses from any provider",
+        "Generic error thrown for network/other failures",
+        ".env.example includes OPENROUTER_API_KEY=sk-or-your-key",
+        "TypeScript compiles with zero errors (npx tsc --noEmit)"
+      ],
+      "notes": "resolveKey() already maps provider to env var via process.env[`${provider.toUpperCase()}_API_KEY`], so OPENROUTER_API_KEY is auto-resolved. Only validateKey() needs changes."
+    },
+    {
+      "id": "S03",
+      "title": "TypeScript: Add OpenRouter provider to chat() method",
+      "description": "Update chat() in packages/ai-core/src/client.ts to handle provider === 'openrouter'. The OpenRouter branch should create an OpenAI client with baseURL: 'https://openrouter.ai/api/v1' and add HTTP-Referer and X-Title headers per OpenRouter best practices. Since OpenRouter uses OpenAI-compatible API format, extract shared helper functions for message formatting and tool transformation that both 'openai' and 'openrouter' branches can reuse (DRY). Update the provider type to include 'openrouter'. Token counting, cost calculation, usage logging, credit checks, and error mapping must all work correctly for the new provider.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "chat() handles provider === 'openrouter' from model registry",
+        "OpenRouter branch creates OpenAI client with baseURL: 'https://openrouter.ai/api/v1'",
+        "HTTP-Referer and X-Title headers added for OpenRouter requests via defaultHeaders",
+        "Shared helper function(s) extracted for OpenAI message/tool formatting (used by both openai and openrouter branches)",
+        "resolveKey() called with provider from model registry (not hardcoded)",
+        "Usage logging records provider: 'openrouter' correctly",
+        "Credit pre-check and post-deduction work for managed keys",
+        "Error mapping (401 -> AUTHENTICATION_ERROR, 429 -> RATE_LIMIT, 5xx -> PROVIDER_ERROR) works for OpenRouter",
+        "Provider type updated to include 'openrouter' in the type assertion",
+        "Existing Anthropic and OpenAI chat tests still pass",
+        "TypeScript compiles with zero errors (npx tsc --noEmit)"
+      ],
+      "notes": "Key pattern: new OpenAI({ apiKey: key, baseURL: 'https://openrouter.ai/api/v1', defaultHeaders: { 'HTTP-Referer': 'https://shared-ai-layer.app', 'X-Title': 'Shared AI Layer' } }). The OpenAI branch at lines 206-248 of client.ts can be refactored to share logic with OpenRouter."
+    },
+    {
+      "id": "S04",
+      "title": "TypeScript: Add OpenAI/OpenRouter streaming to chatStream()",
+      "description": "Update chatStream() in packages/ai-core/src/client.ts to support OpenAI and OpenRouter providers (currently throws 'Streaming only supported for Anthropic' at line 343). Use client.chat.completions.create({ stream: true }) for OpenAI-format streaming. Map OpenAI stream chunks to existing ChatChunk interface: emit start_stream, text_delta (from chunk.choices[0].delta.content), and stop_stream. Capture final token counts from stream usage. OpenRouter uses identical streaming format.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "chatStream() no longer throws for non-Anthropic providers",
+        "OpenAI streaming uses client.chat.completions.create({ stream: true, stream_options: { include_usage: true } })",
+        "OpenRouter streaming uses same OpenAI streaming logic with custom baseURL",
+        "start_stream chunk emitted at stream start",
+        "text_delta chunks emitted for each content delta from choices[0].delta.content",
+        "stop_stream chunk emitted with final token counts (tokensIn, tokensOut)",
+        "Token counts captured from stream usage data",
+        "Usage logged on stream completion (fire-and-forget)",
+        "Error handling maps OpenAI/OpenRouter errors to existing error types",
+        "Existing Anthropic streaming tests still pass",
+        "TypeScript compiles with zero errors (npx tsc --noEmit)"
+      ],
+      "notes": "OpenAI streaming format: for await (const chunk of stream) { chunk.choices[0]?.delta?.content }. Usage comes from the final chunk when stream_options.include_usage is set. Shared helper for creating OpenAI/OpenRouter clients should be reused from S03."
+    },
+    {
+      "id": "S05",
+      "title": "TypeScript: OpenRouter model auto-sync function",
+      "description": "Create a syncOpenRouterModels() function that fetches all available models from OpenRouter's public API (GET https://openrouter.ai/api/v1/models, no auth required) and upserts them into the ai_models table. Map OpenRouter response fields: id -> model id, pricing.prompt -> cost_per_input_token, pricing.completion -> cost_per_output_token, context_length -> max_context_tokens, top_provider.max_completion_tokens -> max_output_tokens, name -> display_name, provider is always 'openrouter'. New models get inserted, existing models get updated (pricing, context_length), models removed from OpenRouter API get is_active=false (soft delete). Skip models with missing or zero pricing. Return summary { inserted, updated, deactivated }.",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "New file packages/ai-core/src/sync.ts exists with syncOpenRouterModels() exported",
+        "Fetches GET https://openrouter.ai/api/v1/models (no auth header needed)",
+        "Maps OpenRouter fields correctly: id, name->display_name, pricing.prompt->cost_per_input_token, pricing.completion->cost_per_output_token, context_length->max_context_tokens, top_provider.max_completion_tokens->max_output_tokens",
+        "Provider is always set to 'openrouter' for synced models",
+        "New models are inserted with is_active=true",
+        "Existing models are updated with latest pricing and context lengths",
+        "Models no longer in OpenRouter API response get is_active=false",
+        "Models with missing pricing or pricing.prompt='0' are handled (either skipped or inserted with zero cost)",
+        "Function returns { inserted: number, updated: number, deactivated: number }",
+        "Handles API errors gracefully (network failure, rate limit) without crashing",
+        "Uses safeParseFloat pattern from models.ts for parsing pricing strings",
+        "sync.ts exported from packages/ai-core/src/index.ts",
+        "TypeScript compiles with zero errors (npx tsc --noEmit)"
+      ],
+      "notes": "OpenRouter pricing format is string per-token e.g. '0.000003'. Use the existing safeParseFloat() from models.ts. The /api/v1/models endpoint returns { data: [{ id, name, pricing: { prompt, completion }, context_length, top_provider: { max_completion_tokens } }] }. Use Supabase upsert with onConflict: 'id' for the insert/update logic."
+    },
+    {
+      "id": "S06",
+      "title": "TypeScript: Tests for OpenRouter provider",
+      "description": "Create comprehensive tests for all new OpenRouter functionality. Test chat() with OpenRouter provider (mock API responses), verify OpenAI client created with correct baseURL, test streaming with OpenRouter, test key validation, test model sync function with mocked API response, test error mapping. All tests use vitest with mocked dependencies (no real API calls).",
+      "model_tier": "sonnet",
+      "phase": 2,
+      "passes": true,
+      "acceptance_criteria": [
+        "New test file packages/ai-core/src/__tests__/openrouter-provider.test.ts exists",
+        "Tests for chat() with OpenRouter provider verify correct baseURL and headers",
+        "Tests for chat() verify shared helper functions work for both openai and openrouter",
+        "Tests for streaming with OpenRouter provider",
+        "Tests for key validation with 'openrouter' provider",
+        "Tests for syncOpenRouterModels() with mocked /api/v1/models response",
+        "Tests for sync: insert new models, update existing, deactivate removed",
+        "Tests for error mapping (401, 429, 5xx from OpenRouter)",
+        "Tests verify usage logging records 'openrouter' as provider",
+        "Tests verify BYOK key resolution works for 'openrouter' provider",
+        "All new tests pass with npx vitest run",
+        "All existing tests still pass (no regressions)",
+        "TypeScript compiles with zero errors (npx tsc --noEmit)"
+      ],
+      "notes": "Follow existing test patterns from client.test.ts and keys.test.ts. Mock the OpenAI constructor, the fetch/httpx calls for sync, and Supabase client. Use vi.mock() for dependency mocking."
+    },
+    {
+      "id": "S07",
+      "title": "Python: Add provider branching for OpenAI and OpenRouter to chat()",
+      "description": "Update backend/ai_core/client.py to detect provider from model registry (currently hardcoded to 'anthropic') and branch chat() logic for all three providers. Add 'openai' Python package import. Anthropic branch must be preserved exactly as-is (no regressions). OpenAI branch creates OpenAI(api_key=key) client with standard message/tool formatting. OpenRouter branch creates OpenAI(api_key=key, base_url='https://openrouter.ai/api/v1') client. Update resolve_key() call to use provider from model registry instead of hardcoded 'anthropic'. Update all usage logging to record correct provider.",
+      "model_tier": "sonnet",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "openai Python package imported (from openai import OpenAI)",
+        "chat() detects provider from model registry via get_model() return value",
+        "Anthropic branch preserved exactly as-is (no regressions)",
+        "OpenAI branch creates OpenAI(api_key=key) client",
+        "OpenRouter branch creates OpenAI(api_key=key, base_url='https://openrouter.ai/api/v1') client",
+        "Message formatting converts to OpenAI format for openai/openrouter: [{'role': 'user', 'content': '...'}]",
+        "Tool/function calling format works for OpenAI/OpenRouter (tools parameter)",
+        "Token counting extracts from OpenAI response: response.choices[0].message.content, response.usage.prompt_tokens/completion_tokens",
+        "Cost calculation uses existing calculate_cost() function",
+        "Usage logging records correct provider string (not hardcoded 'anthropic')",
+        "resolve_key() called with provider from model registry (not hardcoded 'anthropic')",
+        "OPENROUTER_API_KEY env var used as managed fallback for openrouter provider",
+        "Error mapping works for OpenAI/OpenRouter status codes",
+        "openai package added to requirements.txt or pyproject.toml",
+        "All existing Python tests pass (no regressions)"
+      ],
+      "notes": "The model object returned by get_model() has a .provider attribute. Use it: provider = model.provider. Key pattern for OpenRouter: OpenAI(api_key=key, base_url='https://openrouter.ai/api/v1'). The Python openai package uses response.choices[0].message.content for text and response.usage for tokens."
+    },
+    {
+      "id": "S08",
+      "title": "Python: Add streaming for OpenAI/OpenRouter providers",
+      "description": "Update chat_stream() in backend/ai_core/client.py to support OpenAI and OpenRouter providers (currently hardcoded Anthropic-only with os.getenv('ANTHROPIC_API_KEY')). Use openai package streaming: client.chat.completions.create(stream=True). Map OpenAI stream chunks to existing ChatChunk/ChatChunkDelta types. OpenRouter uses same logic with custom base_url. Update key resolution to use provider from model registry.",
+      "model_tier": "sonnet",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "chat_stream() detects provider from model registry",
+        "Anthropic streaming preserved exactly as-is (no regressions)",
+        "OpenAI streaming uses client.chat.completions.create(stream=True, stream_options={'include_usage': True})",
+        "OpenRouter streaming uses same OpenAI streaming logic with custom base_url",
+        "start_stream, text_delta, stop_stream chunks emitted correctly for OpenAI/OpenRouter",
+        "text_delta extracted from chunk.choices[0].delta.content",
+        "Final token counts captured from stream usage data",
+        "Usage logged on stream completion with correct provider",
+        "Key resolution uses resolve_key() with provider from model registry (not hardcoded)",
+        "OPENROUTER_API_KEY env var used as managed fallback for openrouter",
+        "All existing Python tests pass (no regressions)"
+      ],
+      "notes": "Python OpenAI streaming pattern: for chunk in stream: if chunk.choices[0].delta.content: yield text_delta. Usage from final chunk when stream_options include_usage is set. The chat_stream() method currently hardcodes ANTHROPIC_API_KEY at line 174 — this needs to use resolve_key() with proper provider."
+    },
+    {
+      "id": "S09",
+      "title": "Python: OpenRouter model auto-sync function",
+      "description": "Create sync_openrouter_models() function in backend/ai_core/sync.py that mirrors the TypeScript sync function. Fetches GET https://openrouter.ai/api/v1/models, maps fields to ai_models table columns, upserts via Supabase client. Uses httpx or requests for the HTTP call. Returns summary dict { inserted, updated, deactivated }.",
+      "model_tier": "haiku",
+      "phase": 3,
+      "passes": true,
+      "acceptance_criteria": [
+        "New file backend/ai_core/sync.py exists with sync_openrouter_models() function",
+        "Fetches GET https://openrouter.ai/api/v1/models (no auth needed)",
+        "Maps OpenRouter fields to ai_models columns identically to TypeScript version",
+        "Upserts: new models inserted, existing updated, removed models set is_active=false",
+        "Returns dict: {'inserted': N, 'updated': N, 'deactivated': N}",
+        "Uses httpx or requests (add to requirements.txt/pyproject.toml if not present)",
+        "Handles API errors gracefully without crashing",
+        "sync.py importable from backend.ai_core package"
+      ],
+      "notes": "Mirror the TypeScript sync logic from S05. Use the same field mapping. The Python supabase client has the same upsert API pattern. Add httpx to dependencies if using it."
+    },
+    {
+      "id": "S10",
+      "title": "Python: Tests for OpenAI/OpenRouter providers",
+      "description": "Create Python tests for all new provider functionality. Test chat() with OpenAI and OpenRouter providers (mocked), test streaming with both providers, test sync function with mocked API response, verify correct base_url used for OpenRouter, verify provider detection from model registry. All tests use pytest with mocked dependencies.",
+      "model_tier": "sonnet",
+      "phase": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "Tests for chat() with OpenAI provider (mocked API responses)",
+        "Tests for chat() with OpenRouter provider (mocked, verify base_url)",
+        "Tests for chat_stream() with OpenAI/OpenRouter providers (mocked)",
+        "Tests for sync_openrouter_models() with mocked API response",
+        "Tests verify correct base_url='https://openrouter.ai/api/v1' for OpenRouter",
+        "Tests verify provider detection from model registry (not hardcoded)",
+        "Tests verify usage logging records correct provider",
+        "All new tests pass with pytest",
+        "All existing Python tests still pass (no regressions)"
+      ],
+      "notes": "Follow existing Python test patterns. Use unittest.mock or pytest-mock for mocking. Mock the OpenAI constructor, httpx/requests calls, and Supabase client."
+    },
+    {
+      "id": "S11",
+      "title": "Documentation: Update README and config for OpenRouter",
+      "description": "Update README.md to list OpenRouter as the third provider alongside Anthropic and OpenAI. Add usage examples for OpenRouter (chat, streaming, BYOK). Document the auto-sync function with usage instructions. Update architecture diagram to show 3 providers. Ensure .env.example includes OPENROUTER_API_KEY (should already be done in S02).",
+      "model_tier": "haiku",
+      "phase": 4,
+      "passes": true,
+      "acceptance_criteria": [
+        "README.md lists OpenRouter as third provider",
+        "Architecture/provider diagram updated to show 3 providers (Anthropic, OpenAI, OpenRouter)",
+        "Usage examples for OpenRouter chat, streaming, and BYOK added to README",
+        "Auto-sync function documented with usage instructions",
+        "Model registry section mentions auto-sync capability",
+        ".env.example includes OPENROUTER_API_KEY",
+        "No broken links or formatting issues in README"
+      ],
+      "notes": "Keep documentation concise. Focus on what's different about OpenRouter (baseURL trick, 100+ models, auto-sync). The .env.example update should already be done in S02 but verify it here."
+    }
+  ]
+}
