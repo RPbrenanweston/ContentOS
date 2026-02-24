@@ -112,6 +112,19 @@ export async function resolveKey(
     }
 
     const decryptedKey = decrypt(userKey.encrypted_key, encryptionKey);
+
+    // Update last_used_at timestamp (fire-and-forget)
+    void Promise.resolve().then(async () => {
+      await supabase
+        .from('ai_api_keys')
+        .update({ last_used_at: new Date().toISOString() })
+        .eq('user_id', userId)
+        .eq('provider', provider)
+        .eq('is_active', true);
+    }).catch((updateError) => {
+      console.warn('Failed to update last_used_at for BYOK key:', updateError);
+    });
+
     return {
       key: decryptedKey,
       source: 'byok',

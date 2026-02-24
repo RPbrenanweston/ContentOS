@@ -188,7 +188,7 @@ class AIClientImpl implements AIClient {
         costUsd,
         latencyMs,
         success: true,
-        keySource: 'managed',
+        keySource: source,
         supabase: this.supabase,
       });
 
@@ -218,6 +218,7 @@ class AIClientImpl implements AIClient {
       }
 
       // Log usage error (fire-and-forget)
+      // Note: if error happens before key resolution, source will be undefined - fallback to 'managed'
       logUsage({
         userId: params.userId,
         appId: this.appId,
@@ -230,7 +231,7 @@ class AIClientImpl implements AIClient {
         latencyMs,
         success: false,
         errorCode,
-        keySource: 'managed',
+        keySource: 'managed', // Error path may not have resolved key yet
         supabase: this.supabase,
       });
 
@@ -256,7 +257,7 @@ class AIClientImpl implements AIClient {
       const model = await getModel(modelId, this.supabase);
 
       // Resolve API key
-      const { key } = await resolveKey(params.userId, 'anthropic', this.supabase);
+      const { key, source } = await resolveKey(params.userId, 'anthropic', this.supabase);
 
       // Create Anthropic client with resolved key
       const client = new Anthropic({ apiKey: key });
@@ -347,7 +348,7 @@ class AIClientImpl implements AIClient {
         costUsd,
         latencyMs,
         success: true,
-        keySource: 'managed',
+        keySource: source,
         supabase: this.supabase,
       });
     } catch (error: any) {
@@ -366,6 +367,7 @@ class AIClientImpl implements AIClient {
       }
 
       // Log usage error with any accumulated tokens (fire-and-forget)
+      // Note: if error happens before key resolution, source will be undefined - fallback to 'managed'
       logUsage({
         userId: params.userId,
         appId: this.appId,
@@ -378,7 +380,7 @@ class AIClientImpl implements AIClient {
         latencyMs,
         success: false,
         errorCode,
-        keySource: 'managed',
+        keySource: 'managed', // Error path may not have resolved key yet
         supabase: this.supabase,
       });
 

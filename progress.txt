@@ -393,3 +393,27 @@ Total commits: 11 (one per story)
 Tests passing: 33 tests (27 unit + 4 integration + 2 package)
 TypeScript: No errors
 ---
+
+## 2026-02-24 11:40:00 UTC - S12 - PAI Iteration 12
+- **Implemented:** AES-256-GCM encryption module with encrypt() and decrypt() functions
+- **Files changed:**
+  - packages/ai-core/src/keys.ts (added encrypt/decrypt functions, integrated decrypt into resolveKey)
+  - packages/ai-core/src/__tests__/encryption.test.ts (created with 9 comprehensive tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ encrypt produces ciphertext with prepended IV and tag (12-byte IV + 16-byte auth tag + ciphertext, base64-encoded)
+  ✓ decrypt recovers original plaintext from ciphertext (roundtrip test passes)
+  ✓ Random IV generated for each encryption call (verified different ciphertext on same plaintext)
+  ✓ Auth tag validated during decryption prevents tampering (tampered data throws InvalidKeyError)
+  ✓ InvalidKeyError thrown on wrong decryption key (wrong key triggers auth tag validation failure)
+  ✓ Unit tests verify roundtrip and tamper detection (9 tests covering empty strings, long strings, special chars, multiple roundtrips)
+- **Learnings for future iterations:**
+  - AES-256-GCM format: IV (12 bytes) + AuthTag (16 bytes) + Ciphertext ensures authenticated encryption
+  - Key derivation: SHA-256 hash of encryption key string produces 32-byte AES-256 key
+  - Random IV critical for security: randomBytes(12) per encryption prevents pattern analysis
+  - Auth tag validation provides both encryption AND integrity - tampered ciphertext detected at decrypt time
+  - Buffer manipulation: Buffer.concat(), subarray() for binary format construction/parsing
+  - GCM mode advantages: authenticated encryption (AEAD), parallelizable, no padding oracle vulnerabilities
+  - Error handling: crypto.decipher.final() throws on auth tag mismatch - catch and wrap in InvalidKeyError
+  - Encryption key from ENCRYPTION_KEY env var enables key rotation without code changes
+  - Base64 encoding for database storage: binary data → text-safe format for Supabase TEXT column
+---

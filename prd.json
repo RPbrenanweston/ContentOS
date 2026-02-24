@@ -186,7 +186,7 @@
       "description": "In keys.ts: encrypt(plaintext, encryptionKey) and decrypt(ciphertext, encryptionKey) using Node crypto AES-256-GCM. Random IV per encryption. Encryption key from environment variable. Handle key derivation, IV prepend, auth tag.",
       "model_tier": "sonnet",
       "phase": 2,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "encrypt produces ciphertext with prepended IV and tag",
         "decrypt recovers original plaintext from ciphertext",
