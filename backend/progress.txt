@@ -45,3 +45,22 @@
   - Test file organization: integration/ directory for end-to-end flow tests, __tests__/ for unit tests
   - Both test suites verify the same security properties: auth tag validation, wrong key rejection, tampered data detection
 ---
+
+## 2026-02-24 04:23:00 PST - S19 - PAI Iteration 19
+- **Implemented:** Supabase migration for ai_credit_balances table (Phase 3 - Billing + Credits)
+- **Files changed:**
+  - supabase/migrations/004_ai_credit_balances.sql (created)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ Migration creates ai_credit_balances with all columns (id, user_id, org_id, credits_remaining_usd, credits_used_usd, spending_cap_usd, admin_cap_usd, period_start, period_end, created_at, updated_at)
+  ✓ Unique constraint on user_id and period_start enforced (UNIQUE constraint defined)
+  ✓ RLS policy restricts access to own records only (3 policies: SELECT, INSERT, UPDATE all using auth.uid() = user_id)
+  ✓ updated_at trigger fires on row modification (BEFORE UPDATE trigger with update_ai_credit_balances_updated_at function)
+  ✓ Migration runs after Phase 1 and 2 migrations cleanly (named 004_ after 001_, 002_, 003_)
+  ✓ Default credits_remaining_usd is zero (DEFAULT 0 specified)
+- **Learnings for future iterations:**
+  - Migration file naming follows 00X_description.sql pattern for chronological ordering
+  - RLS policies require separate policies for SELECT, INSERT, UPDATE operations
+  - Trigger functions should be created before the trigger that uses them
+  - ON DELETE CASCADE on user_id foreign key ensures cleanup when users are deleted
+  - Comments on table and columns improve database documentation and maintainability
+---

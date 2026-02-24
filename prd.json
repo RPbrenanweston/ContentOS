@@ -298,7 +298,7 @@
       "description": "Create migration for ai_credit_balances table from design doc Section 4.3. Include unique constraint, RLS policy, and trigger for updated_at.",
       "model_tier": "haiku",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Migration creates ai_credit_balances with all columns",
         "Unique constraint on user_id and period_start enforced",
