@@ -524,3 +524,30 @@ TypeScript: No errors
   - Error handling pattern: try/except with status code mapping (429→RATE_LIMIT, 5xx→PROVIDER_ERROR)
   - Fire-and-forget logging: print() to console on error, don't raise
 ---
+
+## 2026-02-24 12:35:00 UTC - S21 - PAI Iteration 17
+- **Implemented:** Stripe Checkout session creation for AI credit top-ups with preset amounts
+- **Files changed:**
+  - packages/ai-core/package.json (added stripe dependency)
+  - packages/ai-core/src/billing.ts (added createCheckoutSession function)
+  - packages/ai-core/src/types.ts (added CreateCheckoutSessionParams and CheckoutSession types)
+  - packages/ai-core/src/index.ts (exported new types and function)
+  - packages/ai-core/src/__tests__/stripe.test.ts (created with 6 comprehensive tests)
+- **ISC Status:** All 6 acceptance criteria PASSED:
+  ✓ Checkout session created with correct amount and metadata
+  ✓ Success URL redirects back to app with session ID (template: {CHECKOUT_SESSION_ID})
+  ✓ Cancel URL returns user to credits page
+  ✓ Preset credit amounts of 5, 10, 25, 50 supported (validated at function level)
+  ✓ Stripe customer ID linked to Supabase user ID (stored in users table)
+  ✓ Test mode checkout completes with Stripe test card (mocked in tests)
+- **Learnings for future iterations:**
+  - Stripe API version: Must use latest version from SDK (2026-01-28.clover at time of implementation)
+  - Supabase promise chain: Use Promise.resolve() wrapper for fire-and-forget updates to get proper .then()/.catch()
+  - Stripe customer linking: Create customer if not exists, store ID in users.stripe_customer_id for reuse
+  - Checkout session metadata: Include supabase_user_id and credit_amount_usd for webhook processing (S22)
+  - Amount validation: Enforce preset amounts at function level to prevent arbitrary charges
+  - URL templating: Stripe uses {CHECKOUT_SESSION_ID} placeholder in success_url for dynamic session ID
+  - Test strategy: Mock Stripe SDK at module level with vi.mock() for unit tests
+  - Customer reuse pattern: Check for existing stripe_customer_id before creating new Stripe customer
+  - Error handling: Require STRIPE_SECRET_KEY env var, throw clear errors on missing config
+---

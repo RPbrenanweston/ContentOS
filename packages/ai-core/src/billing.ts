@@ -269,3 +269,135 @@ export async function createCheckoutSession(
     customerId,
   };
 }
+
+/**
+ * Handle Stripe webhook events
+ *
+ * Verifies signature, processes checkout.session.completed events,
+ * and credits user's ai_credit_balances with idempotency protection.
+ *
+ * @param rawBody - Raw request body (required for signature verification)
+ * @param signature - Stripe signature header value
+ * @param supabase - Supabase client for database operations
+ * @returns Status code and message
+ */
+export async function handleStripeWebhook(
+  rawBody: string | Buffer,
+  signature: string,
+  supabase: SupabaseClient
+): Promise<{ status: number; message: string }> {
+  // Initialize Stripe
+  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!stripeSecretKey) {
+    throw new Error('STRIPE_SECRET_KEY environment variable not set');
+  }
+
+  if (!webhookSecret) {
+    throw new Error('STRIPE_WEBHOOK_SECRET environment variable not set');
+  }
+
+  const stripe = new Stripe(stripeSecretKey, {
+    apiVersion: '2026-01-28.clover',
+  });
+
+  // Verify webhook signature
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+    return {
+      status: 400,
+      message: `Webhook signature verification failed: ${errorMessage}`,
+    };
+  }
+
+  // Handle checkout.session.completed event
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
+
+    // Extract metadata
+    const userId = session.metadata?.supabase_user_id;
+    const creditAmountStr = session.metadata?.credit_amount_usd;
+
+    if (!userId || !creditAmountStr) {
+      return {
+        status: 400,
+        message: 'Missing required metadata: supabase_user_id or credit_amount_usd',
+      };
+    }
+
+    const creditAmount = parseFloat(creditAmountStr);
+
+    // Idempotency: check if this session has already been processed
+    const { data: existingLog } = await supabase
+      .from('stripe_payment_logs')
+      .select('id')
+      .eq('session_id', session.id)
+      .maybeSingle();
+
+    if (existingLog) {
+      // Already processed - return success to acknowledge webhook
+      return {
+        status: 200,
+        message: 'Webhook already processed (idempotent)',
+      };
+    }
+
+    // Credit user's balance
+    const now = new Date();
+    const periodStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString();
+
+    // Get or create balance row for current period
+    const { data: balanceRow } = await supabase
+      .from('ai_credit_balances')
+      .select('*')
+      .eq('user_id', userId)
+      .lte('period_start', now.toISOString())
+      .gt('period_end', now.toISOString())
+      .maybeSingle();
+
+    if (balanceRow) {
+      // Update existing balance
+      const currentRemaining = parseFloat(balanceRow.credits_remaining_usd || '0');
+      await supabase
+        .from('ai_credit_balances')
+        .update({
+          credits_remaining_usd: currentRemaining + creditAmount,
+        })
+        .eq('id', balanceRow.id);
+    } else {
+      // Create new balance row for current period
+      await supabase.from('ai_credit_balances').insert({
+        user_id: userId,
+        period_start: periodStart,
+        period_end: periodEnd,
+        credits_remaining_usd: creditAmount,
+        credits_used_usd: 0,
+      });
+    }
+
+    // Log payment for idempotency tracking
+    await supabase.from('stripe_payment_logs').insert({
+      session_id: session.id,
+      user_id: userId,
+      amount_usd: creditAmount,
+      payment_status: session.payment_status,
+      created_at: new Date().toISOString(),
+    });
+
+    return {
+      status: 200,
+      message: `Credited ${creditAmount} USD to user ${userId}`,
+    };
+  }
+
+  // Unknown event type - return 200 to acknowledge receipt
+  return {
+    status: 200,
+    message: `Unhandled event type: ${event.type}`,
+  };
+}

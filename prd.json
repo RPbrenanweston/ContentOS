@@ -330,7 +330,7 @@
       "description": "Create Stripe Checkout session endpoint for purchasing AI credits. Support preset amounts ($5, $10, $25, $50). On successful payment, increment credits_remaining_usd.",
       "model_tier": "sonnet",
       "phase": 3,
-      "passes": false,
+      "passes": true,
       "acceptance_criteria": [
         "Checkout session created with correct amount and metadata",
         "Success URL redirects back to app with session ID",
