@@ -103,29 +103,48 @@ export class AuthenticationError extends ProviderError {
   }
 }
 
+/** Type guard for errors with an HTTP status code */
+export function hasStatusCode(
+  error: unknown,
+): error is Error & { status: number } {
+  return (
+    error instanceof Error &&
+    'status' in error &&
+    typeof (error as Record<string, unknown>).status === 'number'
+  );
+}
+
 /**
  * Classify a provider error by HTTP status code
  *
  * Extracted from client.ts for Single Responsibility:
  * error classification belongs with error types, not client orchestration.
  */
-export function classifyError(error: any): string {
+export function classifyError(error: unknown): string {
+  if (!hasStatusCode(error)) return 'PROVIDER_ERROR';
   if (error.status === 401 || error.status === 403) return 'AUTHENTICATION_ERROR';
   if (error.status === 429) return 'RATE_LIMIT';
   if (error.status === 400) return 'INVALID_REQUEST';
-  if (error.status && error.status >= 500) return 'PROVIDER_ERROR';
+  if (error.status >= 500) return 'PROVIDER_ERROR';
   return 'PROVIDER_ERROR';
 }
 
 /**
  * Re-throw an error as the appropriate typed error class
  */
-export function throwTypedError(error: any, errorCode: string): never {
+export function throwTypedError(error: unknown, errorCode: string): never {
+  const message = error instanceof Error ? error.message : String(error);
+  const status = hasStatusCode(error) ? error.status : undefined;
   if (errorCode === 'AUTHENTICATION_ERROR') {
-    throw new AuthenticationError(error.message);
+    throw new AuthenticationError(message);
   }
   if (errorCode === 'RATE_LIMIT') {
-    throw new RateLimitError(error.message);
+    throw new RateLimitError(message);
   }
-  throw new ProviderError(error.message, errorCode, error.status, error);
+  throw new ProviderError(
+    message,
+    errorCode,
+    status,
+    error instanceof Error ? error : undefined,
+  );
 }

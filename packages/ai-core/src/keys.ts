@@ -2,7 +2,7 @@
  * Key management and resolution
  */
 
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { InvalidKeyError } from './errors';
 
@@ -22,8 +22,7 @@ export interface ResolvedKey {
  */
 export function encrypt(plaintext: string, encryptionKey: string): string {
   // Derive 32-byte key from encryption key (SHA-256 hash)
-  const crypto = require('node:crypto');
-  const key = crypto.createHash('sha256').update(encryptionKey).digest();
+  const key = createHash('sha256').update(encryptionKey).digest();
 
   // Generate random 12-byte IV (recommended for GCM)
   const iv = randomBytes(12);
@@ -53,8 +52,7 @@ export function encrypt(plaintext: string, encryptionKey: string): string {
  */
 export function decrypt(encryptedData: string, encryptionKey: string): string {
   // Derive 32-byte key from encryption key (SHA-256 hash)
-  const crypto = require('node:crypto');
-  const key = crypto.createHash('sha256').update(encryptionKey).digest();
+  const key = createHash('sha256').update(encryptionKey).digest();
 
   // Decode base64
   const combined = Buffer.from(encryptedData, 'base64');
@@ -77,7 +75,7 @@ export function decrypt(encryptedData: string, encryptionKey: string): string {
     let plaintext = decipher.update(ciphertext, undefined, 'utf8');
     plaintext += decipher.final('utf8');
     return plaintext;
-  } catch (error) {
+  } catch {
     // Auth tag validation failed or wrong key
     throw new InvalidKeyError('Failed to decrypt: invalid key or tampered data');
   }
@@ -147,6 +145,19 @@ export async function deleteKey(
   }
 }
 
+function handleValidateKeyError(error: unknown): never {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status: number }).status === 401
+  ) {
+    throw new InvalidKeyError('Invalid API key');
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  throw new Error(`Failed to validate API key: ${message}`);
+}
+
 /**
  * Validate an API key by making a minimal API call
  *
@@ -167,11 +178,8 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
       });
 
       return true;
-    } catch (error: any) {
-      if (error.status === 401) {
-        throw new InvalidKeyError('Invalid API key');
-      }
-      throw new Error(`Failed to validate API key: ${error.message}`);
+    } catch (error: unknown) {
+      handleValidateKeyError(error);
     }
   }
 
@@ -187,11 +195,8 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
       });
 
       return true;
-    } catch (error: any) {
-      if (error.status === 401) {
-        throw new InvalidKeyError('Invalid API key');
-      }
-      throw new Error(`Failed to validate API key: ${error.message}`);
+    } catch (error: unknown) {
+      handleValidateKeyError(error);
     }
   }
 
@@ -210,11 +215,8 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
       });
 
       return true;
-    } catch (error: any) {
-      if (error.status === 401) {
-        throw new InvalidKeyError('Invalid API key');
-      }
-      throw new Error(`Failed to validate API key: ${error.message}`);
+    } catch (error: unknown) {
+      handleValidateKeyError(error);
     }
   }
 

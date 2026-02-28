@@ -57,10 +57,24 @@ export function calculateCost(model: ModelInfo, tokensIn: number, tokensOut: num
   return inputCost + outputCost;
 }
 
+interface DatabaseModelRow {
+  id: string;
+  provider: string;
+  display_name: string;
+  cost_per_input_token: string | number;
+  cost_per_output_token: string | number;
+  max_context_tokens: number;
+  max_output_tokens: number;
+  supports_streaming: boolean;
+  supports_tools: boolean;
+  is_default: boolean;
+  is_active: boolean;
+}
+
 /**
  * Map database model row to ModelInfo
  */
-function mapDatabaseToModel(row: any): ModelInfo {
+function mapDatabaseToModel(row: DatabaseModelRow): ModelInfo {
   return {
     id: row.id,
     provider: row.provider,

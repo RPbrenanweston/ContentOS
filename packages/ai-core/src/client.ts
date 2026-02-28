@@ -195,7 +195,7 @@ class AIClientImpl implements AIClient {
         model: modelId,
         latencyMs,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       const latencyMs = Date.now() - startTime;
       const errorCode = classifyError(error);
 
@@ -257,7 +257,7 @@ class AIClientImpl implements AIClient {
       };
 
       // Iterate stream chunks
-      for await (const chunk of stream) {
+      for await (const chunk of stream as AsyncIterable<unknown>) {
         const text = adapter.parseStreamChunk(chunk);
         if (text) {
           yield {
@@ -311,7 +311,7 @@ class AIClientImpl implements AIClient {
         keySource: source,
         supabase: this.supabase,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       const latencyMs = Date.now() - startTime;
       const errorCode = classifyError(error);
       let detectedProvider = 'unknown';

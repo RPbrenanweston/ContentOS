@@ -23,10 +23,11 @@ export const DEFAULT_RETRY_CONFIG: RetryConfig = {
 /**
  * Determines if an error is retryable
  */
-export function isRetryableError(error: any): boolean {
-  // Retry on 429 (rate limit) and 5xx (server errors)
-  if (error.status === 429) return true;
-  if (error.status && error.status >= 500) return true;
+export function isRetryableError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null || !('status' in error)) return false;
+  const status = (error as { status: number }).status;
+  if (status === 429) return true;
+  if (status >= 500) return true;
   return false;
 }
 
@@ -59,12 +60,12 @@ export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
   config: RetryConfig = DEFAULT_RETRY_CONFIG,
 ): Promise<T> {
-  let lastError: any;
+  let lastError: unknown;
 
   for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
     try {
       return await operation();
-    } catch (error: any) {
+    } catch (error: unknown) {
       lastError = error;
 
       // Non-retryable errors fail immediately

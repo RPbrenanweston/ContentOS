@@ -52,7 +52,7 @@ export function logUsage(params: LogUsageParams): void {
     .then(() => {
       // Success path: silently logged
     })
-    .catch((error: any) => {
+    .catch((error: unknown) => {
       // Error path: warn but don't throw
       console.warn('Failed to log AI usage:', error);
     });

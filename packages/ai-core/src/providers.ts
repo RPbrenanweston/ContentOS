@@ -26,19 +26,19 @@ export interface ChunkUsage {
 
 /** Chat-only provider capabilities (Interface Segregation) */
 export interface ChatProvider {
-  createClient(apiKey: string): any;
-  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any;
-  executeChat(client: any, request: any): Promise<any>;
-  parseChatResponse(response: any): ChatCallResult;
+  createClient(apiKey: string): unknown;
+  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): unknown;
+  executeChat(client: unknown, request: unknown): Promise<unknown>;
+  parseChatResponse(response: unknown): ChatCallResult;
 }
 
 /** Streaming provider capabilities (Interface Segregation) */
 export interface StreamProvider {
-  buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): any;
-  executeStream(client: any, request: any): Promise<any>;
-  parseStreamChunk(chunk: any): string | null;
-  getChunkUsage(chunk: any): ChunkUsage | null;
-  getFinalUsage(stream: any): Promise<{ tokensIn: number; tokensOut: number } | null>;
+  buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): unknown;
+  executeStream(client: unknown, request: unknown): Promise<unknown>;
+  parseStreamChunk(chunk: unknown): string | null;
+  getChunkUsage(chunk: unknown): ChunkUsage | null;
+  getFinalUsage(stream: unknown): Promise<{ tokensIn: number; tokensOut: number } | null>;
 }
 
 /** Full provider adapter combining chat and streaming */
@@ -60,13 +60,13 @@ class AnthropicAdapter implements ProviderAdapter {
     return new Anthropic({ apiKey });
   }
 
-  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): Record<string, unknown> {
     const messages = params.messages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }));
 
-    const request: any = {
+    const request: Record<string, unknown> = {
       model: modelId,
       max_tokens: params.maxTokens || model.maxOutputTokens,
       temperature: params.temperature,
@@ -84,47 +84,61 @@ class AnthropicAdapter implements ProviderAdapter {
     return request;
   }
 
-  async executeChat(client: any, request: any): Promise<any> {
-    return client.messages.create(request);
+  async executeChat(client: unknown, request: unknown): Promise<Anthropic.Message> {
+    return (client as Anthropic).messages.create(
+      request as Anthropic.MessageCreateParamsNonStreaming,
+    );
   }
 
-  parseChatResponse(response: any): ChatCallResult {
-    const content = response.content
-      .filter((block: any) => block.type === 'text')
-      .map((block: any) => ('text' in block ? block.text : ''))
+  parseChatResponse(response: unknown): ChatCallResult {
+    const msg = response as Anthropic.Message;
+    const content = msg.content
+      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+      .map((block) => block.text)
       .join('');
 
     return {
       content,
-      tokensIn: response.usage.input_tokens,
-      tokensOut: response.usage.output_tokens,
+      tokensIn: msg.usage.input_tokens,
+      tokensOut: msg.usage.output_tokens,
     };
   }
 
-  buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+  buildStreamRequest(
+    modelId: string,
+    model: ModelInfo,
+    params: ChatParams,
+  ): Record<string, unknown> {
     return this.buildRequest(modelId, model, params);
   }
 
-  async executeStream(client: any, request: any): Promise<any> {
-    return client.messages.stream(request);
+  async executeStream(client: unknown, request: unknown): Promise<unknown> {
+    return (client as Anthropic).messages.stream(
+      request as Anthropic.MessageCreateParams,
+    );
   }
 
-  parseStreamChunk(chunk: any): string | null {
-    if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-      return chunk.delta.text;
+  parseStreamChunk(chunk: unknown): string | null {
+    const event = chunk as { type: string; delta?: { type?: string; text?: string } };
+    if (event.type === 'content_block_delta' && event.delta?.type === 'text_delta') {
+      return event.delta.text ?? null;
     }
     return null;
   }
 
-  getChunkUsage(chunk: any): ChunkUsage | null {
-    if (chunk.type === 'message_delta' && chunk.usage) {
-      return { tokensOut: chunk.usage.output_tokens };
+  getChunkUsage(chunk: unknown): ChunkUsage | null {
+    const event = chunk as { type: string; usage?: { output_tokens: number } };
+    if (event.type === 'message_delta' && event.usage) {
+      return { tokensOut: event.usage.output_tokens };
     }
     return null;
   }
 
-  async getFinalUsage(stream: any): Promise<{ tokensIn: number; tokensOut: number } | null> {
-    const finalMessage = await stream.finalMessage();
+  async getFinalUsage(
+    stream: unknown,
+  ): Promise<{ tokensIn: number; tokensOut: number } | null> {
+    const messageStream = stream as { finalMessage(): Promise<Anthropic.Message> };
+    const finalMessage = await messageStream.finalMessage();
     if (finalMessage.usage) {
       return {
         tokensIn: finalMessage.usage.input_tokens,
@@ -140,13 +154,13 @@ class OpenAIAdapter implements ProviderAdapter {
     return new OpenAI({ apiKey });
   }
 
-  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): Record<string, unknown> {
     const messages = params.messages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }));
 
-    const request: any = {
+    const request: Record<string, unknown> = {
       model: modelId,
       max_tokens: params.maxTokens || model.maxOutputTokens,
       temperature: params.temperature,
@@ -160,44 +174,57 @@ class OpenAIAdapter implements ProviderAdapter {
     return request;
   }
 
-  async executeChat(client: any, request: any): Promise<any> {
-    return client.chat.completions.create(request);
+  async executeChat(client: unknown, request: unknown): Promise<OpenAI.Chat.ChatCompletion> {
+    return (client as OpenAI).chat.completions.create(
+      request as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
+    );
   }
 
-  parseChatResponse(response: any): ChatCallResult {
+  parseChatResponse(response: unknown): ChatCallResult {
+    const completion = response as OpenAI.Chat.ChatCompletion;
     return {
-      content: response.choices[0]?.message?.content || '',
-      tokensIn: response.usage?.prompt_tokens || 0,
-      tokensOut: response.usage?.completion_tokens || 0,
+      content: completion.choices[0]?.message?.content || '',
+      tokensIn: completion.usage?.prompt_tokens || 0,
+      tokensOut: completion.usage?.completion_tokens || 0,
     };
   }
 
-  buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+  buildStreamRequest(
+    modelId: string,
+    model: ModelInfo,
+    params: ChatParams,
+  ): Record<string, unknown> {
     const request = this.buildRequest(modelId, model, params);
     request.stream = true;
     request.stream_options = { include_usage: true };
     return request;
   }
 
-  async executeStream(client: any, request: any): Promise<any> {
-    return client.chat.completions.create(request);
+  async executeStream(client: unknown, request: unknown): Promise<unknown> {
+    return (client as OpenAI).chat.completions.create(
+      request as OpenAI.Chat.ChatCompletionCreateParamsStreaming,
+    );
   }
 
-  parseStreamChunk(chunk: any): string | null {
-    return chunk.choices[0]?.delta?.content || null;
+  parseStreamChunk(chunk: unknown): string | null {
+    const streamChunk = chunk as OpenAI.Chat.ChatCompletionChunk;
+    return streamChunk.choices[0]?.delta?.content || null;
   }
 
-  getChunkUsage(chunk: any): ChunkUsage | null {
-    if (chunk.usage) {
+  getChunkUsage(chunk: unknown): ChunkUsage | null {
+    const streamChunk = chunk as OpenAI.Chat.ChatCompletionChunk;
+    if (streamChunk.usage) {
       return {
-        tokensIn: chunk.usage.prompt_tokens,
-        tokensOut: chunk.usage.completion_tokens,
+        tokensIn: streamChunk.usage.prompt_tokens,
+        tokensOut: streamChunk.usage.completion_tokens,
       };
     }
     return null;
   }
 
-  async getFinalUsage(_stream: any): Promise<{ tokensIn: number; tokensOut: number } | null> {
+  async getFinalUsage(
+    _stream: unknown,
+  ): Promise<{ tokensIn: number; tokensOut: number } | null> {
     return null;
   }
 }
@@ -223,35 +250,39 @@ class OpenRouterAdapter implements ProviderAdapter {
     });
   }
 
-  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): Record<string, unknown> {
     return this.delegate.buildRequest(modelId, model, params);
   }
 
-  executeChat(client: any, request: any): Promise<any> {
+  executeChat(client: unknown, request: unknown): Promise<unknown> {
     return this.delegate.executeChat(client, request);
   }
 
-  parseChatResponse(response: any): ChatCallResult {
+  parseChatResponse(response: unknown): ChatCallResult {
     return this.delegate.parseChatResponse(response);
   }
 
-  buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+  buildStreamRequest(
+    modelId: string,
+    model: ModelInfo,
+    params: ChatParams,
+  ): Record<string, unknown> {
     return this.delegate.buildStreamRequest(modelId, model, params);
   }
 
-  executeStream(client: any, request: any): Promise<any> {
+  executeStream(client: unknown, request: unknown): Promise<unknown> {
     return this.delegate.executeStream(client, request);
   }
 
-  parseStreamChunk(chunk: any): string | null {
+  parseStreamChunk(chunk: unknown): string | null {
     return this.delegate.parseStreamChunk(chunk);
   }
 
-  getChunkUsage(chunk: any): ChunkUsage | null {
+  getChunkUsage(chunk: unknown): ChunkUsage | null {
     return this.delegate.getChunkUsage(chunk);
   }
 
-  getFinalUsage(stream: any): Promise<{ tokensIn: number; tokensOut: number } | null> {
+  getFinalUsage(stream: unknown): Promise<{ tokensIn: number; tokensOut: number } | null> {
     return this.delegate.getFinalUsage(stream);
   }
 }
