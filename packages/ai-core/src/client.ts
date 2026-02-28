@@ -104,6 +104,30 @@ async function retryWithBackoff<T>(
 }
 
 /**
+ * Classify a provider error by HTTP status code
+ */
+function classifyError(error: any): string {
+  if (error.status === 401 || error.status === 403) return 'AUTHENTICATION_ERROR';
+  if (error.status === 429) return 'RATE_LIMIT';
+  if (error.status === 400) return 'INVALID_REQUEST';
+  if (error.status && error.status >= 500) return 'PROVIDER_ERROR';
+  return 'PROVIDER_ERROR';
+}
+
+/**
+ * Re-throw an error as the appropriate typed error class
+ */
+function throwTypedError(error: any, errorCode: string): never {
+  if (errorCode === 'AUTHENTICATION_ERROR') {
+    throw new AuthenticationError(error.message);
+  }
+  if (errorCode === 'RATE_LIMIT') {
+    throw new RateLimitError(error.message);
+  }
+  throw new ProviderError(error.message, errorCode, error.status, error);
+}
+
+/**
  * Create and return an initialized AIClient
  */
 export function createAIClient(config: AIClientConfig): AIClient {
@@ -207,21 +231,8 @@ class AIClientImpl implements AIClient {
       };
     } catch (error: any) {
       const latencyMs = Date.now() - startTime;
-      let errorCode = 'PROVIDER_ERROR';
+      const errorCode = classifyError(error);
 
-      // Map Anthropic errors to error codes
-      if (error.status === 401 || error.status === 403) {
-        errorCode = 'AUTHENTICATION_ERROR';
-      } else if (error.status === 429) {
-        errorCode = 'RATE_LIMIT';
-      } else if (error.status === 400) {
-        errorCode = 'INVALID_REQUEST';
-      } else if (error.status && error.status >= 500) {
-        errorCode = 'PROVIDER_ERROR';
-      }
-
-      // Log usage error (fire-and-forget)
-      // Note: if error happens before provider detection, use 'unknown'
       logUsage({
         userId: params.userId,
         appId: this.appId,
@@ -234,15 +245,11 @@ class AIClientImpl implements AIClient {
         latencyMs,
         success: false,
         errorCode,
-        keySource: 'managed', // Error path may not have resolved key yet
+        keySource: 'managed',
         supabase: this.supabase,
       });
 
-      // Re-throw as ProviderError or AuthenticationError
-      if (errorCode === 'AUTHENTICATION_ERROR') {
-        throw new AuthenticationError(error.message);
-      }
-      throw new ProviderError(error.message, errorCode, error.status, error);
+      throwTypedError(error, errorCode);
     }
   }
 
@@ -340,10 +347,9 @@ class AIClientImpl implements AIClient {
       });
     } catch (error: any) {
       const latencyMs = Date.now() - startTime;
-      let errorCode = 'PROVIDER_ERROR';
+      const errorCode = classifyError(error);
       let detectedProvider = 'unknown';
 
-      // Try to detect provider from model if possible
       try {
         const model = await getModel(modelId, this.supabase);
         detectedProvider = model.provider;
@@ -351,19 +357,6 @@ class AIClientImpl implements AIClient {
         // If we can't resolve the model, use 'unknown'
       }
 
-      // Map provider errors to error codes
-      if (error.status === 401 || error.status === 403) {
-        errorCode = 'AUTHENTICATION_ERROR';
-      } else if (error.status === 429) {
-        errorCode = 'RATE_LIMIT';
-      } else if (error.status === 400) {
-        errorCode = 'INVALID_REQUEST';
-      } else if (error.status && error.status >= 500) {
-        errorCode = 'PROVIDER_ERROR';
-      }
-
-      // Log usage error with any accumulated tokens (fire-and-forget)
-      // Note: if error happens before key resolution, source will be undefined - fallback to 'managed'
       logUsage({
         userId: params.userId,
         appId: this.appId,
@@ -376,17 +369,11 @@ class AIClientImpl implements AIClient {
         latencyMs,
         success: false,
         errorCode,
-        keySource: 'managed', // Error path may not have resolved key yet
+        keySource: 'managed',
         supabase: this.supabase,
       });
 
-      // Re-throw as typed error
-      if (errorCode === 'AUTHENTICATION_ERROR') {
-        throw new AuthenticationError(error.message);
-      } else if (errorCode === 'RATE_LIMIT') {
-        throw new RateLimitError(error.message);
-      }
-      throw new ProviderError(error.message, errorCode, error.status, error);
+      throwTypedError(error, errorCode);
     }
   }
 
