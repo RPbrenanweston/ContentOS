@@ -22,15 +22,14 @@
  *   }
  */
 
-import Anthropic from '@anthropic-ai/sdk';
-import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, Tool } from './types';
+import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk } from './types';
 import { getModel, calculateCost } from './models';
 import { logUsage } from './usage';
 import { resolveKey } from './keys';
 import { checkCredits, checkSpendingCap, deductCredits } from './billing';
 import { ProviderError, AuthenticationError, RateLimitError } from './errors';
+import { getAdapter } from './providers';
 
 /**
  * Retry configuration
@@ -67,30 +66,6 @@ function calculateBackoffDelay(attemptNumber: number, baseDelayMs: number, jitte
  */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Shared helper: Format messages for OpenAI-compatible APIs (OpenAI, OpenRouter)
- */
-function formatOpenAIMessages(messages: { role: string; content: string }[]) {
-  return messages.map((msg) => ({
-    role: msg.role as 'user' | 'assistant',
-    content: msg.content,
-  }));
-}
-
-/**
- * Shared helper: Transform tools to OpenAI function calling format
- */
-function formatOpenAITools(tools: Tool[]) {
-  return tools.map((tool) => ({
-    type: 'function' as const,
-    function: {
-      name: tool.name,
-      description: tool.description,
-      parameters: tool.input_schema,
-    },
-  }));
 }
 
 /**
@@ -182,123 +157,17 @@ class AIClientImpl implements AIClient {
         await checkSpendingCap(params.userId, estimatedCost, this.supabase);
       }
 
-      // Provider-specific API call logic
-      let tokensIn: number;
-      let tokensOut: number;
-      let content: string;
+      // Provider-specific API call via adapter
+      const adapter = getAdapter(provider);
+      const client = adapter.createClient(key);
+      const request = adapter.buildRequest(modelId, model, params);
 
-      if (provider === 'anthropic') {
-        // Create Anthropic client with resolved key
-        const client = new Anthropic({ apiKey: key });
+      const response = await retryWithBackoff(
+        () => adapter.executeChat(client, request),
+        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+      );
 
-        // Convert our Message format to Anthropic format
-        const messages = params.messages.map((msg) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        }));
-
-        // Build request parameters
-        const requestParams: any = {
-          model: modelId,
-          max_tokens: params.maxTokens || model.maxOutputTokens,
-          temperature: params.temperature,
-          messages,
-        };
-
-        if (params.tools && params.tools.length > 0) {
-          requestParams.tools = params.tools.map((tool) => ({
-            name: tool.name,
-            description: tool.description,
-            input_schema: tool.input_schema,
-          }));
-        }
-
-        // Call Anthropic API with retry logic
-        const response = await retryWithBackoff(
-          () => client.messages.create(requestParams),
-          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-        );
-
-        tokensIn = response.usage.input_tokens;
-        tokensOut = response.usage.output_tokens;
-
-        // Extract text content from response
-        content = response.content
-          .filter((block) => block.type === 'text')
-          .map((block) => ('text' in block ? block.text : ''))
-          .join('');
-      } else if (provider === 'openai') {
-        // Create OpenAI client with resolved key
-        const client = new OpenAI({ apiKey: key });
-
-        // Use shared helper for message formatting
-        const messages = formatOpenAIMessages(params.messages);
-
-        // Build request parameters
-        const requestParams: any = {
-          model: modelId,
-          max_tokens: params.maxTokens || model.maxOutputTokens,
-          temperature: params.temperature,
-          messages,
-        };
-
-        // Use shared helper for tool formatting
-        if (params.tools && params.tools.length > 0) {
-          requestParams.tools = formatOpenAITools(params.tools);
-        }
-
-        // Call OpenAI API with retry logic
-        const response = await retryWithBackoff(
-          () => client.chat.completions.create(requestParams),
-          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-        );
-
-        tokensIn = response.usage?.prompt_tokens || 0;
-        tokensOut = response.usage?.completion_tokens || 0;
-
-        // Extract text content from response
-        content = response.choices[0]?.message?.content || '';
-      } else if (provider === 'openrouter') {
-        // Create OpenAI client with OpenRouter baseURL and headers
-        const client = new OpenAI({
-          apiKey: key,
-          baseURL: 'https://openrouter.ai/api/v1',
-          defaultHeaders: {
-            'HTTP-Referer': 'https://shared-ai-layer.app',
-            'X-Title': 'Shared AI Layer',
-          },
-        });
-
-        // Use shared helper for message formatting
-        const messages = formatOpenAIMessages(params.messages);
-
-        // Build request parameters
-        const requestParams: any = {
-          model: modelId,
-          max_tokens: params.maxTokens || model.maxOutputTokens,
-          temperature: params.temperature,
-          messages,
-        };
-
-        // Use shared helper for tool formatting
-        if (params.tools && params.tools.length > 0) {
-          requestParams.tools = formatOpenAITools(params.tools);
-        }
-
-        // Call OpenRouter API with retry logic (OpenAI-compatible)
-        const response = await retryWithBackoff(
-          () => client.chat.completions.create(requestParams),
-          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-        );
-
-        tokensIn = response.usage?.prompt_tokens || 0;
-        tokensOut = response.usage?.completion_tokens || 0;
-
-        // Extract text content from response
-        content = response.choices[0]?.message?.content || '';
-      } else {
-        throw new Error(`Unsupported provider: ${provider}`);
-      }
+      const { content, tokensIn, tokensOut } = adapter.parseChatResponse(response);
 
       const latencyMs = Date.now() - startTime;
       const costUsd = calculateCost(model, tokensIn, tokensOut);
@@ -397,277 +266,78 @@ class AIClientImpl implements AIClient {
       // Resolve API key
       const { key, source } = await resolveKey(params.userId, provider, this.supabase);
 
-      if (provider === 'anthropic') {
-        // Create Anthropic client with resolved key
-        const client = new Anthropic({ apiKey: key });
+      // Provider-specific streaming via adapter
+      const adapter = getAdapter(provider);
+      const client = adapter.createClient(key);
+      const request = adapter.buildStreamRequest(modelId, model, params);
 
-        // Convert our Message format to Anthropic format
-        const messages = params.messages.map((msg) => ({
-          role: msg.role as 'user' | 'assistant',
-          content: msg.content,
-        }));
+      const stream = await retryWithBackoff(
+        () => adapter.executeStream(client, request),
+        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+      );
 
-        // Build request parameters
-        const requestParams: any = {
-          model: modelId,
-          max_tokens: params.maxTokens || model.maxOutputTokens,
-          temperature: params.temperature,
-          messages,
-        };
+      // Yield start_stream chunk
+      yield {
+        delta: {
+          type: 'start_stream',
+        },
+      };
 
-        if (params.tools && params.tools.length > 0) {
-          requestParams.tools = params.tools.map((tool) => ({
-            name: tool.name,
-            description: tool.description,
-            input_schema: tool.input_schema,
-          }));
+      // Iterate stream chunks
+      for await (const chunk of stream) {
+        const text = adapter.parseStreamChunk(chunk);
+        if (text) {
+          yield {
+            delta: {
+              type: 'text_delta',
+              text,
+            },
+          };
         }
 
-        // Start streaming - stream() is synchronous, so we wrap it in a retry-compatible function
-        const stream = await retryWithBackoff(
-          async () => client.messages.stream(requestParams),
-          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-        );
-
-        // Yield start_stream chunk
-        yield {
-          delta: {
-            type: 'start_stream',
-          },
-        };
-
-        // Track token counts and content as we stream
-        for await (const chunk of stream) {
-          // Handle text delta events
-          if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-            yield {
-              delta: {
-                type: 'text_delta',
-                text: chunk.delta.text,
-              },
-            };
-          }
-
-          // Accumulate token counts from message_delta
-          if (chunk.type === 'message_delta' && chunk.usage) {
-            tokensOut = chunk.usage.output_tokens;
-          }
+        const chunkUsage = adapter.getChunkUsage(chunk);
+        if (chunkUsage) {
+          if (chunkUsage.tokensIn !== undefined) tokensIn = chunkUsage.tokensIn;
+          if (chunkUsage.tokensOut !== undefined) tokensOut = chunkUsage.tokensOut;
         }
-
-        // Get final token counts from stream.finalMessage()
-        const finalMessage = await stream.finalMessage();
-        if (finalMessage.usage) {
-          tokensIn = finalMessage.usage.input_tokens;
-          tokensOut = finalMessage.usage.output_tokens;
-        }
-
-        const latencyMs = Date.now() - startTime;
-        const costUsd = calculateCost(model, tokensIn, tokensOut);
-
-        // Yield stop_stream chunk with final token counts
-        yield {
-          delta: {
-            type: 'stop_stream',
-          },
-          partialTokens: {
-            tokensIn,
-            tokensOut,
-          },
-        };
-
-        // Log usage on successful stream completion (fire-and-forget)
-        logUsage({
-          userId: params.userId,
-          appId: this.appId,
-          featureId: params.featureId,
-          provider: 'anthropic',
-          model: modelId,
-          tokensIn,
-          tokensOut,
-          costUsd,
-          latencyMs,
-          success: true,
-          keySource: source,
-          supabase: this.supabase,
-        });
-      } else if (provider === 'openai') {
-        // Create OpenAI client with resolved key
-        const client = new OpenAI({ apiKey: key });
-
-        // Use shared helper for message formatting
-        const messages = formatOpenAIMessages(params.messages);
-
-        // Build request parameters
-        const requestParams: any = {
-          model: modelId,
-          max_tokens: params.maxTokens || model.maxOutputTokens,
-          temperature: params.temperature,
-          messages,
-          stream: true,
-          stream_options: { include_usage: true },
-        };
-
-        // Use shared helper for tool formatting
-        if (params.tools && params.tools.length > 0) {
-          requestParams.tools = formatOpenAITools(params.tools);
-        }
-
-        // Start streaming with retry logic
-        const stream = (await retryWithBackoff(
-          async () => client.chat.completions.create(requestParams) as any,
-          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-        )) as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
-
-        // Yield start_stream chunk
-        yield {
-          delta: {
-            type: 'start_stream',
-          },
-        };
-
-        // Track token counts as we stream
-        for await (const chunk of stream) {
-          // Extract text delta from choices[0].delta.content
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            yield {
-              delta: {
-                type: 'text_delta',
-                text: content,
-              },
-            };
-          }
-
-          // Capture final token counts from usage field (appears in final chunk)
-          if (chunk.usage) {
-            tokensIn = chunk.usage.prompt_tokens;
-            tokensOut = chunk.usage.completion_tokens;
-          }
-        }
-
-        const latencyMs = Date.now() - startTime;
-        const costUsd = calculateCost(model, tokensIn, tokensOut);
-
-        // Yield stop_stream chunk with final token counts
-        yield {
-          delta: {
-            type: 'stop_stream',
-          },
-          partialTokens: {
-            tokensIn,
-            tokensOut,
-          },
-        };
-
-        // Log usage on successful stream completion (fire-and-forget)
-        logUsage({
-          userId: params.userId,
-          appId: this.appId,
-          featureId: params.featureId,
-          provider: 'openai',
-          model: modelId,
-          tokensIn,
-          tokensOut,
-          costUsd,
-          latencyMs,
-          success: true,
-          keySource: source,
-          supabase: this.supabase,
-        });
-      } else if (provider === 'openrouter') {
-        // Create OpenAI client with OpenRouter baseURL and headers
-        const client = new OpenAI({
-          apiKey: key,
-          baseURL: 'https://openrouter.ai/api/v1',
-          defaultHeaders: {
-            'HTTP-Referer': 'https://shared-ai-layer.app',
-            'X-Title': 'Shared AI Layer',
-          },
-        });
-
-        // Use shared helper for message formatting
-        const messages = formatOpenAIMessages(params.messages);
-
-        // Build request parameters
-        const requestParams: any = {
-          model: modelId,
-          max_tokens: params.maxTokens || model.maxOutputTokens,
-          temperature: params.temperature,
-          messages,
-          stream: true,
-          stream_options: { include_usage: true },
-        };
-
-        // Use shared helper for tool formatting
-        if (params.tools && params.tools.length > 0) {
-          requestParams.tools = formatOpenAITools(params.tools);
-        }
-
-        // Start streaming with retry logic (OpenAI-compatible)
-        const stream = (await retryWithBackoff(
-          async () => client.chat.completions.create(requestParams) as any,
-          { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-        )) as AsyncIterable<OpenAI.Chat.Completions.ChatCompletionChunk>;
-
-        // Yield start_stream chunk
-        yield {
-          delta: {
-            type: 'start_stream',
-          },
-        };
-
-        // Track token counts as we stream
-        for await (const chunk of stream) {
-          // Extract text delta from choices[0].delta.content
-          const content = chunk.choices[0]?.delta?.content;
-          if (content) {
-            yield {
-              delta: {
-                type: 'text_delta',
-                text: content,
-              },
-            };
-          }
-
-          // Capture final token counts from usage field (appears in final chunk)
-          if (chunk.usage) {
-            tokensIn = chunk.usage.prompt_tokens;
-            tokensOut = chunk.usage.completion_tokens;
-          }
-        }
-
-        const latencyMs = Date.now() - startTime;
-        const costUsd = calculateCost(model, tokensIn, tokensOut);
-
-        // Yield stop_stream chunk with final token counts
-        yield {
-          delta: {
-            type: 'stop_stream',
-          },
-          partialTokens: {
-            tokensIn,
-            tokensOut,
-          },
-        };
-
-        // Log usage on successful stream completion (fire-and-forget)
-        logUsage({
-          userId: params.userId,
-          appId: this.appId,
-          featureId: params.featureId,
-          provider: 'openrouter',
-          model: modelId,
-          tokensIn,
-          tokensOut,
-          costUsd,
-          latencyMs,
-          success: true,
-          keySource: source,
-          supabase: this.supabase,
-        });
-      } else {
-        throw new Error(`Unsupported provider for streaming: ${provider}`);
       }
+
+      // Get final usage (authoritative for Anthropic, null for OpenAI/OpenRouter)
+      const finalUsage = await adapter.getFinalUsage(stream);
+      if (finalUsage) {
+        tokensIn = finalUsage.tokensIn;
+        tokensOut = finalUsage.tokensOut;
+      }
+
+      const latencyMs = Date.now() - startTime;
+      const costUsd = calculateCost(model, tokensIn, tokensOut);
+
+      // Yield stop_stream chunk with final token counts
+      yield {
+        delta: {
+          type: 'stop_stream',
+        },
+        partialTokens: {
+          tokensIn,
+          tokensOut,
+        },
+      };
+
+      // Log usage on successful stream completion (fire-and-forget)
+      logUsage({
+        userId: params.userId,
+        appId: this.appId,
+        featureId: params.featureId,
+        provider,
+        model: modelId,
+        tokensIn,
+        tokensOut,
+        costUsd,
+        latencyMs,
+        success: true,
+        keySource: source,
+        supabase: this.supabase,
+      });
     } catch (error: any) {
       const latencyMs = Date.now() - startTime;
       let errorCode = 'PROVIDER_ERROR';
