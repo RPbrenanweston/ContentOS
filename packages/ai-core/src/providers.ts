@@ -113,9 +113,7 @@ class AnthropicAdapter implements ProviderAdapter {
   }
 
   async executeStream(client: unknown, request: unknown): Promise<unknown> {
-    return (client as Anthropic).messages.stream(
-      request as Anthropic.MessageCreateParams,
-    );
+    return (client as Anthropic).messages.stream(request as Anthropic.MessageCreateParams);
   }
 
   parseStreamChunk(chunk: unknown): string | null {
@@ -134,9 +132,7 @@ class AnthropicAdapter implements ProviderAdapter {
     return null;
   }
 
-  async getFinalUsage(
-    stream: unknown,
-  ): Promise<{ tokensIn: number; tokensOut: number } | null> {
+  async getFinalUsage(stream: unknown): Promise<{ tokensIn: number; tokensOut: number } | null> {
     const messageStream = stream as { finalMessage(): Promise<Anthropic.Message> };
     const finalMessage = await messageStream.finalMessage();
     if (finalMessage.usage) {
@@ -222,9 +218,7 @@ class OpenAIAdapter implements ProviderAdapter {
     return null;
   }
 
-  async getFinalUsage(
-    _stream: unknown,
-  ): Promise<{ tokensIn: number; tokensOut: number } | null> {
+  async getFinalUsage(_stream: unknown): Promise<{ tokensIn: number; tokensOut: number } | null> {
     return null;
   }
 }

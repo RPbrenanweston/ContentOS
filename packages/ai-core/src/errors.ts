@@ -104,9 +104,7 @@ export class AuthenticationError extends ProviderError {
 }
 
 /** Type guard for errors with an HTTP status code */
-export function hasStatusCode(
-  error: unknown,
-): error is Error & { status: number } {
+export function hasStatusCode(error: unknown): error is Error & { status: number } {
   return (
     error instanceof Error &&
     'status' in error &&
@@ -141,10 +139,5 @@ export function throwTypedError(error: unknown, errorCode: string): never {
   if (errorCode === 'RATE_LIMIT') {
     throw new RateLimitError(message);
   }
-  throw new ProviderError(
-    message,
-    errorCode,
-    status,
-    error instanceof Error ? error : undefined,
-  );
+  throw new ProviderError(message, errorCode, status, error instanceof Error ? error : undefined);
 }
