@@ -336,6 +336,109 @@ describe('Integration Tests - AI Core', () => {
     ).rejects.toThrow('Insufficient credits');
   });
 
+  it('chatStream() delivers chunks in correct order: start → text_delta → stop', async () => {
+    const client = createAIClient({
+      supabaseClient: mockSupabase,
+      appId: 'test-app',
+    });
+
+    const stream = client.chatStream({
+      userId: 'user-order',
+      featureId: 'test-ordering',
+      model: 'claude-sonnet-4-20250514',
+      messages: [{ role: 'user', content: 'Order test' }],
+    });
+
+    const chunkTypes: string[] = [];
+    for await (const chunk of stream) {
+      if (chunk.delta?.type) {
+        chunkTypes.push(chunk.delta.type);
+      }
+    }
+
+    // Must start with start_stream, end with stop_stream, text_deltas in between
+    expect(chunkTypes[0]).toBe('start_stream');
+    expect(chunkTypes[chunkTypes.length - 1]).toBe('stop_stream');
+    expect(chunkTypes.filter((t) => t === 'text_delta').length).toBeGreaterThan(0);
+  });
+
+  it('chatStream() reports accumulated tokens in stop_stream chunk', async () => {
+    const client = createAIClient({
+      supabaseClient: mockSupabase,
+      appId: 'test-app',
+    });
+
+    const stream = client.chatStream({
+      userId: 'user-tokens',
+      featureId: 'test-tokens',
+      model: 'claude-sonnet-4-20250514',
+      messages: [{ role: 'user', content: 'Token test' }],
+    });
+
+    let stopChunk: { partialTokens?: { tokensIn: number; tokensOut: number } } | null = null;
+    for await (const chunk of stream) {
+      if (chunk.delta?.type === 'stop_stream') {
+        stopChunk = chunk;
+      }
+    }
+
+    // stop_stream chunk must include partialTokens from finalMessage()
+    expect(stopChunk).not.toBeNull();
+    expect(stopChunk!.partialTokens).toBeDefined();
+    expect(stopChunk!.partialTokens!.tokensIn).toBe(10);
+    expect(stopChunk!.partialTokens!.tokensOut).toBe(2);
+  });
+
+  it('chatStream() handles error mid-stream gracefully', async () => {
+    // Mock a stream that errors partway through
+    mockMessagesStream.mockImplementationOnce(() => ({
+      async *[Symbol.asyncIterator]() {
+        yield {
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'text_delta', text: 'Partial' },
+        };
+        const error = new Error('Connection reset') as Error & { status?: number };
+        error.status = 500;
+        throw error;
+      },
+      async finalMessage() {
+        throw new Error('Stream interrupted');
+      },
+    }));
+
+    const client = createAIClient({
+      supabaseClient: mockSupabase,
+      appId: 'test-app',
+    });
+
+    const stream = client.chatStream({
+      userId: 'user-error',
+      featureId: 'test-mid-error',
+      model: 'claude-sonnet-4-20250514',
+      messages: [{ role: 'user', content: 'Error test' }],
+    });
+
+    const chunks: string[] = [];
+    await expect(async () => {
+      for await (const chunk of stream) {
+        if (chunk.delta?.type === 'text_delta' && chunk.delta.text) {
+          chunks.push(chunk.delta.text);
+        }
+      }
+    }).rejects.toThrow();
+
+    // Should have received the partial chunk before the error
+    expect(chunks).toContain('Partial');
+
+    // Wait for fire-and-forget logging
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Usage should be logged as failed
+    expect(usageLogInserts).toHaveLength(1);
+    expect(usageLogInserts[0].success).toBe(false);
+  });
+
   it('retry logic fires on 429 status code', async () => {
     let attemptCount = 0;
 
