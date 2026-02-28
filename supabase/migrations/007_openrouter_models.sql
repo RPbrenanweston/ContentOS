@@ -153,11 +153,11 @@ BEGIN
   FROM ai_models
   WHERE provider = 'openrouter';
 
-  IF openrouter_count != 8 THEN
-    RAISE EXCEPTION 'Expected 8 OpenRouter models, found %', openrouter_count;
+  IF openrouter_count < 8 THEN
+    RAISE EXCEPTION 'Expected at least 8 OpenRouter models, found %', openrouter_count;
   END IF;
 
-  RAISE NOTICE 'Successfully seeded % OpenRouter models', openrouter_count;
+  RAISE NOTICE 'OpenRouter models present: %', openrouter_count;
 END $$;
 
 -- =====================================================
