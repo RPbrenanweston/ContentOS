@@ -1,9 +1,10 @@
 /**
  * Provider adapters for LLM API calls
  *
- * Each adapter handles SDK-specific details: client creation, request building,
- * response parsing, and streaming. OpenRouter extends OpenAI since it uses the
- * same SDK with a different base URL and headers.
+ * SOLID principles applied:
+ * - Interface Segregation: ChatProvider and StreamProvider are separate interfaces
+ * - Liskov Substitution: OpenRouterAdapter uses composition, not inheritance
+ * - Open/Closed: New providers can be registered via registerAdapter()
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -23,18 +24,25 @@ export interface ChunkUsage {
   tokensOut?: number;
 }
 
-/** Provider adapter interface */
-export interface ProviderAdapter {
+/** Chat-only provider capabilities (Interface Segregation) */
+export interface ChatProvider {
   createClient(apiKey: string): any;
   buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any;
   executeChat(client: any, request: any): Promise<any>;
   parseChatResponse(response: any): ChatCallResult;
+}
+
+/** Streaming provider capabilities (Interface Segregation) */
+export interface StreamProvider {
   buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): any;
   executeStream(client: any, request: any): Promise<any>;
   parseStreamChunk(chunk: any): string | null;
   getChunkUsage(chunk: any): ChunkUsage | null;
   getFinalUsage(stream: any): Promise<{ tokensIn: number; tokensOut: number } | null>;
 }
+
+/** Full provider adapter combining chat and streaming */
+export interface ProviderAdapter extends ChatProvider, StreamProvider {}
 
 function formatOpenAITools(tools: Tool[]) {
   return tools.map(tool => ({
@@ -194,7 +202,16 @@ class OpenAIAdapter implements ProviderAdapter {
   }
 }
 
-class OpenRouterAdapter extends OpenAIAdapter {
+/**
+ * OpenRouter adapter using composition instead of inheritance (Liskov Substitution).
+ *
+ * OpenRouter uses the OpenAI SDK with a different base URL and headers.
+ * Rather than extending OpenAIAdapter (which would change foundational behavior
+ * and violate LSP), we delegate to an internal OpenAIAdapter for shared logic.
+ */
+class OpenRouterAdapter implements ProviderAdapter {
+  private delegate = new OpenAIAdapter();
+
   createClient(apiKey: string) {
     return new OpenAI({
       apiKey,
@@ -205,8 +222,41 @@ class OpenRouterAdapter extends OpenAIAdapter {
       },
     });
   }
+
+  buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+    return this.delegate.buildRequest(modelId, model, params);
+  }
+
+  executeChat(client: any, request: any): Promise<any> {
+    return this.delegate.executeChat(client, request);
+  }
+
+  parseChatResponse(response: any): ChatCallResult {
+    return this.delegate.parseChatResponse(response);
+  }
+
+  buildStreamRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
+    return this.delegate.buildStreamRequest(modelId, model, params);
+  }
+
+  executeStream(client: any, request: any): Promise<any> {
+    return this.delegate.executeStream(client, request);
+  }
+
+  parseStreamChunk(chunk: any): string | null {
+    return this.delegate.parseStreamChunk(chunk);
+  }
+
+  getChunkUsage(chunk: any): ChunkUsage | null {
+    return this.delegate.getChunkUsage(chunk);
+  }
+
+  getFinalUsage(stream: any): Promise<{ tokensIn: number; tokensOut: number } | null> {
+    return this.delegate.getFinalUsage(stream);
+  }
 }
 
+/** Mutable adapter registry (Open/Closed principle) */
 const adapters: Record<string, ProviderAdapter> = {
   anthropic: new AnthropicAdapter(),
   openai: new OpenAIAdapter(),
@@ -219,4 +269,14 @@ export function getAdapter(provider: string): ProviderAdapter {
     throw new Error(`Unsupported provider: ${provider}`);
   }
   return adapter;
+}
+
+/**
+ * Register a custom provider adapter (Open/Closed principle).
+ *
+ * Allows extending the system with new providers without modifying
+ * existing adapter code.
+ */
+export function registerAdapter(provider: string, adapter: ProviderAdapter): void {
+  adapters[provider] = adapter;
 }

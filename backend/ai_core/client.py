@@ -1,6 +1,10 @@
 """
 AI client for LLM API calls
 
+SOLID principles applied:
+- Single Responsibility: Retry logic in retry.py, error classification in errors.py
+- Dependency Inversion: Services injected via constructor, defaulting to concrete implementations
+
 Handles chat, streaming, and structured generation with automatic
 usage logging, key resolution, and credit checks.
 """
@@ -8,20 +12,32 @@ usage logging, key resolution, and credit checks.
 import time
 from typing import Any, AsyncIterable, Optional
 from .types import ChatParams, ChatResult, ChatChunk, ChatChunkDelta, GenerateParams, AIClientConfig, UsageInfo, PartialTokens
-from .models import get_model, calculate_cost
-from .usage import log_usage
-from .keys import resolve_key
-from .providers import get_adapter, retry_with_backoff, classify_error
+from .models import get_model as default_get_model, calculate_cost as default_calculate_cost
+from .usage import log_usage as default_log_usage
+from .keys import resolve_key as default_resolve_key
+from .providers import get_adapter as default_get_adapter
+from .retry import retry_with_backoff as default_retry_with_backoff
+from .errors import classify_error as default_classify_error
 
 
 class AIClient:
     """Main AI client for making LLM calls"""
 
-    def __init__(self, config: AIClientConfig):
+    def __init__(self, config: AIClientConfig, services: dict | None = None):
         self.config = config
         self.app_id = config.app_id
         self.supabase = config.supabase_client
         self.default_model = config.default_model or 'claude-sonnet-4-20250514'
+
+        # Use injected services or defaults (Dependency Inversion)
+        s = services or {}
+        self._get_model = s.get('get_model', default_get_model)
+        self._calculate_cost = s.get('calculate_cost', default_calculate_cost)
+        self._resolve_key = s.get('resolve_key', default_resolve_key)
+        self._log_usage = s.get('log_usage', default_log_usage)
+        self._get_adapter = s.get('get_adapter', default_get_adapter)
+        self._retry_with_backoff = s.get('retry_with_backoff', default_retry_with_backoff)
+        self._classify_error = s.get('classify_error', default_classify_error)
 
     async def chat(self, params: ChatParams) -> ChatResult:
         """
@@ -39,21 +55,21 @@ class AIClient:
 
         try:
             # Resolve the model info
-            model = get_model(model_id, self.supabase)
+            model = self._get_model(model_id, self.supabase)
             provider = model.provider
             detected_provider = provider
 
             # Resolve API key (BYOK or managed)
-            resolved = await resolve_key(params.user_id, provider, self.supabase)
+            resolved = await self._resolve_key(params.user_id, provider, self.supabase)
             api_key = resolved.api_key
             key_source = resolved.source
 
             # Provider-specific API call via adapter
-            adapter = get_adapter(provider)
+            adapter = self._get_adapter(provider)
             client = adapter.create_client(api_key)
             request = adapter.build_request(model_id, model, params)
 
-            response = retry_with_backoff(
+            response = self._retry_with_backoff(
                 lambda: adapter.execute_chat(client, request),
                 max_retries=3,
                 base_delay_ms=100,
@@ -63,11 +79,11 @@ class AIClient:
             result = adapter.parse_chat_response(response)
 
             # Calculate cost and latency
-            cost_usd = calculate_cost(model, result.tokens_in, result.tokens_out)
+            cost_usd = self._calculate_cost(model, result.tokens_in, result.tokens_out)
             latency_ms = int((time.time() - start_time) * 1000)
 
             # Log usage (fire-and-forget)
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
@@ -96,17 +112,17 @@ class AIClient:
 
         except Exception as error:
             latency_ms = int((time.time() - start_time) * 1000)
-            error_code = classify_error(error)
+            error_code = self._classify_error(error)
 
             # Get model info for error logging (best effort)
             try:
-                model = get_model(model_id, self.supabase)
+                model = self._get_model(model_id, self.supabase)
                 detected_provider = model.provider
             except Exception:
                 pass
 
             # Log failed usage
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
@@ -141,20 +157,20 @@ class AIClient:
 
         try:
             # Resolve the model info
-            model = get_model(model_id, self.supabase)
+            model = self._get_model(model_id, self.supabase)
             provider = model.provider
 
             # Resolve API key (BYOK or managed)
-            resolved = await resolve_key(params.user_id, provider, self.supabase)
+            resolved = await self._resolve_key(params.user_id, provider, self.supabase)
             api_key = resolved.api_key
             key_source = resolved.source
 
             # Provider-specific streaming via adapter
-            adapter = get_adapter(provider)
+            adapter = self._get_adapter(provider)
             client = adapter.create_client(api_key)
             request = adapter.build_stream_request(model_id, model, params)
 
-            stream = retry_with_backoff(
+            stream = self._retry_with_backoff(
                 lambda: adapter.execute_stream(client, request),
                 max_retries=3,
                 base_delay_ms=100,
@@ -186,7 +202,7 @@ class AIClient:
                 tokens_out = final_usage['tokens_out']
 
             # Calculate cost and latency
-            cost_usd = calculate_cost(model, tokens_in, tokens_out)
+            cost_usd = self._calculate_cost(model, tokens_in, tokens_out)
             latency_ms = int((time.time() - start_time) * 1000)
 
             # Yield stop signal with final tokens
@@ -196,7 +212,7 @@ class AIClient:
             )
 
             # Log usage (fire-and-forget)
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
@@ -213,11 +229,11 @@ class AIClient:
 
         except Exception as error:
             latency_ms = int((time.time() - start_time) * 1000)
-            error_code = classify_error(error)
+            error_code = self._classify_error(error)
             detected_provider = 'unknown'
 
             try:
-                model = get_model(model_id, self.supabase)
+                model = self._get_model(model_id, self.supabase)
                 detected_provider = model.provider
             except Exception:
                 pass
@@ -226,7 +242,7 @@ class AIClient:
             # resolve_key may not have been reached before the error
             key_source = 'managed'
 
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
@@ -257,7 +273,7 @@ class AIClient:
         raise NotImplementedError("generate() will be implemented later")
 
 
-def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = None) -> AIClient:
+def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = None, services: dict | None = None) -> AIClient:
     """
     Factory function to create an AIClient instance
 
@@ -265,6 +281,7 @@ def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = 
         app_id: Application identifier for usage tracking
         supabase: Supabase client instance
         default_model: Optional default model to use for calls
+        services: Optional dict of service overrides for dependency injection
 
     Returns:
         Configured AIClient instance
@@ -274,4 +291,4 @@ def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = 
         supabase_client=supabase,
         default_model=default_model
     )
-    return AIClient(config)
+    return AIClient(config, services=services)

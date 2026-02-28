@@ -4,8 +4,9 @@
  * Public API for creating and managing AI clients
  */
 
-// Export client factory
+// Export client factory and DI types
 export { createAIClient } from './client';
+export type { AIClientDeps, AIClientOptions } from './client';
 
 // Export all types
 export type {
@@ -25,7 +26,7 @@ export type {
   CheckoutSession,
 } from './types';
 
-// Export all errors
+// Export all errors and error utilities
 export {
   AIError,
   InvalidKeyError,
@@ -35,7 +36,17 @@ export {
   ProviderError,
   RateLimitError,
   AuthenticationError,
+  classifyError,
+  throwTypedError,
 } from './errors';
+
+// Export retry utilities
+export { retryWithBackoff, isRetryableError, calculateBackoffDelay, DEFAULT_RETRY_CONFIG } from './retry';
+export type { RetryConfig } from './retry';
+
+// Export provider types and registration
+export { getAdapter, registerAdapter } from './providers';
+export type { ProviderAdapter, ChatProvider, StreamProvider, ChatCallResult, ChunkUsage } from './providers';
 
 // Export utility functions
 export { getModel, getDefaultModel, calculateCost } from './models';

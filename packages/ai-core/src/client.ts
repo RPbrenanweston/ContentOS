@@ -1,6 +1,10 @@
 /**
  * Core AI client for calling LLM providers
  *
+ * SOLID principles applied:
+ * - Single Responsibility: Retry logic in retry.ts, error classification in errors.ts
+ * - Dependency Inversion: Services injected via AIClientDeps, defaulting to concrete implementations
+ *
  * FUTURE ENHANCEMENT: AbortController Timeout Support
  * ────────────────────────────────────────────────────
  * Currently, API calls to provider SDKs (Anthropic, OpenAI) do not implement
@@ -23,114 +27,44 @@
  */
 
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk } from './types';
-import { getModel, calculateCost } from './models';
-import { logUsage } from './usage';
-import { resolveKey } from './keys';
-import { checkCredits, checkSpendingCap, deductCredits } from './billing';
-import { ProviderError, AuthenticationError, RateLimitError } from './errors';
-import { getAdapter } from './providers';
+import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, ModelInfo } from './types';
+import { getModel as defaultGetModel, calculateCost as defaultCalculateCost } from './models';
+import { logUsage as defaultLogUsage, LogUsageParams } from './usage';
+import { resolveKey as defaultResolveKey, ResolvedKey } from './keys';
+import { checkCredits as defaultCheckCredits, checkSpendingCap as defaultCheckSpendingCap, deductCredits as defaultDeductCredits } from './billing';
+import { classifyError, throwTypedError } from './errors';
+import { getAdapter as defaultGetAdapter, ProviderAdapter } from './providers';
+import { retryWithBackoff, RetryConfig, DEFAULT_RETRY_CONFIG } from './retry';
 
 /**
- * Retry configuration
+ * Injectable dependencies for AIClient (Dependency Inversion Principle).
+ *
+ * All dependencies default to their concrete implementations.
+ * Override individual services for testing or alternative implementations.
  */
-interface RetryConfig {
-  maxRetries: number;
-  baseDelayMs: number;
-  jitterFactor: number;
+export interface AIClientDeps {
+  getModel: (modelId: string, supabase: SupabaseClient) => Promise<ModelInfo>;
+  calculateCost: (model: ModelInfo, tokensIn: number, tokensOut: number) => number;
+  resolveKey: (userId: string, provider: string, supabase: SupabaseClient) => Promise<ResolvedKey>;
+  checkCredits: (userId: string, estimatedCost: number, supabase: SupabaseClient) => Promise<boolean>;
+  checkSpendingCap: (userId: string, estimatedCost: number, supabase: SupabaseClient) => Promise<void>;
+  deductCredits: (userId: string, cost: number, supabase: SupabaseClient) => Promise<void>;
+  logUsage: (params: LogUsageParams) => void;
+  getAdapter: (provider: string) => ProviderAdapter;
+  retryConfig: RetryConfig;
 }
 
 /**
- * Determines if an error is retryable
+ * Extended config with optional dependency injection
  */
-function isRetryableError(error: any): boolean {
-  // Retry on 429 (rate limit) and 5xx (server errors)
-  if (error.status === 429) return true;
-  if (error.status && error.status >= 500) return true;
-  return false;
-}
-
-/**
- * Calculates exponential backoff delay with jitter
- */
-function calculateBackoffDelay(attemptNumber: number, baseDelayMs: number, jitterFactor: number): number {
-  // Exponential: 2^attempt * baseDelay
-  const exponentialDelay = Math.pow(2, attemptNumber) * baseDelayMs;
-  // Add jitter: random value between 0 and jitterFactor * exponentialDelay
-  const jitter = Math.random() * jitterFactor * exponentialDelay;
-  return exponentialDelay + jitter;
-}
-
-/**
- * Sleep for a given number of milliseconds
- */
-function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-/**
- * Wraps an async function with retry logic
- */
-async function retryWithBackoff<T>(
-  operation: () => Promise<T>,
-  config: RetryConfig = { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
-): Promise<T> {
-  let lastError: any;
-
-  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
-    try {
-      return await operation();
-    } catch (error: any) {
-      lastError = error;
-
-      // Non-retryable errors fail immediately
-      if (!isRetryableError(error)) {
-        throw error;
-      }
-
-      // On last attempt, don't sleep - just throw
-      if (attempt === config.maxRetries) {
-        throw error;
-      }
-
-      // Calculate backoff and sleep
-      const delayMs = calculateBackoffDelay(attempt, config.baseDelayMs, config.jitterFactor);
-      await sleep(delayMs);
-    }
-  }
-
-  // Should never reach here, but just in case
-  throw lastError;
-}
-
-/**
- * Classify a provider error by HTTP status code
- */
-function classifyError(error: any): string {
-  if (error.status === 401 || error.status === 403) return 'AUTHENTICATION_ERROR';
-  if (error.status === 429) return 'RATE_LIMIT';
-  if (error.status === 400) return 'INVALID_REQUEST';
-  if (error.status && error.status >= 500) return 'PROVIDER_ERROR';
-  return 'PROVIDER_ERROR';
-}
-
-/**
- * Re-throw an error as the appropriate typed error class
- */
-function throwTypedError(error: any, errorCode: string): never {
-  if (errorCode === 'AUTHENTICATION_ERROR') {
-    throw new AuthenticationError(error.message);
-  }
-  if (errorCode === 'RATE_LIMIT') {
-    throw new RateLimitError(error.message);
-  }
-  throw new ProviderError(error.message, errorCode, error.status, error);
+export interface AIClientOptions extends AIClientConfig {
+  services?: Partial<AIClientDeps>;
 }
 
 /**
  * Create and return an initialized AIClient
  */
-export function createAIClient(config: AIClientConfig): AIClient {
+export function createAIClient(config: AIClientOptions): AIClient {
   return new AIClientImpl(config);
 }
 
@@ -141,11 +75,26 @@ class AIClientImpl implements AIClient {
   private appId: string;
   private supabase: SupabaseClient;
   private defaultModel: string;
+  private deps: AIClientDeps;
 
-  constructor(config: AIClientConfig) {
+  constructor(config: AIClientOptions) {
     this.appId = config.appId;
     this.supabase = config.supabaseClient;
     this.defaultModel = config.defaultModel || 'claude-sonnet-4-20250514';
+
+    // Use injected services or defaults (Dependency Inversion)
+    const s = config.services || {};
+    this.deps = {
+      getModel: s.getModel || defaultGetModel,
+      calculateCost: s.calculateCost || defaultCalculateCost,
+      resolveKey: s.resolveKey || defaultResolveKey,
+      checkCredits: s.checkCredits || defaultCheckCredits,
+      checkSpendingCap: s.checkSpendingCap || defaultCheckSpendingCap,
+      deductCredits: s.deductCredits || defaultDeductCredits,
+      logUsage: s.logUsage || defaultLogUsage,
+      getAdapter: s.getAdapter || defaultGetAdapter,
+      retryConfig: s.retryConfig || DEFAULT_RETRY_CONFIG,
+    };
   }
 
   /**
@@ -158,14 +107,14 @@ class AIClientImpl implements AIClient {
 
     try {
       // Resolve the model info
-      const model = await getModel(modelId, this.supabase);
+      const model = await this.deps.getModel(modelId, this.supabase);
 
       // Detect provider from model registry
       const provider = model.provider as 'anthropic' | 'openai' | 'openrouter';
       detectedProvider = provider; // Store for error logging
 
       // Resolve API key for the detected provider
-      const { key, source } = await resolveKey(params.userId, provider, this.supabase);
+      const { key, source } = await this.deps.resolveKey(params.userId, provider, this.supabase);
 
       // Check credits and spending caps BEFORE API call (managed keys only)
       if (source === 'managed') {
@@ -174,30 +123,30 @@ class AIClientImpl implements AIClient {
           sum + (typeof msg.content === 'string' ? msg.content.length / 4 : 100), 0
         );
         const estimatedOutputTokens = params.maxTokens || model.maxOutputTokens || 1000;
-        const estimatedCost = calculateCost(model, estimatedInputTokens, estimatedOutputTokens);
+        const estimatedCost = this.deps.calculateCost(model, estimatedInputTokens, estimatedOutputTokens);
 
         // Check both credits balance and spending caps
-        await checkCredits(params.userId, estimatedCost, this.supabase);
-        await checkSpendingCap(params.userId, estimatedCost, this.supabase);
+        await this.deps.checkCredits(params.userId, estimatedCost, this.supabase);
+        await this.deps.checkSpendingCap(params.userId, estimatedCost, this.supabase);
       }
 
       // Provider-specific API call via adapter
-      const adapter = getAdapter(provider);
+      const adapter = this.deps.getAdapter(provider);
       const client = adapter.createClient(key);
       const request = adapter.buildRequest(modelId, model, params);
 
       const response = await retryWithBackoff(
         () => adapter.executeChat(client, request),
-        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+        this.deps.retryConfig
       );
 
       const { content, tokensIn, tokensOut } = adapter.parseChatResponse(response);
 
       const latencyMs = Date.now() - startTime;
-      const costUsd = calculateCost(model, tokensIn, tokensOut);
+      const costUsd = this.deps.calculateCost(model, tokensIn, tokensOut);
 
       // Log usage (fire-and-forget)
-      logUsage({
+      this.deps.logUsage({
         userId: params.userId,
         appId: this.appId,
         featureId: params.featureId,
@@ -214,7 +163,7 @@ class AIClientImpl implements AIClient {
 
       // Deduct credits after successful call (managed keys only, fire-and-forget)
       if (source === 'managed') {
-        void Promise.resolve(deductCredits(params.userId, costUsd, this.supabase))
+        void Promise.resolve(this.deps.deductCredits(params.userId, costUsd, this.supabase))
           .then(() => {})
           .catch((err) => console.warn('Failed to deduct credits:', err));
       }
@@ -233,7 +182,7 @@ class AIClientImpl implements AIClient {
       const latencyMs = Date.now() - startTime;
       const errorCode = classifyError(error);
 
-      logUsage({
+      this.deps.logUsage({
         userId: params.userId,
         appId: this.appId,
         featureId: params.featureId,
@@ -265,22 +214,22 @@ class AIClientImpl implements AIClient {
 
     try {
       // Resolve the model info
-      const model = await getModel(modelId, this.supabase);
+      const model = await this.deps.getModel(modelId, this.supabase);
 
       // Detect provider
       const provider = model.provider as 'anthropic' | 'openai' | 'openrouter';
 
       // Resolve API key
-      const { key, source } = await resolveKey(params.userId, provider, this.supabase);
+      const { key, source } = await this.deps.resolveKey(params.userId, provider, this.supabase);
 
       // Provider-specific streaming via adapter
-      const adapter = getAdapter(provider);
+      const adapter = this.deps.getAdapter(provider);
       const client = adapter.createClient(key);
       const request = adapter.buildStreamRequest(modelId, model, params);
 
       const stream = await retryWithBackoff(
         () => adapter.executeStream(client, request),
-        { maxRetries: 3, baseDelayMs: 100, jitterFactor: 0.1 }
+        this.deps.retryConfig
       );
 
       // Yield start_stream chunk
@@ -317,7 +266,7 @@ class AIClientImpl implements AIClient {
       }
 
       const latencyMs = Date.now() - startTime;
-      const costUsd = calculateCost(model, tokensIn, tokensOut);
+      const costUsd = this.deps.calculateCost(model, tokensIn, tokensOut);
 
       // Yield stop_stream chunk with final token counts
       yield {
@@ -331,7 +280,7 @@ class AIClientImpl implements AIClient {
       };
 
       // Log usage on successful stream completion (fire-and-forget)
-      logUsage({
+      this.deps.logUsage({
         userId: params.userId,
         appId: this.appId,
         featureId: params.featureId,
@@ -351,13 +300,13 @@ class AIClientImpl implements AIClient {
       let detectedProvider = 'unknown';
 
       try {
-        const model = await getModel(modelId, this.supabase);
+        const model = await this.deps.getModel(modelId, this.supabase);
         detectedProvider = model.provider;
       } catch {
         // If we can't resolve the model, use 'unknown'
       }
 
-      logUsage({
+      this.deps.logUsage({
         userId: params.userId,
         appId: this.appId,
         featureId: params.featureId,

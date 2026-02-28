@@ -1,17 +1,16 @@
 """
 Provider adapters for LLM API calls
 
-Each adapter handles SDK-specific details: client creation, request building,
-response parsing, and streaming. OpenRouter extends OpenAI since it uses the
-same SDK with a different base URL.
+SOLID principles applied:
+- Interface Segregation: ChatProvider and StreamProvider are separate ABCs
+- Liskov Substitution: OpenRouterAdapter uses composition, not inheritance
+- Open/Closed: New providers can be registered via register_adapter()
 
 Mirrors the TypeScript version at packages/ai-core/src/providers.ts
 """
 
-import time
-import random
 from abc import ABC, abstractmethod
-from typing import Any, Iterator
+from typing import Any
 
 from anthropic import Anthropic
 from openai import OpenAI
@@ -37,8 +36,8 @@ class ChunkUsage:
         self.tokens_out = tokens_out
 
 
-class ProviderAdapter(ABC):
-    """Abstract base class for provider adapters"""
+class ChatProvider(ABC):
+    """Chat-only provider capabilities (Interface Segregation)"""
 
     @abstractmethod
     def create_client(self, api_key: str) -> Any:
@@ -55,6 +54,10 @@ class ProviderAdapter(ABC):
     @abstractmethod
     def parse_chat_response(self, response: Any) -> ChatCallResult:
         """Parse a non-streaming response into content and usage"""
+
+
+class StreamProvider(ABC):
+    """Streaming provider capabilities (Interface Segregation)"""
 
     @abstractmethod
     def build_stream_request(self, model_id: str, model: ModelInfo, params: ChatParams) -> dict:
@@ -76,6 +79,11 @@ class ProviderAdapter(ABC):
     def get_final_usage(self, stream: Any) -> dict[str, int] | None:
         """Get final authoritative usage after stream completes.
         Returns dict with 'tokens_in' and 'tokens_out', or None."""
+
+
+class ProviderAdapter(ChatProvider, StreamProvider):
+    """Full provider adapter combining chat and streaming"""
+    pass
 
 
 class AnthropicAdapter(ProviderAdapter):
@@ -227,8 +235,17 @@ class OpenAIAdapter(ProviderAdapter):
         return None
 
 
-class OpenRouterAdapter(OpenAIAdapter):
-    """Adapter for OpenRouter API (extends OpenAI with custom base URL)"""
+class OpenRouterAdapter(ProviderAdapter):
+    """
+    OpenRouter adapter using composition instead of inheritance (Liskov Substitution).
+
+    OpenRouter uses the OpenAI SDK with a different base URL.
+    Rather than extending OpenAIAdapter (which would change foundational behavior
+    and violate LSP), we delegate to an internal OpenAIAdapter for shared logic.
+    """
+
+    def __init__(self):
+        self._delegate = OpenAIAdapter()
 
     def create_client(self, api_key: str) -> Any:
         return OpenAI(
@@ -236,8 +253,32 @@ class OpenRouterAdapter(OpenAIAdapter):
             base_url='https://openrouter.ai/api/v1',
         )
 
+    def build_request(self, model_id: str, model: ModelInfo, params: ChatParams) -> dict:
+        return self._delegate.build_request(model_id, model, params)
 
-# Adapter registry
+    def execute_chat(self, client: Any, request: dict) -> Any:
+        return self._delegate.execute_chat(client, request)
+
+    def parse_chat_response(self, response: Any) -> ChatCallResult:
+        return self._delegate.parse_chat_response(response)
+
+    def build_stream_request(self, model_id: str, model: ModelInfo, params: ChatParams) -> dict:
+        return self._delegate.build_stream_request(model_id, model, params)
+
+    def execute_stream(self, client: Any, request: dict) -> Any:
+        return self._delegate.execute_stream(client, request)
+
+    def parse_stream_chunk(self, chunk: Any) -> str | None:
+        return self._delegate.parse_stream_chunk(chunk)
+
+    def get_chunk_usage(self, chunk: Any) -> ChunkUsage | None:
+        return self._delegate.get_chunk_usage(chunk)
+
+    def get_final_usage(self, stream: Any) -> dict[str, int] | None:
+        return self._delegate.get_final_usage(stream)
+
+
+# Mutable adapter registry (Open/Closed principle)
 _adapters: dict[str, ProviderAdapter] = {
     'anthropic': AnthropicAdapter(),
     'openai': OpenAIAdapter(),
@@ -253,80 +294,11 @@ def get_adapter(provider: str) -> ProviderAdapter:
     return adapter
 
 
-# --- Retry Logic ---
-
-
-def is_retryable_error(error: Exception) -> bool:
-    """Determine if an error is retryable (429 rate limit or 5xx server errors)"""
-    status = getattr(error, 'status_code', None) or getattr(error, 'status', None)
-    if status == 429:
-        return True
-    if status and status >= 500:
-        return True
-    return False
-
-
-def calculate_backoff_delay(attempt: int, base_delay_ms: float, jitter_factor: float) -> float:
-    """Calculate exponential backoff delay with jitter (in seconds)"""
-    exponential_delay = (2 ** attempt) * base_delay_ms
-    jitter = random.random() * jitter_factor * exponential_delay
-    return (exponential_delay + jitter) / 1000  # Convert ms to seconds
-
-
-def retry_with_backoff(
-    operation,
-    max_retries: int = 3,
-    base_delay_ms: float = 100,
-    jitter_factor: float = 0.1,
-):
+def register_adapter(provider: str, adapter: ProviderAdapter) -> None:
     """
-    Execute an operation with retry logic using exponential backoff.
+    Register a custom provider adapter (Open/Closed principle).
 
-    Args:
-        operation: Callable that performs the operation
-        max_retries: Maximum number of retry attempts
-        base_delay_ms: Base delay in milliseconds
-        jitter_factor: Jitter factor for randomizing delay
-
-    Returns:
-        Result of the operation
-
-    Raises:
-        The last error if all retries are exhausted
+    Allows extending the system with new providers without modifying
+    existing adapter code.
     """
-    last_error = None
-
-    for attempt in range(max_retries + 1):
-        try:
-            return operation()
-        except Exception as error:
-            last_error = error
-
-            if not is_retryable_error(error):
-                raise
-
-            if attempt == max_retries:
-                raise
-
-            delay = calculate_backoff_delay(attempt, base_delay_ms, jitter_factor)
-            time.sleep(delay)
-
-    # Should never reach here, but just in case
-    raise last_error
-
-
-# --- Error Classification ---
-
-
-def classify_error(error: Exception) -> str:
-    """Classify a provider error by HTTP status code"""
-    status = getattr(error, 'status_code', None) or getattr(error, 'status', None)
-    if status in (401, 403):
-        return 'AUTHENTICATION_ERROR'
-    if status == 429:
-        return 'RATE_LIMIT'
-    if status == 400:
-        return 'INVALID_REQUEST'
-    if status and status >= 500:
-        return 'PROVIDER_ERROR'
-    return 'UNKNOWN'
+    _adapters[provider] = adapter

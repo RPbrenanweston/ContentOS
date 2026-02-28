@@ -102,3 +102,30 @@ export class AuthenticationError extends ProviderError {
     Object.setPrototypeOf(this, AuthenticationError.prototype);
   }
 }
+
+/**
+ * Classify a provider error by HTTP status code
+ *
+ * Extracted from client.ts for Single Responsibility:
+ * error classification belongs with error types, not client orchestration.
+ */
+export function classifyError(error: any): string {
+  if (error.status === 401 || error.status === 403) return 'AUTHENTICATION_ERROR';
+  if (error.status === 429) return 'RATE_LIMIT';
+  if (error.status === 400) return 'INVALID_REQUEST';
+  if (error.status && error.status >= 500) return 'PROVIDER_ERROR';
+  return 'PROVIDER_ERROR';
+}
+
+/**
+ * Re-throw an error as the appropriate typed error class
+ */
+export function throwTypedError(error: any, errorCode: string): never {
+  if (errorCode === 'AUTHENTICATION_ERROR') {
+    throw new AuthenticationError(error.message);
+  }
+  if (errorCode === 'RATE_LIMIT') {
+    throw new RateLimitError(error.message);
+  }
+  throw new ProviderError(error.message, errorCode, error.status, error);
+}
