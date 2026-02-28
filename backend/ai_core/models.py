@@ -29,7 +29,7 @@ def get_model(model_id: str, supabase: Any) -> ModelInfo:
     Raises:
         ModelNotFoundError: If model not found or not active
     """
-    response = supabase.table('ai_models').select('*').eq('id', model_id).eq('is_active', True).single().execute()
+    response = supabase.from_('ai_models').select('*').eq('id', model_id).eq('is_active', True).single().execute()
 
     if not response.data:
         raise ModelNotFoundError(model_id)
@@ -50,7 +50,7 @@ def get_default_model(supabase: Any) -> ModelInfo:
     Raises:
         ModelNotFoundError: If no default model configured
     """
-    response = supabase.table('ai_models').select('*').eq('is_default', True).eq('is_active', True).single().execute()
+    response = supabase.from_('ai_models').select('*').eq('is_default', True).eq('is_active', True).single().execute()
 
     if not response.data:
         raise ModelNotFoundError('default')

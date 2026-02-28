@@ -66,7 +66,7 @@ def log_usage(
             'created_at': datetime.now(timezone.utc).isoformat(),
         }
 
-        supabase.table('ai_usage_log').insert(data).execute()
+        supabase.from_('ai_usage_log').insert(data).execute()
     except Exception as e:
         # Fire-and-forget: log error but don't raise
         print(f'Error logging AI usage: {e}')
