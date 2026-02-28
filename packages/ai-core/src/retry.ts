@@ -12,6 +12,7 @@ export interface RetryConfig {
   maxRetries: number;
   baseDelayMs: number;
   jitterFactor: number;
+  isRetryable?: (error: unknown) => boolean;
 }
 
 export const DEFAULT_RETRY_CONFIG: RetryConfig = {
@@ -69,7 +70,8 @@ export async function retryWithBackoff<T>(
       lastError = error;
 
       // Non-retryable errors fail immediately
-      if (!isRetryableError(error)) {
+      const retryCheck = config.isRetryable || isRetryableError;
+      if (!retryCheck(error)) {
         throw error;
       }
 

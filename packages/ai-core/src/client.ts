@@ -40,6 +40,14 @@ import { classifyError, throwTypedError } from './errors';
 import { getAdapter as defaultGetAdapter, ProviderAdapter } from './providers';
 import { retryWithBackoff, RetryConfig, DEFAULT_RETRY_CONFIG } from './retry';
 
+/** Retry config for fire-and-forget DB operations like credit deduction */
+const DB_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 3,
+  baseDelayMs: 500,
+  jitterFactor: 0.2,
+  isRetryable: () => true,
+};
+
 /**
  * Injectable dependencies for AIClient (Dependency Inversion Principle).
  *
@@ -178,11 +186,12 @@ class AIClientImpl implements AIClient {
         supabase: this.supabase,
       });
 
-      // Deduct credits after successful call (managed keys only, fire-and-forget)
+      // Deduct credits after successful call (managed keys only, fire-and-forget with retry)
       if (source === 'managed') {
-        void Promise.resolve(this.deps.deductCredits(params.userId, costUsd, this.supabase))
-          .then(() => {})
-          .catch((err) => console.warn('Failed to deduct credits:', err));
+        void retryWithBackoff(
+          () => this.deps.deductCredits(params.userId, costUsd, this.supabase),
+          DB_RETRY_CONFIG,
+        ).catch((err) => console.warn('Failed to deduct credits after retries:', err));
       }
 
       return {
