@@ -40,11 +40,7 @@ export function encrypt(plaintext: string, encryptionKey: string): string {
 
   // Prepend IV and auth tag to ciphertext
   // Format: IV (12 bytes) + AuthTag (16 bytes) + Ciphertext
-  const combined = Buffer.concat([
-    iv,
-    authTag,
-    Buffer.from(ciphertext, 'base64')
-  ]);
+  const combined = Buffer.concat([iv, authTag, Buffer.from(ciphertext, 'base64')]);
 
   return combined.toString('base64');
 }
@@ -96,7 +92,7 @@ export async function saveKey(
   userId: string,
   provider: string,
   apiKey: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<void> {
   // Get encryption key from environment
   const encryptionKey = process.env.ENCRYPTION_KEY;
@@ -111,21 +107,19 @@ export async function saveKey(
   const keyHint = apiKey.length >= 4 ? `...${apiKey.slice(-4)}` : apiKey;
 
   // Upsert to database (handles duplicate user+provider)
-  const { error } = await supabase
-    .from('ai_api_keys')
-    .upsert(
-      {
-        user_id: userId,
-        provider,
-        encrypted_key: encryptedKey,
-        key_hint: keyHint,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      },
-      {
-        onConflict: 'user_id,provider',
-      }
-    );
+  const { error } = await supabase.from('ai_api_keys').upsert(
+    {
+      user_id: userId,
+      provider,
+      encrypted_key: encryptedKey,
+      key_hint: keyHint,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    },
+    {
+      onConflict: 'user_id,provider',
+    },
+  );
 
   if (error) {
     throw new Error(`Failed to save API key: ${error.message}`);
@@ -140,7 +134,7 @@ export async function saveKey(
 export async function deleteKey(
   userId: string,
   provider: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<void> {
   const { error } = await supabase
     .from('ai_api_keys')
@@ -233,7 +227,7 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
 export async function resolveKey(
   userId: string,
   provider: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<ResolvedKey> {
   // Check for active BYOK key
   const { data: userKey, error } = await supabase
@@ -254,16 +248,18 @@ export async function resolveKey(
     const decryptedKey = decrypt(userKey.encrypted_key, encryptionKey);
 
     // Update last_used_at timestamp (fire-and-forget)
-    void Promise.resolve().then(async () => {
-      await supabase
-        .from('ai_api_keys')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('user_id', userId)
-        .eq('provider', provider)
-        .eq('is_active', true);
-    }).catch((updateError) => {
-      console.warn('Failed to update last_used_at for BYOK key:', updateError);
-    });
+    void Promise.resolve()
+      .then(async () => {
+        await supabase
+          .from('ai_api_keys')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .eq('provider', provider)
+          .eq('is_active', true);
+      })
+      .catch((updateError) => {
+        console.warn('Failed to update last_used_at for BYOK key:', updateError);
+      });
 
     return {
       key: decryptedKey,

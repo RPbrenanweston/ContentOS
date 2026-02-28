@@ -97,7 +97,7 @@ describe('Stripe Checkout', () => {
         successUrl: 'https://app.example.com/success',
         cancelUrl: 'https://app.example.com/cancel',
         supabase: mockSupabase,
-      })
+      }),
     ).rejects.toThrow('Invalid amount: 15. Must be one of: 5, 10, 25, 50');
   });
 
@@ -111,7 +111,7 @@ describe('Stripe Checkout', () => {
         successUrl: 'https://app.example.com/success',
         cancelUrl: 'https://app.example.com/cancel',
         supabase: mockSupabase,
-      })
+      }),
     ).rejects.toThrow('STRIPE_SECRET_KEY environment variable not set');
   });
 

@@ -20,7 +20,7 @@ interface OpenRouterModel {
   id: string;
   name: string;
   pricing: {
-    prompt: string;  // per-token string like "0.000003"
+    prompt: string; // per-token string like "0.000003"
     completion: string;
   };
   context_length: number;
@@ -59,9 +59,7 @@ function safeParseFloat(value: string | number | null | undefined): number {
  * @returns Summary of sync operation
  * @throws Error on network failure or API errors
  */
-export async function syncOpenRouterModels(
-  supabase: SupabaseClient
-): Promise<SyncResult> {
+export async function syncOpenRouterModels(supabase: SupabaseClient): Promise<SyncResult> {
   const result: SyncResult = {
     inserted: 0,
     updated: 0,
@@ -73,12 +71,10 @@ export async function syncOpenRouterModels(
     const response = await fetch('https://openrouter.ai/api/v1/models');
 
     if (!response.ok) {
-      throw new Error(
-        `OpenRouter API error: ${response.status} ${response.statusText}`
-      );
+      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`);
     }
 
-    const apiData = await response.json() as OpenRouterModelsResponse;
+    const apiData = (await response.json()) as OpenRouterModelsResponse;
 
     // Get current OpenRouter models from database
     const { data: existingModels, error: fetchError } = await supabase
@@ -90,7 +86,7 @@ export async function syncOpenRouterModels(
       throw new Error(`Failed to fetch existing models: ${fetchError.message}`);
     }
 
-    const existingModelIds = new Set((existingModels || []).map(m => m.id));
+    const existingModelIds = new Set((existingModels || []).map((m) => m.id));
     const apiModelIds = new Set<string>();
 
     // Process each model from the API
@@ -108,8 +104,7 @@ export async function syncOpenRouterModels(
 
       // Parse context and output limits
       const maxContextTokens = model.context_length || 8192;
-      const maxOutputTokens =
-        model.top_provider?.max_completion_tokens || 8192; // Conservative fallback
+      const maxOutputTokens = model.top_provider?.max_completion_tokens || 8192; // Conservative fallback
 
       // Prepare model row
       const modelRow = {
@@ -120,8 +115,8 @@ export async function syncOpenRouterModels(
         cost_per_output_token: costPerOutputToken,
         max_context_tokens: maxContextTokens,
         max_output_tokens: maxOutputTokens,
-        supports_streaming: true,  // OpenRouter supports streaming for all models
-        supports_tools: true,      // OpenRouter supports tools via OpenAI format
+        supports_streaming: true, // OpenRouter supports streaming for all models
+        supports_tools: true, // OpenRouter supports tools via OpenAI format
         is_default: false,
         is_active: true,
       };
@@ -145,9 +140,7 @@ export async function syncOpenRouterModels(
     }
 
     // Deactivate models that are no longer in the API response
-    const modelsToDeactivate = Array.from(existingModelIds).filter(
-      id => !apiModelIds.has(id)
-    );
+    const modelsToDeactivate = Array.from(existingModelIds).filter((id) => !apiModelIds.has(id));
 
     if (modelsToDeactivate.length > 0) {
       const { error: deactivateError } = await supabase
@@ -163,7 +156,6 @@ export async function syncOpenRouterModels(
     }
 
     return result;
-
   } catch (error) {
     // Network failures, rate limits, or unexpected errors
     if (error instanceof Error) {

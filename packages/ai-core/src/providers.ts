@@ -45,7 +45,7 @@ export interface StreamProvider {
 export interface ProviderAdapter extends ChatProvider, StreamProvider {}
 
 function formatOpenAITools(tools: Tool[]) {
-  return tools.map(tool => ({
+  return tools.map((tool) => ({
     type: 'function' as const,
     function: {
       name: tool.name,
@@ -61,7 +61,7 @@ class AnthropicAdapter implements ProviderAdapter {
   }
 
   buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
-    const messages = params.messages.map(msg => ({
+    const messages = params.messages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }));
@@ -74,7 +74,7 @@ class AnthropicAdapter implements ProviderAdapter {
     };
 
     if (params.tools && params.tools.length > 0) {
-      request.tools = params.tools.map(tool => ({
+      request.tools = params.tools.map((tool) => ({
         name: tool.name,
         description: tool.description,
         input_schema: tool.input_schema,
@@ -141,7 +141,7 @@ class OpenAIAdapter implements ProviderAdapter {
   }
 
   buildRequest(modelId: string, model: ModelInfo, params: ChatParams): any {
-    const messages = params.messages.map(msg => ({
+    const messages = params.messages.map((msg) => ({
       role: msg.role as 'user' | 'assistant',
       content: msg.content,
     }));

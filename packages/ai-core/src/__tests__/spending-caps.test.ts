@@ -24,23 +24,24 @@ describe('Spending Cap Enforcement', () => {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
           eq: vi.fn(() => ({
-            is: vi.fn(() => ({  // Add .is() support for user-level queries
+            is: vi.fn(() => ({
+              // Add .is() support for user-level queries
               lte: vi.fn(() => ({
                 gt: vi.fn(() => ({
-                  maybeSingle: mockMaybeSingle
-                }))
-              }))
+                  maybeSingle: mockMaybeSingle,
+                })),
+              })),
             })),
             lte: vi.fn(() => ({
               gt: vi.fn(() => ({
-                maybeSingle: mockMaybeSingle
-              }))
+                maybeSingle: mockMaybeSingle,
+              })),
             })),
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null })  // For getUserOrgId
-          }))
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }), // For getUserOrgId
+          })),
         })),
-        update: mockUpdate
-      }))
+        update: mockUpdate,
+      })),
     };
   });
 
@@ -49,12 +50,10 @@ describe('Spending Cap Enforcement', () => {
       // Mock: no balance row exists (no caps)
       mockMaybeSingle.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.50, mockSupabase)
-      ).resolves.toBeUndefined();
+      await expect(checkSpendingCap('user-123', 0.5, mockSupabase)).resolves.toBeUndefined();
     });
 
     it('AC2: allows call when balance row exists but no caps set', async () => {
@@ -64,14 +63,12 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '5.0000',
           credits_remaining_usd: '10.0000',
           spending_cap_usd: null,
-          admin_cap_usd: null
+          admin_cap_usd: null,
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.50, mockSupabase)
-      ).resolves.toBeUndefined();
+      await expect(checkSpendingCap('user-123', 0.5, mockSupabase)).resolves.toBeUndefined();
     });
 
     it('AC3: enforces user cap when only user cap set', async () => {
@@ -81,14 +78,14 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '9.6000',
           credits_remaining_usd: '0.4000',
           spending_cap_usd: '10.0000',
-          admin_cap_usd: null
+          admin_cap_usd: null,
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.50, mockSupabase)
-      ).rejects.toThrow(SpendingCapExceededError);
+      await expect(checkSpendingCap('user-123', 0.5, mockSupabase)).rejects.toThrow(
+        SpendingCapExceededError,
+      );
     });
 
     it('AC4: allows call when under user cap', async () => {
@@ -98,14 +95,12 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '9.0000',
           credits_remaining_usd: '1.0000',
           spending_cap_usd: '10.0000',
-          admin_cap_usd: null
+          admin_cap_usd: null,
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.50, mockSupabase)
-      ).resolves.toBeUndefined();
+      await expect(checkSpendingCap('user-123', 0.5, mockSupabase)).resolves.toBeUndefined();
     });
 
     it('AC5: enforces admin cap when only admin cap set', async () => {
@@ -115,14 +110,14 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '4.8000',
           credits_remaining_usd: '0.2000',
           spending_cap_usd: null,
-          admin_cap_usd: '5.0000'
+          admin_cap_usd: '5.0000',
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.30, mockSupabase)
-      ).rejects.toThrow(SpendingCapExceededError);
+      await expect(checkSpendingCap('user-123', 0.3, mockSupabase)).rejects.toThrow(
+        SpendingCapExceededError,
+      );
     });
 
     it('AC6: lower of user and admin cap wins (user lower)', async () => {
@@ -133,14 +128,14 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '4.8000',
           credits_remaining_usd: '0.2000',
           spending_cap_usd: '5.0000',
-          admin_cap_usd: '10.0000'
+          admin_cap_usd: '10.0000',
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.30, mockSupabase)
-      ).rejects.toThrow(SpendingCapExceededError);
+      await expect(checkSpendingCap('user-123', 0.3, mockSupabase)).rejects.toThrow(
+        SpendingCapExceededError,
+      );
     });
 
     it('AC7: lower of user and admin cap wins (admin lower)', async () => {
@@ -151,14 +146,14 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '4.8000',
           credits_remaining_usd: '0.2000',
           spending_cap_usd: '10.0000',
-          admin_cap_usd: '5.0000'
+          admin_cap_usd: '5.0000',
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.30, mockSupabase)
-      ).rejects.toThrow(SpendingCapExceededError);
+      await expect(checkSpendingCap('user-123', 0.3, mockSupabase)).rejects.toThrow(
+        SpendingCapExceededError,
+      );
     });
 
     it('AC8: allows call when both caps set and under limit', async () => {
@@ -169,14 +164,12 @@ describe('Spending Cap Enforcement', () => {
           credits_used_usd: '3.0000',
           credits_remaining_usd: '2.0000',
           spending_cap_usd: '10.0000',
-          admin_cap_usd: '5.0000'
+          admin_cap_usd: '5.0000',
         },
-        error: null
+        error: null,
       });
 
-      await expect(
-        checkSpendingCap('user-123', 0.50, mockSupabase)
-      ).resolves.toBeUndefined();
+      await expect(checkSpendingCap('user-123', 0.5, mockSupabase)).resolves.toBeUndefined();
     });
   });
 
@@ -187,17 +180,17 @@ describe('Spending Cap Enforcement', () => {
         data: {
           id: 'balance-123',
           credits_used_usd: '5.0000',
-          credits_remaining_usd: '10.0000'
+          credits_remaining_usd: '10.0000',
         },
-        error: null
+        error: null,
       });
 
-      await deductCredits('user-123', 0.50, mockSupabase);
+      await deductCredits('user-123', 0.5, mockSupabase);
 
       // Verify update was called with incremented credits_used_usd
       expect(mockUpdate).toHaveBeenCalledWith({
-        credits_used_usd: 5.50,
-        credits_remaining_usd: 9.50
+        credits_used_usd: 5.5,
+        credits_remaining_usd: 9.5,
       });
     });
 
@@ -207,17 +200,17 @@ describe('Spending Cap Enforcement', () => {
         data: {
           id: 'balance-123',
           credits_used_usd: '5.0000',
-          credits_remaining_usd: '10.0000'
+          credits_remaining_usd: '10.0000',
         },
-        error: null
+        error: null,
       });
 
-      await deductCredits('user-123', 0.50, mockSupabase);
+      await deductCredits('user-123', 0.5, mockSupabase);
 
       // Verify update was called with decremented credits_remaining_usd
       expect(mockUpdate).toHaveBeenCalledWith({
-        credits_used_usd: 5.50,
-        credits_remaining_usd: 9.50
+        credits_used_usd: 5.5,
+        credits_remaining_usd: 9.5,
       });
     });
 
@@ -227,17 +220,17 @@ describe('Spending Cap Enforcement', () => {
         data: {
           id: 'balance-123',
           credits_used_usd: '9.7000',
-          credits_remaining_usd: '0.3000'
+          credits_remaining_usd: '0.3000',
         },
-        error: null
+        error: null,
       });
 
-      await deductCredits('user-123', 0.50, mockSupabase);
+      await deductCredits('user-123', 0.5, mockSupabase);
 
       // Verify credits_remaining_usd is floored at 0
       expect(mockUpdate).toHaveBeenCalledWith({
-        credits_used_usd: 10.20,
-        credits_remaining_usd: 0
+        credits_used_usd: 10.2,
+        credits_remaining_usd: 0,
       });
     });
 
@@ -245,13 +238,11 @@ describe('Spending Cap Enforcement', () => {
       // Mock: no balance row exists
       mockMaybeSingle.mockResolvedValue({
         data: null,
-        error: null
+        error: null,
       });
 
       // Should not throw, just return
-      await expect(
-        deductCredits('user-123', 0.50, mockSupabase)
-      ).resolves.toBeUndefined();
+      await expect(deductCredits('user-123', 0.5, mockSupabase)).resolves.toBeUndefined();
 
       // Verify update was NOT called
       expect(mockUpdate).not.toHaveBeenCalled();

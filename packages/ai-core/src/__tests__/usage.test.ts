@@ -148,10 +148,7 @@ describe('usage', () => {
 
       return new Promise((resolve) => {
         setTimeout(() => {
-          expect(consoleWarnSpy).toHaveBeenCalledWith(
-            'Failed to log AI usage:',
-            testError
-          );
+          expect(consoleWarnSpy).toHaveBeenCalledWith('Failed to log AI usage:', testError);
           consoleWarnSpy.mockRestore();
           resolve(undefined);
         }, 10);

@@ -30,24 +30,22 @@ export interface LogUsageParams {
  */
 export function logUsage(params: LogUsageParams): void {
   // Fire-and-forget: log but don't wait
-  const insertPromise = params.supabase
-    .from('ai_usage_log')
-    .insert({
-      user_id: params.userId,
-      org_id: params.orgId || null,
-      app_id: params.appId,
-      feature_id: params.featureId,
-      provider: params.provider,
-      model: params.model,
-      tokens_in: params.tokensIn,
-      tokens_out: params.tokensOut,
-      cost_usd: params.costUsd,
-      latency_ms: params.latencyMs,
-      success: params.success,
-      error_code: params.errorCode || null,
-      key_source: params.keySource,
-      created_at: new Date().toISOString(),
-    });
+  const insertPromise = params.supabase.from('ai_usage_log').insert({
+    user_id: params.userId,
+    org_id: params.orgId || null,
+    app_id: params.appId,
+    feature_id: params.featureId,
+    provider: params.provider,
+    model: params.model,
+    tokens_in: params.tokensIn,
+    tokens_out: params.tokensOut,
+    cost_usd: params.costUsd,
+    latency_ms: params.latencyMs,
+    success: params.success,
+    error_code: params.errorCode || null,
+    key_source: params.keySource,
+    created_at: new Date().toISOString(),
+  });
 
   // Handle promise but don't wait for it
   void Promise.resolve(insertPromise)

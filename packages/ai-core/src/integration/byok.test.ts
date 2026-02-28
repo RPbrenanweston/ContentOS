@@ -100,7 +100,7 @@ describe('BYOK Integration Tests', () => {
 
     // Tamper with the ciphertext
     const buffer = Buffer.from(encrypted, 'base64');
-    buffer[buffer.length - 1] ^= 0xFF; // Flip last byte
+    buffer[buffer.length - 1] ^= 0xff; // Flip last byte
     const tampered = buffer.toString('base64');
 
     // Decryption should fail (auth tag validation)

@@ -80,12 +80,14 @@ export function createMockCreditBalance(
  *   // Access the raw from() mock for assertions:
  *   expect(mock.from).toHaveBeenCalledWith('ai_usage_log');
  */
-export function createMockSupabase(options: {
-  model?: Record<string, unknown> | null;
-  creditBalance?: Record<string, unknown> | null;
-  apiKey?: Record<string, unknown> | null;
-  orgMember?: Record<string, unknown> | null;
-} = {}) {
+export function createMockSupabase(
+  options: {
+    model?: Record<string, unknown> | null;
+    creditBalance?: Record<string, unknown> | null;
+    apiKey?: Record<string, unknown> | null;
+    orgMember?: Record<string, unknown> | null;
+  } = {},
+) {
   const {
     model = createMockModel(),
     creditBalance = createMockCreditBalance(),
@@ -108,9 +110,7 @@ export function createMockSupabase(options: {
         upsert: vi.fn().mockReturnValue({
           execute: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
-        update: vi.fn().mockReturnValue(
-          buildEqChain({ data: null, error: null }),
-        ),
+        update: vi.fn().mockReturnValue(buildEqChain({ data: null, error: null })),
       };
     }
 

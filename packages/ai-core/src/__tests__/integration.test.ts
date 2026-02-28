@@ -12,15 +12,15 @@ import Anthropic from '@anthropic-ai/sdk';
 vi.mock('@anthropic-ai/sdk', () => {
   const mockMessages = {
     create: vi.fn(),
-    stream: vi.fn()
+    stream: vi.fn(),
   };
 
   return {
     default: vi.fn(() => ({
-      messages: mockMessages
+      messages: mockMessages,
     })),
     // Export mock messages for test access
-    __mockMessages: mockMessages
+    __mockMessages: mockMessages,
   };
 });
 
@@ -46,15 +46,15 @@ describe('Integration Tests - AI Core', () => {
       content: [
         {
           type: 'text',
-          text: 'Test response'
-        }
+          text: 'Test response',
+        },
       ],
       model: 'claude-sonnet-4-20250514',
       stop_reason: 'end_turn',
       usage: {
         input_tokens: 10,
-        output_tokens: 20
-      }
+        output_tokens: 20,
+      },
     });
 
     mockMessagesStream = vi.fn(() => ({
@@ -62,22 +62,22 @@ describe('Integration Tests - AI Core', () => {
         yield {
           type: 'content_block_start',
           index: 0,
-          content_block: { type: 'text', text: '' }
+          content_block: { type: 'text', text: '' },
         };
         yield {
           type: 'content_block_delta',
           index: 0,
-          delta: { type: 'text_delta', text: 'Hello' }
+          delta: { type: 'text_delta', text: 'Hello' },
         };
         yield {
           type: 'content_block_delta',
           index: 0,
-          delta: { type: 'text_delta', text: ' World' }
+          delta: { type: 'text_delta', text: ' World' },
         };
         yield {
           type: 'message_delta',
           delta: { stop_reason: 'end_turn' },
-          usage: { output_tokens: 2 }
+          usage: { output_tokens: 2 },
         };
       },
       async finalMessage() {
@@ -87,17 +87,17 @@ describe('Integration Tests - AI Core', () => {
           role: 'assistant',
           content: [{ type: 'text', text: 'Hello World' }],
           model: 'claude-sonnet-4-20250514',
-          usage: { input_tokens: 10, output_tokens: 2 }
+          usage: { input_tokens: 10, output_tokens: 2 },
         };
-      }
+      },
     }));
 
     // Configure Anthropic constructor mock to return these methods
     AnthropicMock.mockImplementation(() => ({
       messages: {
         create: mockMessagesCreate,
-        stream: mockMessagesStream
-      }
+        stream: mockMessagesStream,
+      },
     }));
 
     // Mock Supabase client
@@ -119,12 +119,12 @@ describe('Integration Tests - AI Core', () => {
                     supports_streaming: true,
                     supports_tools: true,
                     is_default: true,
-                    is_active: true
+                    is_active: true,
                   },
-                  error: null
-                })
-              }))
-            }))
+                  error: null,
+                }),
+              })),
+            })),
           };
         }
 
@@ -137,12 +137,12 @@ describe('Integration Tests - AI Core', () => {
                   eq: vi.fn(() => ({
                     single: vi.fn().mockResolvedValue({
                       data: null,
-                      error: { message: 'No rows found' }
-                    })
-                  }))
-                }))
-              }))
-            }))
+                      error: { message: 'No rows found' },
+                    }),
+                  })),
+                })),
+              })),
+            })),
           };
         }
 
@@ -151,7 +151,7 @@ describe('Integration Tests - AI Core', () => {
             insert: vi.fn((data: any) => {
               usageLogInserts.push(data);
               return Promise.resolve({ data, error: null });
-            })
+            }),
           };
         }
 
@@ -162,10 +162,10 @@ describe('Integration Tests - AI Core', () => {
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({
                   data: null,
-                  error: null
-                })
-              }))
-            }))
+                  error: null,
+                }),
+              })),
+            })),
           };
         }
 
@@ -173,7 +173,8 @@ describe('Integration Tests - AI Core', () => {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                is: vi.fn(() => ({  // Add .is() support for user-level queries
+                is: vi.fn(() => ({
+                  // Add .is() support for user-level queries
                   lte: vi.fn(() => ({
                     gt: vi.fn(() => ({
                       maybeSingle: vi.fn().mockResolvedValue({
@@ -181,36 +182,36 @@ describe('Integration Tests - AI Core', () => {
                           credits_remaining_usd: '10.0000',
                           credits_used_usd: '0.0000',
                           period_start: new Date().toISOString(),
-                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         },
-                        error: null
-                      })
-                    }))
-                  }))
-                }))
-              }))
-            }))
+                        error: null,
+                      }),
+                    })),
+                  })),
+                })),
+              })),
+            })),
           };
         }
 
         return {
-          select: vi.fn(() => ({ data: [], error: null }))
+          select: vi.fn(() => ({ data: [], error: null })),
         };
-      })
+      }),
     } as unknown as SupabaseClient;
   });
 
   it('chat() call logs usage row to database', async () => {
     const client = createAIClient({
       supabaseClient: mockSupabase,
-      appId: 'test-app'
+      appId: 'test-app',
     });
 
     const result = await client.chat({
       userId: 'user123',
       featureId: 'test-feature',
       model: 'claude-sonnet-4-20250514',
-      messages: [{ role: 'user', content: 'Hello' }]
+      messages: [{ role: 'user', content: 'Hello' }],
     });
 
     // Wait for fire-and-forget logging to complete
@@ -240,14 +241,14 @@ describe('Integration Tests - AI Core', () => {
   it('chatStream() logs usage on completion', async () => {
     const client = createAIClient({
       supabaseClient: mockSupabase,
-      appId: 'test-app'
+      appId: 'test-app',
     });
 
     const stream = client.chatStream({
       userId: 'user456',
       featureId: 'test-streaming',
       model: 'claude-sonnet-4-20250514',
-      messages: [{ role: 'user', content: 'Stream test' }]
+      messages: [{ role: 'user', content: 'Stream test' }],
     });
 
     // Consume stream
@@ -285,17 +286,18 @@ describe('Integration Tests - AI Core', () => {
               eq: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({
                   data: null,
-                  error: null
-                })
-              }))
-            }))
+                  error: null,
+                }),
+              })),
+            })),
           };
         }
         if (table === 'ai_credit_balances') {
           return {
             select: vi.fn(() => ({
               eq: vi.fn(() => ({
-                is: vi.fn(() => ({  // Add .is() support
+                is: vi.fn(() => ({
+                  // Add .is() support
                   lte: vi.fn(() => ({
                     gt: vi.fn(() => ({
                       maybeSingle: vi.fn().mockResolvedValue({
@@ -303,25 +305,25 @@ describe('Integration Tests - AI Core', () => {
                           credits_remaining_usd: '0.0000',
                           credits_used_usd: '100.0000',
                           period_start: new Date().toISOString(),
-                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         },
-                        error: null
-                      })
-                    }))
-                  }))
-                }))
-              }))
-            }))
+                        error: null,
+                      }),
+                    })),
+                  })),
+                })),
+              })),
+            })),
           };
         }
         // Delegate to original mock for other tables
         return (mockSupabase.from as any)(table);
-      })
+      }),
     } as unknown as SupabaseClient;
 
     const client = createAIClient({
       supabaseClient: zeroBalanceSupabase,
-      appId: 'test-app'
+      appId: 'test-app',
     });
 
     await expect(
@@ -329,8 +331,8 @@ describe('Integration Tests - AI Core', () => {
         userId: 'user789',
         featureId: 'test-blocked',
         model: 'claude-sonnet-4-20250514',
-        messages: [{ role: 'user', content: 'This should fail' }]
-      })
+        messages: [{ role: 'user', content: 'This should fail' }],
+      }),
     ).rejects.toThrow('Insufficient credits');
   });
 
@@ -351,20 +353,20 @@ describe('Integration Tests - AI Core', () => {
         role: 'assistant',
         content: [{ type: 'text', text: 'Success after retries' }],
         model: 'claude-sonnet-4-20250514',
-        usage: { input_tokens: 5, output_tokens: 10 }
+        usage: { input_tokens: 5, output_tokens: 10 },
       };
     });
 
     const client = createAIClient({
       supabaseClient: mockSupabase,
-      appId: 'test-app'
+      appId: 'test-app',
     });
 
     const result = await client.chat({
       userId: 'user-retry',
       featureId: 'test-retry',
       model: 'claude-sonnet-4-20250514',
-      messages: [{ role: 'user', content: 'Retry test' }]
+      messages: [{ role: 'user', content: 'Retry test' }],
     });
 
     // Wait for logging

@@ -20,15 +20,8 @@ function safeParseFloat(value: string | number, fieldName: string): number {
 /**
  * Get a specific model by ID
  */
-export async function getModel(
-  modelId: string,
-  supabase: SupabaseClient
-): Promise<ModelInfo> {
-  const { data, error } = await supabase
-    .from('ai_models')
-    .select('*')
-    .eq('id', modelId)
-    .single();
+export async function getModel(modelId: string, supabase: SupabaseClient): Promise<ModelInfo> {
+  const { data, error } = await supabase.from('ai_models').select('*').eq('id', modelId).single();
 
   if (error || !data) {
     throw new ModelNotFoundError(modelId);
@@ -58,11 +51,7 @@ export async function getDefaultModel(supabase: SupabaseClient): Promise<ModelIn
 /**
  * Calculate cost for a model call
  */
-export function calculateCost(
-  model: ModelInfo,
-  tokensIn: number,
-  tokensOut: number
-): number {
+export function calculateCost(model: ModelInfo, tokensIn: number, tokensOut: number): number {
   const inputCost = tokensIn * model.costPerInputToken;
   const outputCost = tokensOut * model.costPerOutputToken;
   return inputCost + outputCost;

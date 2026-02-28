@@ -102,7 +102,8 @@ describe('OpenAI Provider Support', () => {
           return {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
-                is: vi.fn().mockReturnValue({  // Add .is() support
+                is: vi.fn().mockReturnValue({
+                  // Add .is() support
                   lte: vi.fn().mockReturnValue({
                     gt: vi.fn().mockReturnValue({
                       maybeSingle: vi.fn().mockResolvedValue({
@@ -110,7 +111,7 @@ describe('OpenAI Provider Support', () => {
                           credits_remaining_usd: '100.00',
                           credits_used_usd: '0.00',
                           period_start: new Date().toISOString(),
-                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                          period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         },
                         error: null,
                       }),
@@ -179,7 +180,7 @@ describe('OpenAI Provider Support', () => {
         messages: [{ role: 'user', content: 'Test message' }],
         temperature: 0.7,
         max_tokens: 100,
-      })
+      }),
     );
 
     // Verify response format
@@ -207,7 +208,7 @@ describe('OpenAI Provider Support', () => {
     });
 
     // Give time for fire-and-forget logging
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Verify usage was logged with correct provider
     expect(mockSupabase.from).toHaveBeenCalledWith('ai_usage_log');
@@ -263,7 +264,7 @@ describe('OpenAI Provider Support', () => {
             },
           },
         ],
-      })
+      }),
     );
   });
 });

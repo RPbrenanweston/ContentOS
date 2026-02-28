@@ -2,15 +2,24 @@
   "name": "shared-ai-layer",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "description": "Shared AI utility layer for LLM provider access, usage tracking, and billing",
   "scripts": {
     "test": "npm run test --workspace=packages/ai-core",
     "typecheck": "npm run typecheck --workspace=packages/ai-core",
-    "lint": "npm run typecheck --workspace=packages/ai-core"
+    "lint": "eslint packages/*/src/**/*.ts",
+    "lint:fix": "eslint --fix packages/*/src/**/*.ts",
+    "format": "prettier --write 'packages/*/src/**/*.ts'",
+    "format:check": "prettier --check 'packages/*/src/**/*.ts'"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.0.0",
+    "eslint": "^10.0.2",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.8.1",
     "typescript": "^5.5.0",
+    "typescript-eslint": "^8.56.1",
     "vitest": "^1.6.0"
   }
 }

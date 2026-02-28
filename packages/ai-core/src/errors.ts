@@ -72,7 +72,7 @@ export class ProviderError extends AIError {
     message: string,
     code: string = 'PROVIDER_ERROR',
     statusCode?: number,
-    originalError?: Error
+    originalError?: Error,
   ) {
     super(message, code, statusCode);
     this.name = 'ProviderError';

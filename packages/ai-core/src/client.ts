@@ -31,7 +31,11 @@ import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, ModelInfo 
 import { getModel as defaultGetModel, calculateCost as defaultCalculateCost } from './models';
 import { logUsage as defaultLogUsage, LogUsageParams } from './usage';
 import { resolveKey as defaultResolveKey, ResolvedKey } from './keys';
-import { checkCredits as defaultCheckCredits, checkSpendingCap as defaultCheckSpendingCap, deductCredits as defaultDeductCredits } from './billing';
+import {
+  checkCredits as defaultCheckCredits,
+  checkSpendingCap as defaultCheckSpendingCap,
+  deductCredits as defaultDeductCredits,
+} from './billing';
 import { classifyError, throwTypedError } from './errors';
 import { getAdapter as defaultGetAdapter, ProviderAdapter } from './providers';
 import { retryWithBackoff, RetryConfig, DEFAULT_RETRY_CONFIG } from './retry';
@@ -46,8 +50,16 @@ export interface AIClientDeps {
   getModel: (modelId: string, supabase: SupabaseClient) => Promise<ModelInfo>;
   calculateCost: (model: ModelInfo, tokensIn: number, tokensOut: number) => number;
   resolveKey: (userId: string, provider: string, supabase: SupabaseClient) => Promise<ResolvedKey>;
-  checkCredits: (userId: string, estimatedCost: number, supabase: SupabaseClient) => Promise<boolean>;
-  checkSpendingCap: (userId: string, estimatedCost: number, supabase: SupabaseClient) => Promise<void>;
+  checkCredits: (
+    userId: string,
+    estimatedCost: number,
+    supabase: SupabaseClient,
+  ) => Promise<boolean>;
+  checkSpendingCap: (
+    userId: string,
+    estimatedCost: number,
+    supabase: SupabaseClient,
+  ) => Promise<void>;
   deductCredits: (userId: string, cost: number, supabase: SupabaseClient) => Promise<void>;
   logUsage: (params: LogUsageParams) => void;
   getAdapter: (provider: string) => ProviderAdapter;
@@ -119,11 +131,16 @@ class AIClientImpl implements AIClient {
       // Check credits and spending caps BEFORE API call (managed keys only)
       if (source === 'managed') {
         // Estimate cost for pre-check (rough estimate based on input message length)
-        const estimatedInputTokens = params.messages.reduce((sum, msg) =>
-          sum + (typeof msg.content === 'string' ? msg.content.length / 4 : 100), 0
+        const estimatedInputTokens = params.messages.reduce(
+          (sum, msg) => sum + (typeof msg.content === 'string' ? msg.content.length / 4 : 100),
+          0,
         );
         const estimatedOutputTokens = params.maxTokens || model.maxOutputTokens || 1000;
-        const estimatedCost = this.deps.calculateCost(model, estimatedInputTokens, estimatedOutputTokens);
+        const estimatedCost = this.deps.calculateCost(
+          model,
+          estimatedInputTokens,
+          estimatedOutputTokens,
+        );
 
         // Check both credits balance and spending caps
         await this.deps.checkCredits(params.userId, estimatedCost, this.supabase);
@@ -137,7 +154,7 @@ class AIClientImpl implements AIClient {
 
       const response = await retryWithBackoff(
         () => adapter.executeChat(client, request),
-        this.deps.retryConfig
+        this.deps.retryConfig,
       );
 
       const { content, tokensIn, tokensOut } = adapter.parseChatResponse(response);
@@ -229,7 +246,7 @@ class AIClientImpl implements AIClient {
 
       const stream = await retryWithBackoff(
         () => adapter.executeStream(client, request),
-        this.deps.retryConfig
+        this.deps.retryConfig,
       );
 
       // Yield start_stream chunk
@@ -325,5 +342,4 @@ class AIClientImpl implements AIClient {
       throwTypedError(error, errorCode);
     }
   }
-
 }

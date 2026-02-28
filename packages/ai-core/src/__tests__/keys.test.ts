@@ -85,7 +85,7 @@ describe('resolveKey', () => {
     await resolveKey('user-123', 'anthropic', mockSupabase);
 
     // Wait for fire-and-forget update to complete
-    await new Promise(resolve => setTimeout(resolve, 50));
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     // Assert - update should have been called
     expect(mockSupabase.update).toHaveBeenCalled();
@@ -108,12 +108,12 @@ describe('resolveKey', () => {
     delete process.env.ENCRYPTION_KEY;
 
     // Act & Assert
-    await expect(
-      resolveKey('user-123', 'anthropic', mockSupabase)
-    ).rejects.toThrow(InvalidKeyError);
-    await expect(
-      resolveKey('user-123', 'anthropic', mockSupabase)
-    ).rejects.toThrow('ENCRYPTION_KEY environment variable not set');
+    await expect(resolveKey('user-123', 'anthropic', mockSupabase)).rejects.toThrow(
+      InvalidKeyError,
+    );
+    await expect(resolveKey('user-123', 'anthropic', mockSupabase)).rejects.toThrow(
+      'ENCRYPTION_KEY environment variable not set',
+    );
   });
 
   it('should throw InvalidKeyError when no managed key found', async () => {
@@ -127,12 +127,12 @@ describe('resolveKey', () => {
     delete process.env.ANTHROPIC_API_KEY;
 
     // Act & Assert
-    await expect(
-      resolveKey('user-123', 'anthropic', mockSupabase)
-    ).rejects.toThrow(InvalidKeyError);
-    await expect(
-      resolveKey('user-123', 'anthropic', mockSupabase)
-    ).rejects.toThrow('No API key found for provider: anthropic');
+    await expect(resolveKey('user-123', 'anthropic', mockSupabase)).rejects.toThrow(
+      InvalidKeyError,
+    );
+    await expect(resolveKey('user-123', 'anthropic', mockSupabase)).rejects.toThrow(
+      'No API key found for provider: anthropic',
+    );
   });
 
   it('should handle wrong encryption key gracefully', async () => {
@@ -152,12 +152,12 @@ describe('resolveKey', () => {
     process.env.ENCRYPTION_KEY = wrongKey;
 
     // Act & Assert
-    await expect(
-      resolveKey('user-123', 'anthropic', mockSupabase)
-    ).rejects.toThrow(InvalidKeyError);
-    await expect(
-      resolveKey('user-123', 'anthropic', mockSupabase)
-    ).rejects.toThrow('Failed to decrypt: invalid key or tampered data');
+    await expect(resolveKey('user-123', 'anthropic', mockSupabase)).rejects.toThrow(
+      InvalidKeyError,
+    );
+    await expect(resolveKey('user-123', 'anthropic', mockSupabase)).rejects.toThrow(
+      'Failed to decrypt: invalid key or tampered data',
+    );
   });
 
   it('should work seamlessly when integrated into chat flow', async () => {

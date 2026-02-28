@@ -33,7 +33,11 @@ export function isRetryableError(error: any): boolean {
 /**
  * Calculates exponential backoff delay with jitter
  */
-export function calculateBackoffDelay(attemptNumber: number, baseDelayMs: number, jitterFactor: number): number {
+export function calculateBackoffDelay(
+  attemptNumber: number,
+  baseDelayMs: number,
+  jitterFactor: number,
+): number {
   // Exponential: 2^attempt * baseDelay
   const exponentialDelay = Math.pow(2, attemptNumber) * baseDelayMs;
   // Add jitter: random value between 0 and jitterFactor * exponentialDelay
@@ -45,7 +49,7 @@ export function calculateBackoffDelay(attemptNumber: number, baseDelayMs: number
  * Sleep for a given number of milliseconds
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
@@ -53,7 +57,7 @@ export function sleep(ms: number): Promise<void> {
  */
 export async function retryWithBackoff<T>(
   operation: () => Promise<T>,
-  config: RetryConfig = DEFAULT_RETRY_CONFIG
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
 ): Promise<T> {
   let lastError: any;
 

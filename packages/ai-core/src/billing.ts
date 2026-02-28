@@ -26,12 +26,10 @@ function safeParseFloat(value: string | number, fieldName: string): number {
  */
 async function getActiveBalance(
   supabase: SupabaseClient,
-  identity: { userId: string } | { orgId: string }
+  identity: { userId: string } | { orgId: string },
 ): Promise<any | null> {
   const now = new Date();
-  let query = supabase
-    .from('ai_credit_balances')
-    .select('*');
+  let query = supabase.from('ai_credit_balances').select('*');
 
   if ('orgId' in identity) {
     query = query.eq('org_id', identity.orgId).is('user_id', null);
@@ -62,7 +60,7 @@ async function getActiveBalance(
  */
 export async function getUserOrgId(
   userId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<string | null> {
   try {
     // Query org_members table to find user's organization
@@ -88,7 +86,7 @@ export async function getUserOrgId(
  */
 export async function getOrgBalance(
   orgId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<CreditBalance> {
   const data = await getActiveBalance(supabase, { orgId });
 
@@ -107,7 +105,9 @@ export async function getOrgBalance(
     usedUsd: safeParseFloat(data.credits_used_usd, 'credits_used_usd'),
     periodStart: data.period_start,
     periodEnd: data.period_end,
-    spendingCapUsd: data.admin_cap_usd ? safeParseFloat(data.admin_cap_usd, 'admin_cap_usd') : undefined,
+    spendingCapUsd: data.admin_cap_usd
+      ? safeParseFloat(data.admin_cap_usd, 'admin_cap_usd')
+      : undefined,
     orgId: data.org_id,
   };
 }
@@ -120,7 +120,7 @@ export async function getOrgBalance(
  */
 export async function getRemainingCredits(
   userId: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<CreditBalance> {
   // Check if user belongs to an organization
   const orgId = await getUserOrgId(userId, supabase);
@@ -148,7 +148,9 @@ export async function getRemainingCredits(
     usedUsd: safeParseFloat(data.credits_used_usd, 'credits_used_usd'),
     periodStart: data.period_start,
     periodEnd: data.period_end,
-    spendingCapUsd: data.spending_cap_usd ? safeParseFloat(data.spending_cap_usd, 'spending_cap_usd') : undefined,
+    spendingCapUsd: data.spending_cap_usd
+      ? safeParseFloat(data.spending_cap_usd, 'spending_cap_usd')
+      : undefined,
   };
 }
 
@@ -158,12 +160,12 @@ export async function getRemainingCredits(
 export async function checkCredits(
   userId: string,
   estimatedCostUsd: number,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<boolean> {
   const balance = await getRemainingCredits(userId, supabase);
   if (balance.remainingUsd < estimatedCostUsd) {
     throw new InsufficientCreditsError(
-      `Insufficient credits: ${balance.remainingUsd.toFixed(4)} remaining, ${estimatedCostUsd.toFixed(4)} required`
+      `Insufficient credits: ${balance.remainingUsd.toFixed(4)} remaining, ${estimatedCostUsd.toFixed(4)} required`,
     );
   }
   return true;
@@ -180,24 +182,25 @@ export async function checkCredits(
 export async function checkSpendingCap(
   userId: string,
   estimatedCostUsd: number,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<void> {
   // Check if user belongs to org
   const orgId = await getUserOrgId(userId, supabase);
   const isOrgBalance = !!orgId;
 
-  const balanceData = await getActiveBalance(
-    supabase,
-    orgId ? { orgId } : { userId }
-  );
+  const balanceData = await getActiveBalance(supabase, orgId ? { orgId } : { userId });
 
   if (!balanceData) {
     return; // No balance configured
   }
 
   const currentUsed = safeParseFloat(balanceData.credits_used_usd || '0', 'credits_used_usd');
-  const userCap = balanceData.spending_cap_usd ? safeParseFloat(balanceData.spending_cap_usd, 'spending_cap_usd') : null;
-  const adminCap = balanceData.admin_cap_usd ? safeParseFloat(balanceData.admin_cap_usd, 'admin_cap_usd') : null;
+  const userCap = balanceData.spending_cap_usd
+    ? safeParseFloat(balanceData.spending_cap_usd, 'spending_cap_usd')
+    : null;
+  const adminCap = balanceData.admin_cap_usd
+    ? safeParseFloat(balanceData.admin_cap_usd, 'admin_cap_usd')
+    : null;
 
   let effectiveCap: number | null = null;
 
@@ -227,7 +230,7 @@ export async function checkSpendingCap(
     const capType = isOrgBalance ? 'Org admin cap' : 'Spending cap';
 
     throw new SpendingCapExceededError(
-      `${capType} exceeded: ${currentUsed.toFixed(4)} used + ${estimatedCostUsd.toFixed(4)} estimated = ${projectedUsed.toFixed(4)}, cap is ${effectiveCap.toFixed(4)}`
+      `${capType} exceeded: ${currentUsed.toFixed(4)} used + ${estimatedCostUsd.toFixed(4)} estimated = ${projectedUsed.toFixed(4)}, cap is ${effectiveCap.toFixed(4)}`,
     );
   }
 }
@@ -243,22 +246,22 @@ export async function checkSpendingCap(
 export async function deductCredits(
   userId: string,
   costUsd: number,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<void> {
   // Check if user belongs to org
   const orgId = await getUserOrgId(userId, supabase);
 
-  const balanceData = await getActiveBalance(
-    supabase,
-    orgId ? { orgId } : { userId }
-  );
+  const balanceData = await getActiveBalance(supabase, orgId ? { orgId } : { userId });
 
   if (!balanceData) {
     return; // No balance to deduct from
   }
 
   const currentUsed = safeParseFloat(balanceData.credits_used_usd || '0', 'credits_used_usd');
-  const currentRemaining = safeParseFloat(balanceData.credits_remaining_usd || '0', 'credits_remaining_usd');
+  const currentRemaining = safeParseFloat(
+    balanceData.credits_remaining_usd || '0',
+    'credits_remaining_usd',
+  );
 
   // Update the balance row
   await supabase
@@ -278,16 +281,14 @@ export async function deductCredits(
  * Optional orgId parameter for org-level credit purchases
  */
 export async function createCheckoutSession(
-  params: CreateCheckoutSessionParams
+  params: CreateCheckoutSessionParams,
 ): Promise<CheckoutSession> {
   const { userId, amountUsd, successUrl, cancelUrl, supabase, orgId } = params;
 
   // Validate amount is one of the preset values
   const PRESET_AMOUNTS = [5, 10, 25, 50];
   if (!PRESET_AMOUNTS.includes(amountUsd)) {
-    throw new Error(
-      `Invalid amount: ${amountUsd}. Must be one of: ${PRESET_AMOUNTS.join(', ')}`
-    );
+    throw new Error(`Invalid amount: ${amountUsd}. Must be one of: ${PRESET_AMOUNTS.join(', ')}`);
   }
 
   // Initialize Stripe
@@ -329,10 +330,7 @@ export async function createCheckoutSession(
     // Store Stripe customer ID in Supabase (if users table exists)
     // This is fire-and-forget - if it fails, we'll create a new customer next time
     void Promise.resolve(
-      supabase
-        .from('users')
-        .update({ stripe_customer_id: customerId })
-        .eq('id', userId)
+      supabase.from('users').update({ stripe_customer_id: customerId }).eq('id', userId),
     )
       .then(() => {})
       .catch((err: unknown) => console.warn('Failed to store Stripe customer ID:', err));
@@ -393,7 +391,7 @@ export async function createCheckoutSession(
 export async function handleStripeWebhook(
   rawBody: string | Buffer,
   signature: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<{ status: number; message: string }> {
   // Initialize Stripe
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -463,14 +461,14 @@ export async function handleStripeWebhook(
 
     // Get or create balance row for current period
     // If orgId is present, credit the org balance; otherwise credit user balance
-    const balanceRow = await getActiveBalance(
-      supabase,
-      orgId ? { orgId } : { userId }
-    );
+    const balanceRow = await getActiveBalance(supabase, orgId ? { orgId } : { userId });
 
     if (balanceRow) {
       // Update existing balance
-      const currentRemaining = safeParseFloat(balanceRow.credits_remaining_usd || '0', 'credits_remaining_usd');
+      const currentRemaining = safeParseFloat(
+        balanceRow.credits_remaining_usd || '0',
+        'credits_remaining_usd',
+      );
       await supabase
         .from('ai_credit_balances')
         .update({

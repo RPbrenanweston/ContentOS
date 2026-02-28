@@ -67,11 +67,7 @@ describe('handleStripeWebhook', () => {
       throw new Error('Invalid signature');
     });
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'invalid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'invalid_signature', mockSupabase);
 
     expect(result.status).toBe(400);
     expect(result.message).toContain('Webhook signature verification failed');
@@ -135,11 +131,7 @@ describe('handleStripeWebhook', () => {
       return { select: vi.fn(), insert: vi.fn() };
     }) as any;
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(result.message).toContain('Credited 25 USD');
@@ -182,11 +174,7 @@ describe('handleStripeWebhook', () => {
       insert: insertMock,
     })) as any;
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(result.message).toContain('already processed');
@@ -255,11 +243,7 @@ describe('handleStripeWebhook', () => {
       insert: insertMock,
     })) as any;
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(updateMock).toHaveBeenCalled(); // Update called, not insert
@@ -278,11 +262,7 @@ describe('handleStripeWebhook', () => {
 
     (mockStripe.webhooks.constructEvent as any).mockReturnValue(mockEvent);
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(result.message).toContain('Unhandled event type');
@@ -304,11 +284,7 @@ describe('handleStripeWebhook', () => {
 
     (mockStripe.webhooks.constructEvent as any).mockReturnValue(mockEvent);
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(400);
     expect(result.message).toContain('Missing required metadata');

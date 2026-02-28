@@ -41,18 +41,38 @@ export {
 } from './errors';
 
 // Export retry utilities
-export { retryWithBackoff, isRetryableError, calculateBackoffDelay, DEFAULT_RETRY_CONFIG } from './retry';
+export {
+  retryWithBackoff,
+  isRetryableError,
+  calculateBackoffDelay,
+  DEFAULT_RETRY_CONFIG,
+} from './retry';
 export type { RetryConfig } from './retry';
 
 // Export provider types and registration
 export { getAdapter, registerAdapter } from './providers';
-export type { ProviderAdapter, ChatProvider, StreamProvider, ChatCallResult, ChunkUsage } from './providers';
+export type {
+  ProviderAdapter,
+  ChatProvider,
+  StreamProvider,
+  ChatCallResult,
+  ChunkUsage,
+} from './providers';
 
 // Export utility functions
 export { getModel, getDefaultModel, calculateCost } from './models';
 export { logUsage } from './usage';
 export type { LogUsageParams } from './usage';
-export { getRemainingCredits, checkCredits, checkSpendingCap, deductCredits, createCheckoutSession, handleStripeWebhook, getUserOrgId, getOrgBalance } from './billing';
+export {
+  getRemainingCredits,
+  checkCredits,
+  checkSpendingCap,
+  deductCredits,
+  createCheckoutSession,
+  handleStripeWebhook,
+  getUserOrgId,
+  getOrgBalance,
+} from './billing';
 export { resolveKey, saveKey, deleteKey, validateKey } from './keys';
 export type { ResolvedKey } from './keys';
 export { syncOpenRouterModels } from './sync';
