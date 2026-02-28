@@ -1,7 +1,12 @@
 """
-Credit balance and spending cap enforcement
+Credit balance and spending cap enforcement (Python)
 
-Functions to check credits, enforce caps, and prevent overspending.
+STATUS: Not yet implemented. Use the TypeScript @org/ai-core package
+for billing operations. The Python client currently operates without
+pre-call credit checks.
+
+The TypeScript implementation in packages/ai-core/src/billing.ts is
+the reference for a future Python port.
 """
 
 from typing import Any
@@ -10,16 +15,18 @@ from .types import CreditBalance
 
 async def get_remaining_credits(user_id: str, supabase: Any) -> CreditBalance:
     """
-    Get remaining credit balance for current period
+    Get remaining credit balance for current period.
 
-    Args:
-        user_id: User UUID
-        supabase: Supabase client
+    NOT YET IMPLEMENTED in Python. The TypeScript equivalent
+    (getRemainingCredits in billing.ts) is fully functional.
 
-    Returns:
-        CreditBalance with remaining and used amounts
+    Raises:
+        NotImplementedError: Always — this function is not yet ported to Python.
     """
-    raise NotImplementedError("get_remaining_credits() will be implemented in S16")
+    raise NotImplementedError(
+        "get_remaining_credits() is not yet implemented in Python. "
+        "Use the TypeScript @org/ai-core package for billing queries."
+    )
 
 
 async def check_credits(
@@ -29,18 +36,15 @@ async def check_credits(
     key_source: str = 'managed'
 ) -> None:
     """
-    Pre-check that user has sufficient credits
+    Pre-check that user has sufficient credits.
 
-    Only checks for managed keys (BYOK users skip this).
-
-    Args:
-        user_id: User UUID
-        estimated_cost_usd: Estimated cost for the upcoming call
-        supabase: Supabase client
-        key_source: 'byok' or 'managed'
+    NOT YET IMPLEMENTED in Python. The TypeScript equivalent
+    (checkCredits + checkSpendingCap in billing.ts) is fully functional.
 
     Raises:
-        InsufficientCreditsError: If balance too low
-        SpendingCapExceededError: If spending cap reached
+        NotImplementedError: Always — this function is not yet ported to Python.
     """
-    raise NotImplementedError("check_credits() will be implemented in S16")
+    raise NotImplementedError(
+        "check_credits() is not yet implemented in Python. "
+        "Use the TypeScript @org/ai-core package for billing enforcement."
+    )

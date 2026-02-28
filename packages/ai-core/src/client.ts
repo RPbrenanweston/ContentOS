@@ -8,7 +8,7 @@
  *
  * 1. Wrap provider API calls with AbortSignal.timeout(ms)
  * 2. Default timeout: 60 seconds for chat, 300 seconds for streaming
- * 3. Allow configurable timeout via ChatParams/GenerateParams
+ * 3. Allow configurable timeout via ChatParams
  * 4. Properly clean up AbortController instances after use
  * 5. Test that timeouts don't break existing retry logic
  *
@@ -25,7 +25,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import OpenAI from 'openai';
 import { SupabaseClient } from '@supabase/supabase-js';
-import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, GenerateParams, CreditBalance, UsageSummary, DateRange, Tool } from './types';
+import { AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, Tool } from './types';
 import { getModel, calculateCost } from './models';
 import { logUsage } from './usage';
 import { resolveKey } from './keys';
@@ -720,27 +720,4 @@ class AIClientImpl implements AIClient {
     }
   }
 
-  /**
-   * Generate structured output
-   */
-  async generate<T>(params: GenerateParams<T>): Promise<T> {
-    // TODO: Implement structured generation
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * Get usage summary for a period
-   */
-  async getUsage(period?: DateRange): Promise<UsageSummary> {
-    // TODO: Implement usage query
-    throw new Error('Not implemented');
-  }
-
-  /**
-   * Get remaining credits
-   */
-  async getRemainingCredits(): Promise<CreditBalance> {
-    // TODO: Implement credit query
-    throw new Error('Not implemented');
-  }
 }

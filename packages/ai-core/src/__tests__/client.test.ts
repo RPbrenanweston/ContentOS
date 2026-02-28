@@ -73,9 +73,6 @@ describe('AIClient', () => {
 
       expect(client).toHaveProperty('chat');
       expect(client).toHaveProperty('chatStream');
-      expect(client).toHaveProperty('generate');
-      expect(client).toHaveProperty('getUsage');
-      expect(client).toHaveProperty('getRemainingCredits');
     });
 
     it('should handle missing API key gracefully', () => {
