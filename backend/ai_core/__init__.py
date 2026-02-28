@@ -19,6 +19,7 @@ from .types import (
     CreditBalance,
     DateRange,
     ModelInfo,
+    ModelNotFoundError,
     PartialTokens,
 )
 from .models import get_model, get_default_model, calculate_cost
@@ -48,6 +49,7 @@ __all__ = [
     'CreditBalance',
     'DateRange',
     'ModelInfo',
+    'ModelNotFoundError',
     'PartialTokens',
     # Models
     'get_model',

@@ -492,11 +492,9 @@ describe('OpenRouter Provider Integration Tests', () => {
   });
 
   describe('validateKey() for OpenRouter', () => {
-    // NOTE: Success and network error tests are skipped due to dynamic require() mock issues
-    // The 401 test passes, confirming the implementation is correct
-    // TODO: Investigate vitest mocking for dynamic require() in keys.ts line 214
-    it.skip('should validate OpenRouter API key successfully', async () => {
-      // Use mockImplementationOnce for isolated test behavior
+    // Fixed: validateKey now uses dynamic import() instead of require(),
+    // so vi.mock('openai') properly intercepts all SDK usage.
+    it('should validate OpenRouter API key successfully', async () => {
       mockOpenAICreate.mockImplementationOnce(async () => ({
         choices: [{ message: { content: 'valid' } }],
         usage: { prompt_tokens: 1, completion_tokens: 1 },
@@ -530,8 +528,7 @@ describe('OpenRouter Provider Integration Tests', () => {
       );
     });
 
-    it.skip('should throw generic error on network failure for OpenRouter', async () => {
-      // Network errors don't have a status property
+    it('should throw generic error on network failure for OpenRouter', async () => {
       const error = new Error('Network error');
 
       mockOpenAICreate.mockImplementationOnce(async () => {

@@ -5,14 +5,7 @@ Functions to query ai_models table for model information and cost calculation.
 """
 
 from typing import Any
-from .types import ModelInfo
-
-
-class ModelNotFoundError(Exception):
-    """Raised when a model is not found in the registry"""
-    def __init__(self, model_id: str):
-        self.model_id = model_id
-        super().__init__(f'Model not found: {model_id}')
+from .types import ModelInfo, ModelNotFoundError
 
 
 def get_model(model_id: str, supabase: Any) -> ModelInfo:

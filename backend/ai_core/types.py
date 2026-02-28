@@ -152,8 +152,9 @@ class SpendingCapExceededError(AIError):
 
 class ModelNotFoundError(AIError):
     """Error when requested model is not found"""
-    def __init__(self, message: str = "Model not found"):
-        super().__init__(message, "MODEL_NOT_FOUND")
+    def __init__(self, model_id: str = "unknown"):
+        super().__init__(f"Model not found: {model_id}", "MODEL_NOT_FOUND")
+        self.model_id = model_id
 
 
 class ProviderError(AIError):
