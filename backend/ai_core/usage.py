@@ -5,7 +5,7 @@ Fire-and-forget logging of all AI calls to ai_usage_log table.
 """
 
 from typing import Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 def log_usage(
@@ -63,10 +63,10 @@ def log_usage(
             'error_code': error_code,
             'key_source': key_source,
             'metadata': metadata or {},
-            'created_at': datetime.utcnow().isoformat(),
+            'created_at': datetime.now(timezone.utc).isoformat(),
         }
 
-        supabase.table('ai_usage_log').insert(data).execute()
+        supabase.from_('ai_usage_log').insert(data).execute()
     except Exception as e:
         # Fire-and-forget: log error but don't raise
         print(f'Error logging AI usage: {e}')

@@ -2,7 +2,7 @@
  * Key management and resolution
  */
 
-import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { SupabaseClient } from '@supabase/supabase-js';
 import { InvalidKeyError } from './errors';
 
@@ -22,8 +22,7 @@ export interface ResolvedKey {
  */
 export function encrypt(plaintext: string, encryptionKey: string): string {
   // Derive 32-byte key from encryption key (SHA-256 hash)
-  const crypto = require('node:crypto');
-  const key = crypto.createHash('sha256').update(encryptionKey).digest();
+  const key = createHash('sha256').update(encryptionKey).digest();
 
   // Generate random 12-byte IV (recommended for GCM)
   const iv = randomBytes(12);
@@ -40,11 +39,7 @@ export function encrypt(plaintext: string, encryptionKey: string): string {
 
   // Prepend IV and auth tag to ciphertext
   // Format: IV (12 bytes) + AuthTag (16 bytes) + Ciphertext
-  const combined = Buffer.concat([
-    iv,
-    authTag,
-    Buffer.from(ciphertext, 'base64')
-  ]);
+  const combined = Buffer.concat([iv, authTag, Buffer.from(ciphertext, 'base64')]);
 
   return combined.toString('base64');
 }
@@ -57,8 +52,7 @@ export function encrypt(plaintext: string, encryptionKey: string): string {
  */
 export function decrypt(encryptedData: string, encryptionKey: string): string {
   // Derive 32-byte key from encryption key (SHA-256 hash)
-  const crypto = require('node:crypto');
-  const key = crypto.createHash('sha256').update(encryptionKey).digest();
+  const key = createHash('sha256').update(encryptionKey).digest();
 
   // Decode base64
   const combined = Buffer.from(encryptedData, 'base64');
@@ -81,7 +75,7 @@ export function decrypt(encryptedData: string, encryptionKey: string): string {
     let plaintext = decipher.update(ciphertext, undefined, 'utf8');
     plaintext += decipher.final('utf8');
     return plaintext;
-  } catch (error) {
+  } catch {
     // Auth tag validation failed or wrong key
     throw new InvalidKeyError('Failed to decrypt: invalid key or tampered data');
   }
@@ -96,7 +90,7 @@ export async function saveKey(
   userId: string,
   provider: string,
   apiKey: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<void> {
   // Get encryption key from environment
   const encryptionKey = process.env.ENCRYPTION_KEY;
@@ -111,21 +105,19 @@ export async function saveKey(
   const keyHint = apiKey.length >= 4 ? `...${apiKey.slice(-4)}` : apiKey;
 
   // Upsert to database (handles duplicate user+provider)
-  const { error } = await supabase
-    .from('ai_api_keys')
-    .upsert(
-      {
-        user_id: userId,
-        provider,
-        encrypted_key: encryptedKey,
-        key_hint: keyHint,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      },
-      {
-        onConflict: 'user_id,provider',
-      }
-    );
+  const { error } = await supabase.from('ai_api_keys').upsert(
+    {
+      user_id: userId,
+      provider,
+      encrypted_key: encryptedKey,
+      key_hint: keyHint,
+      is_active: true,
+      created_at: new Date().toISOString(),
+    },
+    {
+      onConflict: 'user_id,provider',
+    },
+  );
 
   if (error) {
     throw new Error(`Failed to save API key: ${error.message}`);
@@ -140,7 +132,7 @@ export async function saveKey(
 export async function deleteKey(
   userId: string,
   provider: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<void> {
   const { error } = await supabase
     .from('ai_api_keys')
@@ -153,6 +145,19 @@ export async function deleteKey(
   }
 }
 
+function handleValidateKeyError(error: unknown): never {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    (error as { status: number }).status === 401
+  ) {
+    throw new InvalidKeyError('Invalid API key');
+  }
+  const message = error instanceof Error ? error.message : String(error);
+  throw new Error(`Failed to validate API key: ${message}`);
+}
+
 /**
  * Validate an API key by making a minimal API call
  *
@@ -162,11 +167,10 @@ export async function deleteKey(
 export async function validateKey(provider: string, apiKey: string): Promise<boolean> {
   if (provider === 'anthropic') {
     try {
-      // Make minimal Anthropic API call to test key validity
-      const Anthropic = require('@anthropic-ai/sdk');
+      // Dynamic import() so vitest can mock the module (require() bypasses vi.mock)
+      const { default: Anthropic } = await import('@anthropic-ai/sdk');
       const client = new Anthropic({ apiKey });
 
-      // Use messages.create with minimal parameters to test auth
       await client.messages.create({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 1,
@@ -174,23 +178,16 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
       });
 
       return true;
-    } catch (error: any) {
-      // 401 = invalid API key
-      if (error.status === 401) {
-        throw new InvalidKeyError('Invalid API key');
-      }
-      // Other errors (network, rate limit, etc.) - still throw but different message
-      throw new Error(`Failed to validate API key: ${error.message}`);
+    } catch (error: unknown) {
+      handleValidateKeyError(error);
     }
   }
 
   if (provider === 'openai') {
     try {
-      // Make minimal OpenAI API call to test key validity
-      const OpenAI = require('openai');
+      const { default: OpenAI } = await import('openai');
       const client = new OpenAI({ apiKey });
 
-      // Use chat.completions.create with minimal parameters
       await client.chat.completions.create({
         model: 'gpt-4o-mini',
         max_tokens: 1,
@@ -198,27 +195,19 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
       });
 
       return true;
-    } catch (error: any) {
-      // 401 = invalid API key
-      if (error.status === 401) {
-        throw new InvalidKeyError('Invalid API key');
-      }
-      // Other errors (network, rate limit, etc.) - still throw but different message
-      throw new Error(`Failed to validate API key: ${error.message}`);
+    } catch (error: unknown) {
+      handleValidateKeyError(error);
     }
   }
 
   if (provider === 'openrouter') {
     try {
-      // OpenRouter uses OpenAI SDK with custom baseURL
-      const OpenAI = require('openai');
+      const { default: OpenAI } = await import('openai');
       const client = new OpenAI({
         apiKey,
         baseURL: 'https://openrouter.ai/api/v1',
       });
 
-      // Use chat.completions.create with minimal parameters
-      // OpenRouter requires a valid model, use a cheap one
       await client.chat.completions.create({
         model: 'google/gemini-2.0-flash-001',
         max_tokens: 1,
@@ -226,13 +215,8 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
       });
 
       return true;
-    } catch (error: any) {
-      // 401 = invalid API key
-      if (error.status === 401) {
-        throw new InvalidKeyError('Invalid API key');
-      }
-      // Other errors (network, rate limit, etc.) - still throw but different message
-      throw new Error(`Failed to validate API key: ${error.message}`);
+    } catch (error: unknown) {
+      handleValidateKeyError(error);
     }
   }
 
@@ -245,7 +229,7 @@ export async function validateKey(provider: string, apiKey: string): Promise<boo
 export async function resolveKey(
   userId: string,
   provider: string,
-  supabase: SupabaseClient
+  supabase: SupabaseClient,
 ): Promise<ResolvedKey> {
   // Check for active BYOK key
   const { data: userKey, error } = await supabase
@@ -266,16 +250,18 @@ export async function resolveKey(
     const decryptedKey = decrypt(userKey.encrypted_key, encryptionKey);
 
     // Update last_used_at timestamp (fire-and-forget)
-    void Promise.resolve().then(async () => {
-      await supabase
-        .from('ai_api_keys')
-        .update({ last_used_at: new Date().toISOString() })
-        .eq('user_id', userId)
-        .eq('provider', provider)
-        .eq('is_active', true);
-    }).catch((updateError) => {
-      console.warn('Failed to update last_used_at for BYOK key:', updateError);
-    });
+    void Promise.resolve()
+      .then(async () => {
+        await supabase
+          .from('ai_api_keys')
+          .update({ last_used_at: new Date().toISOString() })
+          .eq('user_id', userId)
+          .eq('provider', provider)
+          .eq('is_active', true);
+      })
+      .catch((updateError) => {
+        console.warn('Failed to update last_used_at for BYOK key:', updateError);
+      });
 
     return {
       key: decryptedKey,

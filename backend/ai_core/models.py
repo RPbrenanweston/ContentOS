@@ -5,14 +5,7 @@ Functions to query ai_models table for model information and cost calculation.
 """
 
 from typing import Any
-from .types import ModelInfo
-
-
-class ModelNotFoundError(Exception):
-    """Raised when a model is not found in the registry"""
-    def __init__(self, model_id: str):
-        self.model_id = model_id
-        super().__init__(f'Model not found: {model_id}')
+from .types import ModelInfo, ModelNotFoundError
 
 
 def get_model(model_id: str, supabase: Any) -> ModelInfo:
@@ -29,7 +22,7 @@ def get_model(model_id: str, supabase: Any) -> ModelInfo:
     Raises:
         ModelNotFoundError: If model not found or not active
     """
-    response = supabase.table('ai_models').select('*').eq('id', model_id).eq('is_active', True).single().execute()
+    response = supabase.from_('ai_models').select('*').eq('id', model_id).eq('is_active', True).single().execute()
 
     if not response.data:
         raise ModelNotFoundError(model_id)
@@ -50,7 +43,7 @@ def get_default_model(supabase: Any) -> ModelInfo:
     Raises:
         ModelNotFoundError: If no default model configured
     """
-    response = supabase.table('ai_models').select('*').eq('is_default', True).eq('is_active', True).single().execute()
+    response = supabase.from_('ai_models').select('*').eq('is_default', True).eq('is_active', True).single().execute()
 
     if not response.data:
         raise ModelNotFoundError('default')

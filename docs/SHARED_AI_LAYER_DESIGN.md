@@ -421,7 +421,7 @@ Every app follows the same flow:
 Each app owns:
 - **Prompts** — Domain-specific, versioned per-app
 - **Context assembly** — Each app knows its own data shape
-- **Feature definitions** — What AI features exist and where they appear in UI
+- **Feature definitions** — What AI features exist and how they are invoked
 - **Result handling** — Parse, validate, present AI output
 - **Confirmation flows** — Write operations show preview, user confirms
 
@@ -456,7 +456,7 @@ Build:
 - [ ] Key encryption (Supabase Vault or app-level AES-256)
 - [ ] Key resolution in client (BYOK → managed fallback)
 - [ ] Key validation endpoint (test key before saving)
-- [ ] Settings UI: "Use my own key" toggle with key hint display
+- [ ] Key management API: save/delete/validate BYOK keys
 - [ ] Python `ai_core` module (same patterns, same tables)
 - [ ] Integrate into ExpressRecruitment: signal classification, candidate scoring
 
@@ -468,7 +468,7 @@ Build:
 - [ ] Pre-call credit check (fail fast if insufficient)
 - [ ] Post-call balance deduction
 - [ ] Spending caps (user-configured + admin-enforced)
-- [ ] Usage dashboard component (period usage, remaining credits, cost breakdown by feature)
+- [ ] Usage query API (period usage, remaining credits, cost breakdown by feature)
 - [ ] Stripe integration for credit purchases
 
 ### Phase 4: Multi-Provider + Admin (Week 7-8)
@@ -479,7 +479,7 @@ Build:
 - [ ] Model selection per-call and per-user preference
 - [ ] Org/team billing (shared credit pools)
 - [ ] Admin controls: force managed/BYOK mode, org-level spending caps
-- [ ] Cross-app usage analytics dashboard
+- [ ] Cross-app usage analytics queries
 
 ---
 
@@ -592,7 +592,7 @@ The shared AI layer is **infrastructure** that enables AI features across the po
 | BYOK works end-to-end | User sets key → AI calls use it → usage logged correctly |
 | Zero-effort usage tracking for app devs | App calls `ai.chat()`, logging is automatic |
 | Credit system prevents overuse | Pre-call check rejects when balance is zero |
-| Cross-app usage visibility | Dashboard shows usage across all apps, filterable by app |
+| Cross-app usage visibility | Usage data queryable across all apps, filterable by app |
 | New app integration under 1 hour | Import package, set app ID, start calling |
 
 ---

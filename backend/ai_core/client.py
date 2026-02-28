@@ -1,29 +1,43 @@
 """
 AI client for LLM API calls
 
+SOLID principles applied:
+- Single Responsibility: Retry logic in retry.py, error classification in errors.py
+- Dependency Inversion: Services injected via constructor, defaulting to concrete implementations
+
 Handles chat, streaming, and structured generation with automatic
 usage logging, key resolution, and credit checks.
 """
 
-import os
 import time
 from typing import Any, AsyncIterable, Optional
-from anthropic import Anthropic
-from openai import OpenAI
 from .types import ChatParams, ChatResult, ChatChunk, ChatChunkDelta, GenerateParams, AIClientConfig, UsageInfo, PartialTokens
-from .models import get_model, calculate_cost
-from .usage import log_usage
-from .keys import resolve_key
+from .models import get_model as default_get_model, calculate_cost as default_calculate_cost
+from .usage import log_usage as default_log_usage
+from .keys import resolve_key as default_resolve_key
+from .providers import get_adapter as default_get_adapter
+from .retry import retry_with_backoff as default_retry_with_backoff
+from .errors import classify_error as default_classify_error
 
 
 class AIClient:
     """Main AI client for making LLM calls"""
 
-    def __init__(self, config: AIClientConfig):
+    def __init__(self, config: AIClientConfig, services: dict | None = None):
         self.config = config
         self.app_id = config.app_id
         self.supabase = config.supabase_client
         self.default_model = config.default_model or 'claude-sonnet-4-20250514'
+
+        # Use injected services or defaults (Dependency Inversion)
+        s = services or {}
+        self._get_model = s.get('get_model', default_get_model)
+        self._calculate_cost = s.get('calculate_cost', default_calculate_cost)
+        self._resolve_key = s.get('resolve_key', default_resolve_key)
+        self._log_usage = s.get('log_usage', default_log_usage)
+        self._get_adapter = s.get('get_adapter', default_get_adapter)
+        self._retry_with_backoff = s.get('retry_with_backoff', default_retry_with_backoff)
+        self._classify_error = s.get('classify_error', default_classify_error)
 
     async def chat(self, params: ChatParams) -> ChatResult:
         """
@@ -37,167 +51,47 @@ class AIClient:
         """
         start_time = time.time()
         model_id = params.model or self.default_model
+        detected_provider = 'unknown'
 
         try:
             # Resolve the model info
-            model = get_model(model_id, self.supabase)
+            model = self._get_model(model_id, self.supabase)
             provider = model.provider
+            detected_provider = provider
 
             # Resolve API key (BYOK or managed)
-            resolved = await resolve_key(params.user_id, provider, self.supabase)
+            resolved = await self._resolve_key(params.user_id, provider, self.supabase)
             api_key = resolved.api_key
             key_source = resolved.source
 
-            # Branch based on provider
-            if provider == 'anthropic':
-                # Anthropic branch (preserved exactly as-is)
-                client = Anthropic(api_key=api_key)
+            # Provider-specific API call via adapter
+            adapter = self._get_adapter(provider)
+            client = adapter.create_client(api_key)
+            request = adapter.build_request(model_id, model, params)
 
-                # Convert our Message format to Anthropic format
-                messages = [
-                    {'role': msg.role, 'content': msg.content}
-                    for msg in params.messages
-                ]
+            response = self._retry_with_backoff(
+                lambda: adapter.execute_chat(client, request),
+                max_retries=3,
+                base_delay_ms=100,
+                jitter_factor=0.1,
+            )
 
-                # Build request parameters
-                request_params = {
-                    'model': model_id,
-                    'max_tokens': params.max_tokens or model.max_output_tokens,
-                    'messages': messages,
-                }
+            result = adapter.parse_chat_response(response)
 
-                if params.temperature is not None:
-                    request_params['temperature'] = params.temperature
-
-                if params.tools:
-                    request_params['tools'] = [
-                        {
-                            'name': tool.name,
-                            'description': tool.description,
-                            'input_schema': tool.input_schema,
-                        }
-                        for tool in params.tools
-                    ]
-
-                # Make the API call
-                response = client.messages.create(**request_params)
-
-                # Extract text from response
-                content_blocks = [block for block in response.content if block.type == 'text']
-                content = ' '.join([block.text for block in content_blocks])
-
-                # Calculate cost
-                tokens_in = response.usage.input_tokens
-                tokens_out = response.usage.output_tokens
-
-            elif provider == 'openai':
-                # OpenAI branch
-                client = OpenAI(api_key=api_key)
-
-                # Convert our Message format to OpenAI format
-                messages = [
-                    {'role': msg.role, 'content': msg.content}
-                    for msg in params.messages
-                ]
-
-                # Build request parameters
-                request_params = {
-                    'model': model_id,
-                    'max_tokens': params.max_tokens or model.max_output_tokens,
-                    'messages': messages,
-                }
-
-                if params.temperature is not None:
-                    request_params['temperature'] = params.temperature
-
-                if params.tools:
-                    request_params['tools'] = [
-                        {
-                            'type': 'function',
-                            'function': {
-                                'name': tool.name,
-                                'description': tool.description,
-                                'parameters': tool.input_schema,
-                            }
-                        }
-                        for tool in params.tools
-                    ]
-
-                # Make the API call
-                response = client.chat.completions.create(**request_params)
-
-                # Extract text from response
-                content = response.choices[0].message.content or ''
-
-                # Calculate cost
-                tokens_in = response.usage.prompt_tokens
-                tokens_out = response.usage.completion_tokens
-
-            elif provider == 'openrouter':
-                # OpenRouter branch (uses OpenAI SDK with custom base_url)
-                client = OpenAI(
-                    api_key=api_key,
-                    base_url='https://openrouter.ai/api/v1'
-                )
-
-                # Convert our Message format to OpenAI format
-                messages = [
-                    {'role': msg.role, 'content': msg.content}
-                    for msg in params.messages
-                ]
-
-                # Build request parameters
-                request_params = {
-                    'model': model_id,
-                    'max_tokens': params.max_tokens or model.max_output_tokens,
-                    'messages': messages,
-                }
-
-                if params.temperature is not None:
-                    request_params['temperature'] = params.temperature
-
-                if params.tools:
-                    request_params['tools'] = [
-                        {
-                            'type': 'function',
-                            'function': {
-                                'name': tool.name,
-                                'description': tool.description,
-                                'parameters': tool.input_schema,
-                            }
-                        }
-                        for tool in params.tools
-                    ]
-
-                # Make the API call
-                response = client.chat.completions.create(**request_params)
-
-                # Extract text from response
-                content = response.choices[0].message.content or ''
-
-                # Calculate cost
-                tokens_in = response.usage.prompt_tokens
-                tokens_out = response.usage.completion_tokens
-
-            else:
-                raise ValueError(f'Unsupported provider: {provider}')
-
-            # Calculate cost (common across all providers)
-            cost_usd = calculate_cost(model, tokens_in, tokens_out)
-
-            # Calculate latency
+            # Calculate cost and latency
+            cost_usd = self._calculate_cost(model, result.tokens_in, result.tokens_out)
             latency_ms = int((time.time() - start_time) * 1000)
 
             # Log usage (fire-and-forget)
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
                 provider=provider,
                 model=model_id,
-                tokens_in=tokens_in,
-                tokens_out=tokens_out,
+                tokens_in=result.tokens_in,
+                tokens_out=result.tokens_out,
                 cost_usd=cost_usd,
                 latency_ms=latency_ms,
                 success=True,
@@ -206,10 +100,10 @@ class AIClient:
 
             # Return result
             return ChatResult(
-                content=content,
+                content=result.content,
                 usage=UsageInfo(
-                    tokens_in=tokens_in,
-                    tokens_out=tokens_out,
+                    tokens_in=result.tokens_in,
+                    tokens_out=result.tokens_out,
                     cost_usd=cost_usd,
                 ),
                 model=model_id,
@@ -217,34 +111,23 @@ class AIClient:
             )
 
         except Exception as error:
-            # Calculate latency for error case
             latency_ms = int((time.time() - start_time) * 1000)
-
-            # Map error types
-            error_code = 'UNKNOWN'
-            if hasattr(error, 'status_code'):
-                status = error.status_code
-                if status == 401:
-                    error_code = 'AUTHENTICATION_ERROR'
-                elif status == 429:
-                    error_code = 'RATE_LIMIT'
-                elif status >= 500:
-                    error_code = 'PROVIDER_ERROR'
+            error_code = self._classify_error(error)
 
             # Get model info for error logging (best effort)
             try:
-                model = get_model(model_id, self.supabase)
-                provider = model.provider
-            except:
-                provider = 'unknown'
+                model = self._get_model(model_id, self.supabase)
+                detected_provider = model.provider
+            except Exception:
+                pass
 
             # Log failed usage
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
-                provider=provider,
+                provider=detected_provider,
                 model=model_id,
                 tokens_in=0,
                 tokens_out=0,
@@ -255,7 +138,6 @@ class AIClient:
                 key_source='managed',
             )
 
-            # Re-raise the error
             raise
 
     async def chat_stream(self, params: ChatParams) -> AsyncIterable[ChatChunk]:
@@ -270,117 +152,57 @@ class AIClient:
         """
         start_time = time.time()
         model_id = params.model or self.default_model
+        tokens_in = 0
+        tokens_out = 0
 
         try:
             # Resolve the model info
-            model = get_model(model_id, self.supabase)
+            model = self._get_model(model_id, self.supabase)
             provider = model.provider
 
             # Resolve API key (BYOK or managed)
-            resolved = await resolve_key(params.user_id, provider, self.supabase)
+            resolved = await self._resolve_key(params.user_id, provider, self.supabase)
             api_key = resolved.api_key
             key_source = resolved.source
 
-            # Provider branching
-            tokens_in = 0
-            tokens_out = 0
+            # Provider-specific streaming via adapter
+            adapter = self._get_adapter(provider)
+            client = adapter.create_client(api_key)
+            request = adapter.build_stream_request(model_id, model, params)
 
-            if provider == 'anthropic':
-                # Create Anthropic client
-                client = Anthropic(api_key=api_key)
+            stream = self._retry_with_backoff(
+                lambda: adapter.execute_stream(client, request),
+                max_retries=3,
+                base_delay_ms=100,
+                jitter_factor=0.1,
+            )
 
-                # Convert our Message format to Anthropic format
-                messages = [
-                    {'role': msg.role, 'content': msg.content}
-                    for msg in params.messages
-                ]
+            # Yield start signal
+            yield ChatChunk(delta=ChatChunkDelta(type='start_stream'))
 
-                # Build request parameters
-                request_params = {
-                    'model': model_id,
-                    'max_tokens': params.max_tokens or model.max_output_tokens,
-                    'messages': messages,
-                }
+            # Iterate stream chunks
+            for chunk in stream:
+                text = adapter.parse_stream_chunk(chunk)
+                if text:
+                    yield ChatChunk(
+                        delta=ChatChunkDelta(type='text_delta', text=text)
+                    )
 
-                if params.temperature is not None:
-                    request_params['temperature'] = params.temperature
+                chunk_usage = adapter.get_chunk_usage(chunk)
+                if chunk_usage:
+                    if chunk_usage.tokens_in is not None:
+                        tokens_in = chunk_usage.tokens_in
+                    if chunk_usage.tokens_out is not None:
+                        tokens_out = chunk_usage.tokens_out
 
-                # Yield start signal
-                yield ChatChunk(delta=ChatChunkDelta(type='start_stream'))
-
-                # Start streaming
-                partial_tokens_in = 0
-                partial_tokens_out = 0
-
-                with client.messages.stream(**request_params) as stream:
-                    for event in stream:
-                        # Handle text deltas
-                        if event.type == 'content_block_delta':
-                            if hasattr(event.delta, 'text'):
-                                yield ChatChunk(
-                                    delta=ChatChunkDelta(type='text_delta', text=event.delta.text)
-                                )
-
-                        # Track token usage from message_delta events
-                        elif event.type == 'message_delta':
-                            if hasattr(event, 'usage'):
-                                partial_tokens_out = event.usage.output_tokens
-
-                    # Get final message for full token counts
-                    final_message = stream.get_final_message()
-                    tokens_in = final_message.usage.input_tokens
-                    tokens_out = final_message.usage.output_tokens
-
-            elif provider in ['openai', 'openrouter']:
-                # Create OpenAI client (with custom base_url for OpenRouter)
-                if provider == 'openrouter':
-                    client = OpenAI(api_key=api_key, base_url='https://openrouter.ai/api/v1')
-                else:
-                    client = OpenAI(api_key=api_key)
-
-                # Convert our Message format to OpenAI format
-                messages = [
-                    {'role': msg.role, 'content': msg.content}
-                    for msg in params.messages
-                ]
-
-                # Build request parameters
-                request_params = {
-                    'model': model_id,
-                    'max_tokens': params.max_tokens or model.max_output_tokens,
-                    'messages': messages,
-                    'stream': True,
-                    'stream_options': {'include_usage': True},
-                }
-
-                if params.temperature is not None:
-                    request_params['temperature'] = params.temperature
-
-                # Yield start signal
-                yield ChatChunk(delta=ChatChunkDelta(type='start_stream'))
-
-                # Start streaming
-                stream = client.chat.completions.create(**request_params)
-
-                for chunk in stream:
-                    # Extract text delta
-                    if chunk.choices and len(chunk.choices) > 0:
-                        delta = chunk.choices[0].delta
-                        if delta and delta.content:
-                            yield ChatChunk(
-                                delta=ChatChunkDelta(type='text_delta', text=delta.content)
-                            )
-
-                    # Capture final usage from last chunk
-                    if hasattr(chunk, 'usage') and chunk.usage:
-                        tokens_in = chunk.usage.prompt_tokens
-                        tokens_out = chunk.usage.completion_tokens
-
-            else:
-                raise ValueError(f'Unsupported provider: {provider}')
+            # Get final usage (authoritative for Anthropic, None for OpenAI/OpenRouter)
+            final_usage = adapter.get_final_usage(stream)
+            if final_usage:
+                tokens_in = final_usage['tokens_in']
+                tokens_out = final_usage['tokens_out']
 
             # Calculate cost and latency
-            cost_usd = calculate_cost(model, tokens_in, tokens_out)
+            cost_usd = self._calculate_cost(model, tokens_in, tokens_out)
             latency_ms = int((time.time() - start_time) * 1000)
 
             # Yield stop signal with final tokens
@@ -390,7 +212,7 @@ class AIClient:
             )
 
             # Log usage (fire-and-forget)
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
@@ -406,41 +228,26 @@ class AIClient:
             )
 
         except Exception as error:
-            # Calculate latency for error case
             latency_ms = int((time.time() - start_time) * 1000)
+            error_code = self._classify_error(error)
+            detected_provider = 'unknown'
 
-            # Map error types
-            error_code = 'UNKNOWN'
-            if hasattr(error, 'status_code'):
-                status = error.status_code
-                if status == 401:
-                    error_code = 'AUTHENTICATION_ERROR'
-                elif status == 429:
-                    error_code = 'RATE_LIMIT'
-                elif status >= 500:
-                    error_code = 'PROVIDER_ERROR'
-
-            # Get model info for error logging (best effort)
             try:
-                model = get_model(model_id, self.supabase)
-                provider = model.provider
-            except:
-                provider = 'unknown'
+                model = self._get_model(model_id, self.supabase)
+                detected_provider = model.provider
+            except Exception:
+                pass
 
-            # Get key source (best effort)
-            try:
-                key_result = resolve_key(self.supabase, params.user_id, provider)
-                key_source = key_result['source']
-            except:
-                key_source = 'unknown'
+            # Use 'managed' as default key_source for error path —
+            # resolve_key may not have been reached before the error
+            key_source = 'managed'
 
-            # Log failed usage
-            log_usage(
+            self._log_usage(
                 supabase=self.supabase,
                 user_id=params.user_id,
                 app_id=self.app_id,
                 feature_id=params.feature_id,
-                provider=provider,
+                provider=detected_provider,
                 model=model_id,
                 tokens_in=0,
                 tokens_out=0,
@@ -451,7 +258,6 @@ class AIClient:
                 key_source=key_source,
             )
 
-            # Re-raise the error
             raise
 
     async def generate(self, params: GenerateParams) -> Any:
@@ -467,7 +273,7 @@ class AIClient:
         raise NotImplementedError("generate() will be implemented later")
 
 
-def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = None) -> AIClient:
+def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = None, services: dict | None = None) -> AIClient:
     """
     Factory function to create an AIClient instance
 
@@ -475,6 +281,7 @@ def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = 
         app_id: Application identifier for usage tracking
         supabase: Supabase client instance
         default_model: Optional default model to use for calls
+        services: Optional dict of service overrides for dependency injection
 
     Returns:
         Configured AIClient instance
@@ -484,4 +291,4 @@ def create_ai_client(app_id: str, supabase: Any, default_model: Optional[str] = 
         supabase_client=supabase,
         default_model=default_model
     )
-    return AIClient(config)
+    return AIClient(config, services=services)

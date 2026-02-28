@@ -73,9 +73,9 @@ describe('BYOK Key Management', () => {
     it('should throw error if ENCRYPTION_KEY not set', async () => {
       delete process.env.ENCRYPTION_KEY;
 
-      await expect(
-        saveKey('user123', 'anthropic', 'sk-ant-test', mockSupabase)
-      ).rejects.toThrow('ENCRYPTION_KEY environment variable not set');
+      await expect(saveKey('user123', 'anthropic', 'sk-ant-test', mockSupabase)).rejects.toThrow(
+        'ENCRYPTION_KEY environment variable not set',
+      );
     });
 
     it('should throw error if database upsert fails', async () => {
@@ -83,9 +83,9 @@ describe('BYOK Key Management', () => {
         error: { message: 'Database connection failed' },
       });
 
-      await expect(
-        saveKey('user123', 'anthropic', 'sk-ant-test', mockSupabase)
-      ).rejects.toThrow('Failed to save API key: Database connection failed');
+      await expect(saveKey('user123', 'anthropic', 'sk-ant-test', mockSupabase)).rejects.toThrow(
+        'Failed to save API key: Database connection failed',
+      );
     });
 
     it('should handle duplicate user+provider by updating existing row', async () => {
@@ -141,7 +141,7 @@ describe('BYOK Key Management', () => {
       mockSupabase.update.mockReturnValue({ eq: firstEq });
 
       await expect(deleteKey('user123', 'anthropic', mockSupabase)).rejects.toThrow(
-        'Failed to delete API key: Update failed'
+        'Failed to delete API key: Update failed',
       );
     });
   });
@@ -149,7 +149,7 @@ describe('BYOK Key Management', () => {
   describe('validateKey', () => {
     it('should reject unsupported providers', async () => {
       await expect(validateKey('unsupported-provider' as any, 'sk-test')).rejects.toThrow(
-        'Unsupported provider for validation: unsupported-provider'
+        'Unsupported provider for validation: unsupported-provider',
       );
     });
 

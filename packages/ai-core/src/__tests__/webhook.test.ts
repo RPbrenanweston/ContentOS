@@ -34,20 +34,13 @@ describe('handleStripeWebhook', () => {
     mockSupabase = {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
-          lte: vi.fn(() => ({  // .lte() can be called directly after .select()
-            gt: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                is: vi.fn(() => ({
-                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-                })),
-              })),
-            })),
-          })),
           eq: vi.fn(() => ({
             maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-            lte: vi.fn(() => ({
-              gt: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            is: vi.fn(() => ({
+              lte: vi.fn(() => ({
+                gt: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                })),
               })),
             })),
           })),
@@ -74,11 +67,7 @@ describe('handleStripeWebhook', () => {
       throw new Error('Invalid signature');
     });
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'invalid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'invalid_signature', mockSupabase);
 
     expect(result.status).toBe(400);
     expect(result.message).toContain('Webhook signature verification failed');
@@ -111,22 +100,14 @@ describe('handleStripeWebhook', () => {
       })),
     }));
 
-    // Mock no existing balance row
+    // Mock no existing balance row (getActiveBalance chain: .eq().is().lte().gt().maybeSingle())
     const balanceSelectMock = vi.fn(() => ({
-      lte: vi.fn(() => ({  // Support .select().lte() for webhook pattern
-        gt: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            is: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        is: vi.fn(() => ({
+          lte: vi.fn(() => ({
+            gt: vi.fn(() => ({
               maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
             })),
-          })),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-      eq: vi.fn(() => ({
-        lte: vi.fn(() => ({
-          gt: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
           })),
         })),
       })),
@@ -150,11 +131,7 @@ describe('handleStripeWebhook', () => {
       return { select: vi.fn(), insert: vi.fn() };
     }) as any;
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(result.message).toContain('Credited 25 USD');
@@ -197,11 +174,7 @@ describe('handleStripeWebhook', () => {
       insert: insertMock,
     })) as any;
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(result.message).toContain('already processed');
@@ -244,22 +217,14 @@ describe('handleStripeWebhook', () => {
           })),
         };
       }
-      // Balance query - return existing row
+      // Balance query - return existing row (getActiveBalance chain: .eq().is().lte().gt().maybeSingle())
       return {
-        lte: vi.fn(() => ({  // Support .select().lte() for webhook pattern
-          gt: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              is: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          is: vi.fn(() => ({
+            lte: vi.fn(() => ({
+              gt: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
               })),
-            })),
-            maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
-          })),
-        })),
-        eq: vi.fn(() => ({
-          lte: vi.fn(() => ({
-            gt: vi.fn(() => ({
-              maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
             })),
           })),
         })),
@@ -278,11 +243,7 @@ describe('handleStripeWebhook', () => {
       insert: insertMock,
     })) as any;
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(updateMock).toHaveBeenCalled(); // Update called, not insert
@@ -301,11 +262,7 @@ describe('handleStripeWebhook', () => {
 
     (mockStripe.webhooks.constructEvent as any).mockReturnValue(mockEvent);
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(200);
     expect(result.message).toContain('Unhandled event type');
@@ -327,11 +284,7 @@ describe('handleStripeWebhook', () => {
 
     (mockStripe.webhooks.constructEvent as any).mockReturnValue(mockEvent);
 
-    const result = await handleStripeWebhook(
-      'raw body',
-      'valid_signature',
-      mockSupabase
-    );
+    const result = await handleStripeWebhook('raw body', 'valid_signature', mockSupabase);
 
     expect(result.status).toBe(400);
     expect(result.message).toContain('Missing required metadata');

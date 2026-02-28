@@ -53,7 +53,7 @@ async def test_chat_basic_flow(mock_supabase, mock_model):
     # Mock the model query - Python Supabase SDK is synchronous
     execute_mock = Mock()
     execute_mock.data = mock_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     # Mock Anthropic SDK response
     mock_response = Mock()
@@ -61,7 +61,7 @@ async def test_chat_basic_flow(mock_supabase, mock_model):
     mock_response.usage = Mock(input_tokens=10, output_tokens=20)
 
     with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
-        with patch('ai_core.client.Anthropic') as MockAnthropic:
+        with patch('ai_core.providers.Anthropic') as MockAnthropic:
             mock_client_instance = Mock()
             mock_client_instance.messages.create = Mock(return_value=mock_response)
             MockAnthropic.return_value = mock_client_instance
@@ -90,7 +90,7 @@ async def test_chat_logs_usage(mock_supabase, mock_model):
     # Mock the model query
     execute_mock = Mock()
     execute_mock.data = mock_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     # Mock Anthropic SDK response
     mock_response = Mock()
@@ -106,10 +106,10 @@ async def test_chat_logs_usage(mock_supabase, mock_model):
         mock_result.execute = Mock()
         return mock_result
 
-    mock_supabase.table().insert = track_insert
+    mock_supabase.from_().insert = track_insert
 
     with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
-        with patch('ai_core.client.Anthropic') as MockAnthropic:
+        with patch('ai_core.providers.Anthropic') as MockAnthropic:
             mock_client_instance = Mock()
             mock_client_instance.messages.create = Mock(return_value=mock_response)
             MockAnthropic.return_value = mock_client_instance
@@ -142,7 +142,7 @@ async def test_chat_handles_error(mock_supabase, mock_model):
     # Mock the model query
     execute_mock = Mock()
     execute_mock.data = mock_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     # Track insert calls
     insert_calls = []
@@ -153,10 +153,10 @@ async def test_chat_handles_error(mock_supabase, mock_model):
         mock_result.execute = Mock()
         return mock_result
 
-    mock_supabase.table().insert = track_insert
+    mock_supabase.from_().insert = track_insert
 
     with patch.dict('os.environ', {'ANTHROPIC_API_KEY': 'test-key'}):
-        with patch('ai_core.client.Anthropic') as MockAnthropic:
+        with patch('ai_core.providers.Anthropic') as MockAnthropic:
             # Mock API error
             mock_client_instance = Mock()
             error = Exception('API Error')

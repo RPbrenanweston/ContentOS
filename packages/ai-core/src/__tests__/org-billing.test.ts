@@ -44,18 +44,18 @@ const createMockSupabase = () => {
       lte: mockLte,
       maybeSingle: mockMaybeSingle,
       select: mockSelect,
-      single: vi.fn().mockResolvedValue({ data: null, error: null }),  // For users table query
+      single: vi.fn().mockResolvedValue({ data: null, error: null }), // For users table query
     });
     mockSelect.mockReturnValue({
       eq: mockEq,
       is: mockIs,
-      lte: mockLte,  // Add .lte() directly after .select() for webhook pattern
+      lte: mockLte, // Add .lte() directly after .select() for webhook pattern
     });
 
     // Update chain that resolves to promise
     const mockUpdateEq = vi.fn(() => Promise.resolve({ error: null }));
     const mockUpdateChain = vi.fn((data: any) => {
-      mockUpdateCall(data);  // Capture the update data
+      mockUpdateCall(data); // Capture the update data
       return { eq: mockUpdateEq };
     });
 
@@ -74,7 +74,7 @@ const createMockSupabase = () => {
     mocks: {
       from: mockFrom,
       maybeSingle: mockMaybeSingle,
-      update: mockUpdateCall,  // Expose the actual update call, not the chain
+      update: mockUpdateCall, // Expose the actual update call, not the chain
       insert: mockInsert,
     },
   } as any;
@@ -259,9 +259,7 @@ describe('Org-Level Billing', () => {
         });
 
       // This should pass: 450 + 30 = 480 < 500
-      await expect(
-        checkSpendingCap('user_123', 30, mockSupabase)
-      ).resolves.toBeUndefined();
+      await expect(checkSpendingCap('user_123', 30, mockSupabase)).resolves.toBeUndefined();
     });
 
     it('throws when org admin cap exceeded', async () => {
@@ -284,9 +282,9 @@ describe('Org-Level Billing', () => {
         });
 
       // This should fail: 480 + 30 = 510 > 500
-      await expect(
-        checkSpendingCap('user_123', 30, mockSupabase)
-      ).rejects.toThrow(SpendingCapExceededError);
+      await expect(checkSpendingCap('user_123', 30, mockSupabase)).rejects.toThrow(
+        SpendingCapExceededError,
+      );
     });
   });
 
@@ -310,7 +308,7 @@ describe('Org-Level Billing', () => {
           error: null,
         });
 
-      await deductCredits('user_123', 5.50, mockSupabase);
+      await deductCredits('user_123', 5.5, mockSupabase);
 
       expect(mockSupabase.mocks.update).toHaveBeenCalledWith({
         credits_used_usd: 105.5,
@@ -407,7 +405,7 @@ describe('Org-Level Billing', () => {
               }),
             }),
           ]),
-        })
+        }),
       );
     });
   });

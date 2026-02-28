@@ -19,9 +19,6 @@ export interface AIClientConfig {
 export interface AIClient {
   chat(params: ChatParams): Promise<ChatResult>;
   chatStream(params: ChatParams): AsyncIterable<ChatChunk>;
-  generate<T>(params: GenerateParams<T>): Promise<T>;
-  getUsage(period?: DateRange): Promise<UsageSummary>;
-  getRemainingCredits(): Promise<CreditBalance>;
 }
 
 /**
@@ -68,7 +65,7 @@ export interface ChatChunk {
 /**
  * Parameters for structured output generation
  */
-export interface GenerateParams<T> {
+export interface GenerateParams {
   userId: string;
   featureId: string;
   messages: Message[];

@@ -1,7 +1,7 @@
 """
-Backend package for AI Security Recruitment Sales Intelligence Platform.
+Shared AI Layer — Python backend package.
 
-CSV upload and data management utilities.
+Multi-provider LLM orchestration with usage tracking, billing, and key management.
 """
 
 __version__ = "0.1.0"

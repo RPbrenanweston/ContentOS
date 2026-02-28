@@ -6,7 +6,12 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createAIClient } from '../client';
-import { createCheckoutSession, handleStripeWebhook, getRemainingCredits, checkSpendingCap } from '../billing';
+import {
+  createCheckoutSession,
+  handleStripeWebhook,
+  getRemainingCredits,
+  checkSpendingCap,
+} from '../billing';
 import { encrypt } from '../keys';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
@@ -70,7 +75,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
     const createMockChain = (returnData: any) => ({
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
-          is: vi.fn().mockReturnValue({  // Add .is() support for user-level queries
+          is: vi.fn().mockReturnValue({
+            // Add .is() support for user-level queries
             lte: vi.fn().mockReturnValue({
               gt: vi.fn().mockReturnValue({
                 maybeSingle: vi.fn().mockResolvedValue(returnData),
@@ -95,7 +101,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
         }),
         lte: vi.fn().mockReturnValue({
           gt: vi.fn().mockReturnValue({
-            eq: vi.fn().mockReturnValue({  // Add .eq().is() for webhook pattern: .lte().gt().eq().is()
+            eq: vi.fn().mockReturnValue({
+              // Add .eq().is() for webhook pattern: .lte().gt().eq().is()
               is: vi.fn().mockReturnValue({
                 maybeSingle: vi.fn().mockResolvedValue(returnData),
               }),
@@ -199,20 +206,12 @@ describe('Phase 3 Integration: Billing Flow', () => {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             maybeSingle: vi.fn().mockResolvedValue(returnData),
-            lte: vi.fn().mockReturnValue({
-              gt: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue(returnData),
-              }),
-            }),
-          }),
-          lte: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                is: vi.fn().mockReturnValue({
+            is: vi.fn().mockReturnValue({
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
                 }),
               }),
-              maybeSingle: vi.fn().mockResolvedValue(returnData),
             }),
           }),
         }),
@@ -243,7 +242,7 @@ describe('Phase 3 Integration: Billing Flow', () => {
     const result = await handleStripeWebhook(
       JSON.stringify(webhookEvent),
       'test-signature',
-      mockSupabase
+      mockSupabase,
     );
 
     expect(result.status).toBe(200);
@@ -290,7 +289,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
                 maybeSingle: vi.fn().mockResolvedValue(returnData),
               }),
             }),
-            is: vi.fn().mockReturnValue({  // Add .is() for user-level balance queries
+            is: vi.fn().mockReturnValue({
+              // Add .is() for user-level balance queries
               lte: vi.fn().mockReturnValue({
                 gt: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
@@ -384,7 +384,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
       const createMockChain = (returnData: any) => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            is: vi.fn().mockReturnValue({  // Add .is() for user-level queries
+            is: vi.fn().mockReturnValue({
+              // Add .is() for user-level queries
               lte: vi.fn().mockReturnValue({
                 gt: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
@@ -409,7 +410,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
           }),
           lte: vi.fn().mockReturnValue({
             gt: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({  // Add .eq().is() for webhook pattern
+              eq: vi.fn().mockReturnValue({
+                // Add .eq().is() for webhook pattern
                 is: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
                 }),
@@ -454,7 +456,7 @@ describe('Phase 3 Integration: Billing Flow', () => {
         userId: 'user-123',
         featureId: 'test-feature',
         messages: [{ role: 'user', content: 'This should be blocked' }],
-      })
+      }),
     ).rejects.toThrow('Spending cap exceeded');
   });
 
@@ -483,7 +485,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
       const createMockChain = (returnData: any) => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            is: vi.fn().mockReturnValue({  // Add .is() support
+            is: vi.fn().mockReturnValue({
+              // Add .is() support
               lte: vi.fn().mockReturnValue({
                 gt: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
@@ -492,7 +495,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
             }),
             maybeSingle: vi.fn().mockResolvedValue(returnData),
           }),
-          lte: vi.fn().mockReturnValue({  // Add webhook pattern support
+          lte: vi.fn().mockReturnValue({
+            // Add webhook pattern support
             gt: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 is: vi.fn().mockReturnValue({
@@ -519,7 +523,7 @@ describe('Phase 3 Integration: Billing Flow', () => {
     const result = await handleStripeWebhook(
       JSON.stringify(webhookEvent),
       'test-signature',
-      mockSupabase
+      mockSupabase,
     );
 
     expect(result.status).toBe(200);
@@ -535,7 +539,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
       const createMockChain = (returnData: any) => ({
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
-            is: vi.fn().mockReturnValue({  // Add .is() for user-level queries
+            is: vi.fn().mockReturnValue({
+              // Add .is() for user-level queries
               lte: vi.fn().mockReturnValue({
                 gt: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
@@ -553,7 +558,8 @@ describe('Phase 3 Integration: Billing Flow', () => {
             single: vi.fn().mockResolvedValue(returnData),
             maybeSingle: vi.fn().mockResolvedValue(returnData),
           }),
-          lte: vi.fn().mockReturnValue({  // Add webhook pattern
+          lte: vi.fn().mockReturnValue({
+            // Add webhook pattern
             gt: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
                 is: vi.fn().mockReturnValue({

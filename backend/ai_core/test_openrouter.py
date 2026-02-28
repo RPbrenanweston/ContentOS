@@ -63,7 +63,7 @@ async def test_chat_openai_provider(mock_supabase, mock_openai_model):
     # Mock the model query
     execute_mock = Mock()
     execute_mock.data = mock_openai_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     # Mock OpenAI SDK response
     mock_response = Mock()
@@ -71,7 +71,7 @@ async def test_chat_openai_provider(mock_supabase, mock_openai_model):
     mock_response.usage = Mock(prompt_tokens=15, completion_tokens=25)
 
     with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-openai-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create = Mock(return_value=mock_response)
             MockOpenAI.return_value = mock_client_instance
@@ -103,14 +103,14 @@ async def test_chat_openai_message_format(mock_supabase, mock_openai_model):
     """Test that messages are converted to OpenAI format"""
     execute_mock = Mock()
     execute_mock.data = mock_openai_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     mock_response = Mock()
     mock_response.choices = [Mock(message=Mock(content='Response'))]
     mock_response.usage = Mock(prompt_tokens=10, completion_tokens=20)
 
     with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create = Mock(return_value=mock_response)
             MockOpenAI.return_value = mock_client_instance
@@ -144,18 +144,18 @@ async def test_chat_openai_logs_correct_provider(mock_supabase, mock_openai_mode
     """Test that usage logging records 'openai' as provider"""
     execute_mock = Mock()
     execute_mock.data = mock_openai_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     # Track insert calls
     insert_mock = Mock()
-    mock_supabase.table().insert.return_value.execute.return_value = insert_mock
+    mock_supabase.from_().insert.return_value.execute.return_value = insert_mock
 
     mock_response = Mock()
     mock_response.choices = [Mock(message=Mock(content='Response'))]
     mock_response.usage = Mock(prompt_tokens=10, completion_tokens=20)
 
     with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create = Mock(return_value=mock_response)
             MockOpenAI.return_value = mock_client_instance
@@ -171,7 +171,7 @@ async def test_chat_openai_logs_correct_provider(mock_supabase, mock_openai_mode
             )
 
             # Verify usage logging was called
-            insert_calls = mock_supabase.table().insert.call_args_list
+            insert_calls = mock_supabase.from_().insert.call_args_list
             assert len(insert_calls) > 0
 
             # Verify provider field in usage log
@@ -188,14 +188,14 @@ async def test_chat_openrouter_provider(mock_supabase, mock_openrouter_model):
     """Test chat() with OpenRouter provider uses correct base_url"""
     execute_mock = Mock()
     execute_mock.data = mock_openrouter_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     mock_response = Mock()
     mock_response.choices = [Mock(message=Mock(content='OpenRouter response'))]
     mock_response.usage = Mock(prompt_tokens=12, completion_tokens=18)
 
     with patch.dict('os.environ', {'OPENROUTER_API_KEY': 'test-openrouter-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create = Mock(return_value=mock_response)
             MockOpenAI.return_value = mock_client_instance
@@ -228,17 +228,17 @@ async def test_chat_openrouter_logs_correct_provider(mock_supabase, mock_openrou
     """Test that usage logging records 'openrouter' as provider"""
     execute_mock = Mock()
     execute_mock.data = mock_openrouter_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     insert_mock = Mock()
-    mock_supabase.table().insert.return_value.execute.return_value = insert_mock
+    mock_supabase.from_().insert.return_value.execute.return_value = insert_mock
 
     mock_response = Mock()
     mock_response.choices = [Mock(message=Mock(content='Response'))]
     mock_response.usage = Mock(prompt_tokens=10, completion_tokens=20)
 
     with patch.dict('os.environ', {'OPENROUTER_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create = Mock(return_value=mock_response)
             MockOpenAI.return_value = mock_client_instance
@@ -254,7 +254,7 @@ async def test_chat_openrouter_logs_correct_provider(mock_supabase, mock_openrou
             )
 
             # Verify provider field in usage log
-            insert_calls = mock_supabase.table().insert.call_args_list
+            insert_calls = mock_supabase.from_().insert.call_args_list
             usage_log = insert_calls[0][0][0]
             assert usage_log['provider'] == 'openrouter'
 
@@ -264,14 +264,14 @@ async def test_chat_openrouter_provider_detection(mock_supabase, mock_openrouter
     """Test provider detection from model registry (not hardcoded)"""
     execute_mock = Mock()
     execute_mock.data = mock_openrouter_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     mock_response = Mock()
     mock_response.choices = [Mock(message=Mock(content='Response'))]
     mock_response.usage = Mock(prompt_tokens=10, completion_tokens=20)
 
     with patch.dict('os.environ', {'OPENROUTER_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create = Mock(return_value=mock_response)
             MockOpenAI.return_value = mock_client_instance
@@ -301,7 +301,7 @@ async def test_chat_stream_openai(mock_supabase, mock_openai_model):
     """Test chat_stream() with OpenAI provider"""
     execute_mock = Mock()
     execute_mock.data = mock_openai_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     # Mock OpenAI streaming chunks
     chunk1 = Mock()
@@ -317,7 +317,7 @@ async def test_chat_stream_openai(mock_supabase, mock_openai_model):
     final_chunk.usage = Mock(prompt_tokens=5, completion_tokens=2)
 
     with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create.return_value = iter([chunk1, chunk2, final_chunk])
             MockOpenAI.return_value = mock_client_instance
@@ -347,7 +347,7 @@ async def test_chat_stream_openrouter(mock_supabase, mock_openrouter_model):
     """Test chat_stream() with OpenRouter provider uses correct base_url"""
     execute_mock = Mock()
     execute_mock.data = mock_openrouter_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     chunk = Mock()
     chunk.choices = [Mock(delta=Mock(content='Test'))]
@@ -358,7 +358,7 @@ async def test_chat_stream_openrouter(mock_supabase, mock_openrouter_model):
     final_chunk.usage = Mock(prompt_tokens=8, completion_tokens=4)
 
     with patch.dict('os.environ', {'OPENROUTER_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create.return_value = iter([chunk, final_chunk])
             MockOpenAI.return_value = mock_client_instance
@@ -391,7 +391,7 @@ async def test_chat_stream_openai_extracts_text_delta(mock_supabase, mock_openai
     """Test text_delta extraction from chunk.choices[0].delta.content"""
     execute_mock = Mock()
     execute_mock.data = mock_openai_model.model_dump()
-    mock_supabase.table().select().eq().eq().single().execute.return_value = execute_mock
+    mock_supabase.from_().select().eq().eq().single().execute.return_value = execute_mock
 
     chunk = Mock()
     chunk.choices = [Mock(delta=Mock(content='Delta text here'))]
@@ -402,7 +402,7 @@ async def test_chat_stream_openai_extracts_text_delta(mock_supabase, mock_openai
     final_chunk.usage = Mock(prompt_tokens=3, completion_tokens=1)
 
     with patch.dict('os.environ', {'OPENAI_API_KEY': 'test-key'}):
-        with patch('ai_core.client.OpenAI') as MockOpenAI:
+        with patch('ai_core.providers.OpenAI') as MockOpenAI:
             mock_client_instance = Mock()
             mock_client_instance.chat.completions.create.return_value = iter([chunk, final_chunk])
             MockOpenAI.return_value = mock_client_instance

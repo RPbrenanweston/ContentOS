@@ -39,7 +39,7 @@ vi.mock('openai', () => {
   }
 
   return {
-    default: MockConstructor,  // For: import OpenAI from 'openai'
+    default: MockConstructor, // For: import OpenAI from 'openai'
     __esModule: true,
   };
 });
@@ -302,7 +302,7 @@ describe('OpenRouter Provider Integration Tests', () => {
               },
             },
           ],
-        })
+        }),
       );
     });
 
@@ -337,7 +337,7 @@ describe('OpenRouter Provider Integration Tests', () => {
       });
 
       // Wait for fire-and-forget usage logging
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Verify usage was logged with provider="openrouter"
       expect(insertSpy).toHaveBeenCalledWith(
@@ -346,7 +346,7 @@ describe('OpenRouter Provider Integration Tests', () => {
           tokens_in: 20,
           tokens_out: 10,
           success: true,
-        })
+        }),
       );
     });
 
@@ -451,11 +451,11 @@ describe('OpenRouter Provider Integration Tests', () => {
       expect(chunks[0].delta.type).toBe('start_stream');
 
       // Verify text deltas
-      const textChunks = chunks.filter(c => c.delta?.type === 'text_delta');
+      const textChunks = chunks.filter((c) => c.delta?.type === 'text_delta');
       expect(textChunks.length).toBeGreaterThan(0);
 
       // Verify final stop chunk
-      const stopChunk = chunks.find(c => c.delta?.type === 'stop_stream');
+      const stopChunk = chunks.find((c) => c.delta?.type === 'stop_stream');
       expect(stopChunk).toBeDefined();
     });
 
@@ -492,11 +492,9 @@ describe('OpenRouter Provider Integration Tests', () => {
   });
 
   describe('validateKey() for OpenRouter', () => {
-    // NOTE: Success and network error tests are skipped due to dynamic require() mock issues
-    // The 401 test passes, confirming the implementation is correct
-    // TODO: Investigate vitest mocking for dynamic require() in keys.ts line 214
-    it.skip('should validate OpenRouter API key successfully', async () => {
-      // Use mockImplementationOnce for isolated test behavior
+    // Fixed: validateKey now uses dynamic import() instead of require(),
+    // so vi.mock('openai') properly intercepts all SDK usage.
+    it('should validate OpenRouter API key successfully', async () => {
       mockOpenAICreate.mockImplementationOnce(async () => ({
         choices: [{ message: { content: 'valid' } }],
         usage: { prompt_tokens: 1, completion_tokens: 1 },
@@ -513,7 +511,7 @@ describe('OpenRouter Provider Integration Tests', () => {
           model: 'google/gemini-2.0-flash-001',
           max_tokens: 1,
           messages: [{ role: 'user', content: 'test' }],
-        })
+        }),
       );
     });
 
@@ -526,12 +524,11 @@ describe('OpenRouter Provider Integration Tests', () => {
       });
 
       await expect(validateKey('openrouter', 'sk-or-invalid-key')).rejects.toThrow(
-        'Invalid API key'
+        'Invalid API key',
       );
     });
 
-    it.skip('should throw generic error on network failure for OpenRouter', async () => {
-      // Network errors don't have a status property
+    it('should throw generic error on network failure for OpenRouter', async () => {
       const error = new Error('Network error');
 
       mockOpenAICreate.mockImplementationOnce(async () => {
@@ -539,7 +536,7 @@ describe('OpenRouter Provider Integration Tests', () => {
       });
 
       await expect(validateKey('openrouter', 'sk-or-test-key')).rejects.toThrow(
-        'Failed to validate API key: Network error'
+        'Failed to validate API key: Network error',
       );
     });
   });
@@ -616,7 +613,7 @@ describe('OpenRouter Provider Integration Tests', () => {
           provider: 'openrouter',
           display_name: 'Gemini 2.0 Flash',
         }),
-        { onConflict: 'id' }
+        { onConflict: 'id' },
       );
 
       // Verify result summary
@@ -632,10 +629,10 @@ describe('OpenRouter Provider Integration Tests', () => {
             id: 'google/gemini-2.0-flash-001',
             name: 'Gemini 2.0 Flash (Updated)',
             pricing: {
-              prompt: '0.0000002',  // Price changed
+              prompt: '0.0000002', // Price changed
               completion: '0.0000004',
             },
-            context_length: 64000,  // Context changed
+            context_length: 64000, // Context changed
             top_provider: {
               max_completion_tokens: 16384,
             },
@@ -697,10 +694,7 @@ describe('OpenRouter Provider Integration Tests', () => {
       // Mock two existing models, only one in API response
       const selectSpy = vi.fn().mockReturnValue({
         eq: vi.fn().mockResolvedValue({
-          data: [
-            { id: 'google/gemini-2.0-flash-001' },
-            { id: 'removed/old-model' },
-          ],
+          data: [{ id: 'google/gemini-2.0-flash-001' }, { id: 'removed/old-model' }],
           error: null,
         }),
       });
@@ -773,7 +767,7 @@ describe('OpenRouter Provider Integration Tests', () => {
         expect.objectContaining({
           id: 'valid/model',
         }),
-        { onConflict: 'id' }
+        { onConflict: 'id' },
       );
     });
 
@@ -784,17 +778,13 @@ describe('OpenRouter Provider Integration Tests', () => {
         statusText: 'Internal Server Error',
       } as Response);
 
-      await expect(syncOpenRouterModels(mockSupabase)).rejects.toThrow(
-        'OpenRouter sync failed'
-      );
+      await expect(syncOpenRouterModels(mockSupabase)).rejects.toThrow('OpenRouter sync failed');
     });
 
     it('should handle network failures gracefully', async () => {
       vi.mocked(global.fetch).mockRejectedValue(new Error('Network error'));
 
-      await expect(syncOpenRouterModels(mockSupabase)).rejects.toThrow(
-        'OpenRouter sync failed'
-      );
+      await expect(syncOpenRouterModels(mockSupabase)).rejects.toThrow('OpenRouter sync failed');
     });
   });
 
@@ -815,16 +805,16 @@ describe('OpenRouter Provider Integration Tests', () => {
           userId: 'user-123',
           featureId: 'test-error',
           messages: [{ role: 'user', content: 'Test' }],
-        })
+        }),
       ).rejects.toThrow();
 
       // Wait for fire-and-forget usage logging
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       // Verify error was logged with correct error_code
-      const insertCall = vi.mocked(mockSupabase.from).mock.results.find(
-        (r: any) => r.value?.insert
-      );
+      const insertCall = vi
+        .mocked(mockSupabase.from)
+        .mock.results.find((r: any) => r.value?.insert);
       if (insertCall) {
         const insertArgs = vi.mocked(insertCall.value.insert).mock.calls[0];
         if (insertArgs) {
@@ -852,7 +842,7 @@ describe('OpenRouter Provider Integration Tests', () => {
           userId: 'user-123',
           featureId: 'test-error',
           messages: [{ role: 'user', content: 'Test' }],
-        })
+        }),
       ).rejects.toThrow();
     });
 
@@ -872,7 +862,7 @@ describe('OpenRouter Provider Integration Tests', () => {
           userId: 'user-123',
           featureId: 'test-error',
           messages: [{ role: 'user', content: 'Test' }],
-        })
+        }),
       ).rejects.toThrow();
     });
   });

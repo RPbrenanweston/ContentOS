@@ -19,6 +19,7 @@ from .types import (
     CreditBalance,
     DateRange,
     ModelInfo,
+    ModelNotFoundError,
     PartialTokens,
 )
 from .models import get_model, get_default_model, calculate_cost
@@ -26,6 +27,9 @@ from .billing import get_remaining_credits, check_credits
 from .keys import resolve_key, save_key, delete_key, validate_key, encrypt, decrypt
 from .usage import log_usage
 from .sync import sync_openrouter_models
+from .retry import retry_with_backoff, is_retryable_error, calculate_backoff_delay
+from .errors import classify_error
+from .providers import get_adapter, register_adapter
 
 __all__ = [
     # Client
@@ -45,6 +49,7 @@ __all__ = [
     'CreditBalance',
     'DateRange',
     'ModelInfo',
+    'ModelNotFoundError',
     'PartialTokens',
     # Models
     'get_model',
@@ -64,4 +69,13 @@ __all__ = [
     'log_usage',
     # Sync
     'sync_openrouter_models',
+    # Retry utilities
+    'retry_with_backoff',
+    'is_retryable_error',
+    'calculate_backoff_delay',
+    # Error utilities
+    'classify_error',
+    # Provider registration
+    'get_adapter',
+    'register_adapter',
 ]
