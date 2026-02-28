@@ -28,28 +28,10 @@ describe('BYOK Integration Tests', () => {
     expect(decrypted).toBe(plaintext);
   });
 
-  it('AC2: Managed fallback key resolution logic', () => {
-    // This test verifies the logic in resolveKey function
-    // When no BYOK key exists, it should fall back to env var
-
-    // Setup: no BYOK key in database (mocked in resolveKey)
-    // Expected: resolveKey returns { key: env['ANTHROPIC_API_KEY'], source: 'managed' }
-
-    // Actual implementation tested in resolveKey unit tests
-    // This integration test confirms the pattern works end-to-end
-    expect(true).toBe(true);
-  });
-
-  it('AC3: Usage log key_source field is set correctly', () => {
-    // This test verifies logUsage receives correct key_source value
-
-    // When BYOK key used: logUsage called with keySource='byok'
-    // When managed key used: logUsage called with keySource='managed'
-
-    // Actual implementation tested in client.ts chat() method
-    // This integration test confirms usage logging captures the correct source
-    expect(true).toBe(true);
-  });
+  // AC2 (managed fallback) and AC3 (key_source logging) are tested in:
+  //   - keys.test.ts: resolveKey returns managed key when no BYOK exists
+  //   - integration.test.ts: chat() logs usage with correct key_source
+  // Removed placeholder tests that asserted expect(true).toBe(true).
 
   it('AC4: Python decrypts key encrypted by TypeScript', () => {
     // Test cross-language encryption compatibility
@@ -76,17 +58,10 @@ describe('BYOK Integration Tests', () => {
     // This test verifies the format is compatible (IV + Tag + Ciphertext)
   });
 
-  it('AC5: Deactivated BYOK key triggers managed fallback', () => {
-    // This test verifies deleteKey sets is_active=false
-    // And resolveKey filters by is_active=true, thus excluding deactivated keys
-
-    // Setup: Save BYOK key, then delete it (sets is_active=false)
-    // Expected: resolveKey returns managed key (no active BYOK key found)
-
-    // Actual implementation tested in keys.ts resolveKey logic
-    // This integration test confirms the deactivation pattern works
-    expect(true).toBe(true);
-  });
+  // AC5 (deactivated key fallback) is tested in:
+  //   - keys.test.ts: resolveKey filters by is_active=true
+  //   - key-management.test.ts: deleteKey sets is_active=false
+  // Removed placeholder test that asserted expect(true).toBe(true).
 
   it('AC6: Encryption roundtrip with multiple keys', () => {
     // Test that different plaintexts encrypt to different ciphertexts
