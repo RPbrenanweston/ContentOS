@@ -235,7 +235,7 @@ class AIClient:
             try:
                 model = get_model(model_id, self.supabase)
                 provider = model.provider
-            except:
+            except Exception:
                 provider = 'unknown'
 
             # Log failed usage
@@ -424,15 +424,12 @@ class AIClient:
             try:
                 model = get_model(model_id, self.supabase)
                 provider = model.provider
-            except:
+            except Exception:
                 provider = 'unknown'
 
-            # Get key source (best effort)
-            try:
-                key_result = resolve_key(self.supabase, params.user_id, provider)
-                key_source = key_result['source']
-            except:
-                key_source = 'unknown'
+            # Use 'managed' as default key_source for error path —
+            # resolve_key may not have been reached before the error
+            key_source = 'managed'
 
             # Log failed usage
             log_usage(

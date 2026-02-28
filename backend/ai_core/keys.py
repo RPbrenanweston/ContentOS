@@ -8,7 +8,7 @@ import base64
 import hashlib
 import os
 from typing import Any, Literal
-from datetime import datetime
+from datetime import datetime, timezone
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from ai_core.types import InvalidKeyError
 
@@ -140,7 +140,7 @@ async def save_key(
             'encrypted_key': encrypted_key,
             'key_hint': key_hint,
             'is_active': True,
-            'created_at': datetime.now().isoformat(),
+            'created_at': datetime.now(timezone.utc).isoformat(),
         },
         on_conflict='user_id,provider'
     ).execute()
@@ -254,7 +254,7 @@ async def resolve_key(
         # Note: Python Supabase is synchronous, so we just run it without awaiting
         try:
             supabase.from_('ai_api_keys').update(
-                {'last_used_at': datetime.now().isoformat()}
+                {'last_used_at': datetime.now(timezone.utc).isoformat()}
             ).eq('user_id', user_id).eq('provider', provider).eq('is_active', True).execute()
         except Exception as update_error:
             print(f"Warning: Failed to update last_used_at for BYOK key: {update_error}")
