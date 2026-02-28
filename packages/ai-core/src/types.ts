@@ -65,7 +65,7 @@ export interface ChatChunk {
 /**
  * Parameters for structured output generation
  */
-export interface GenerateParams<T> {
+export interface GenerateParams {
   userId: string;
   featureId: string;
   messages: Message[];

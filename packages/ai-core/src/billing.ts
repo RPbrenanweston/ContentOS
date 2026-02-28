@@ -5,9 +5,8 @@
 
 import { SupabaseClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { CreditBalance, ModelInfo, CreateCheckoutSessionParams, CheckoutSession } from './types';
+import { CreditBalance, CreateCheckoutSessionParams, CheckoutSession } from './types';
 import { InsufficientCreditsError, SpendingCapExceededError } from './errors';
-import { calculateCost } from './models';
 
 /**
  * Safely parse a float value, throwing if NaN
