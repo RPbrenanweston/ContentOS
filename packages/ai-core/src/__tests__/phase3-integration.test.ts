@@ -199,20 +199,12 @@ describe('Phase 3 Integration: Billing Flow', () => {
         select: vi.fn().mockReturnValue({
           eq: vi.fn().mockReturnValue({
             maybeSingle: vi.fn().mockResolvedValue(returnData),
-            lte: vi.fn().mockReturnValue({
-              gt: vi.fn().mockReturnValue({
-                maybeSingle: vi.fn().mockResolvedValue(returnData),
-              }),
-            }),
-          }),
-          lte: vi.fn().mockReturnValue({
-            gt: vi.fn().mockReturnValue({
-              eq: vi.fn().mockReturnValue({
-                is: vi.fn().mockReturnValue({
+            is: vi.fn().mockReturnValue({
+              lte: vi.fn().mockReturnValue({
+                gt: vi.fn().mockReturnValue({
                   maybeSingle: vi.fn().mockResolvedValue(returnData),
                 }),
               }),
-              maybeSingle: vi.fn().mockResolvedValue(returnData),
             }),
           }),
         }),

@@ -20,6 +20,34 @@ function safeParseFloat(value: string | number, fieldName: string): number {
   return parsed;
 }
 
+/**
+ * Query the active balance row for a user or org in the current billing period.
+ * Returns the raw database row or null if no active balance exists.
+ */
+async function getActiveBalance(
+  supabase: SupabaseClient,
+  identity: { userId: string } | { orgId: string }
+): Promise<any | null> {
+  const now = new Date();
+  let query = supabase
+    .from('ai_credit_balances')
+    .select('*');
+
+  if ('orgId' in identity) {
+    query = query.eq('org_id', identity.orgId).is('user_id', null);
+  } else {
+    query = query.eq('user_id', identity.userId).is('org_id', null);
+  }
+
+  const { data, error } = await query
+    .lte('period_start', now.toISOString())
+    .gt('period_end', now.toISOString())
+    .maybeSingle();
+
+  if (error || !data) return null;
+  return data;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Org-Level Billing Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,20 +90,10 @@ export async function getOrgBalance(
   orgId: string,
   supabase: SupabaseClient
 ): Promise<CreditBalance> {
-  const now = new Date();
+  const data = await getActiveBalance(supabase, { orgId });
 
-  // Query for org balance row where period_start <= now < period_end
-  const { data, error } = await supabase
-    .from('ai_credit_balances')
-    .select('*')
-    .eq('org_id', orgId)
-    .is('user_id', null) // Org-level balance has null user_id
-    .lte('period_start', now.toISOString())
-    .gt('period_end', now.toISOString())
-    .maybeSingle();
-
-  // If no row found, return zero balance
-  if (!data || error) {
+  if (!data) {
+    const now = new Date();
     return {
       remainingUsd: 0,
       usedUsd: 0,
@@ -113,20 +131,10 @@ export async function getRemainingCredits(
   }
 
   // Otherwise, return user-level balance
-  const now = new Date();
+  const data = await getActiveBalance(supabase, { userId });
 
-  // Query for balance row where period_start <= now < period_end
-  const { data, error } = await supabase
-    .from('ai_credit_balances')
-    .select('*')
-    .eq('user_id', userId)
-    .is('org_id', null) // User-level balance has null org_id
-    .lte('period_start', now.toISOString())
-    .gt('period_end', now.toISOString())
-    .maybeSingle();
-
-  // If no row found or error, return zero balance (credit system not active)
   if (!data) {
+    const now = new Date();
     return {
       remainingUsd: 0,
       usedUsd: 0,
@@ -174,47 +182,17 @@ export async function checkSpendingCap(
   estimatedCostUsd: number,
   supabase: SupabaseClient
 ): Promise<void> {
-  const now = new Date();
-
   // Check if user belongs to org
   const orgId = await getUserOrgId(userId, supabase);
+  const isOrgBalance = !!orgId;
 
-  let balanceData;
-  let isOrgBalance = false;
+  const balanceData = await getActiveBalance(
+    supabase,
+    orgId ? { orgId } : { userId }
+  );
 
-  if (orgId) {
-    // User is org member - query org-level balance
-    const { data, error } = await supabase
-      .from('ai_credit_balances')
-      .select('*')
-      .eq('org_id', orgId)
-      .is('user_id', null)
-      .lte('period_start', now.toISOString())
-      .gt('period_end', now.toISOString())
-      .maybeSingle();
-
-    if (!data || error) {
-      return; // No org balance configured
-    }
-
-    balanceData = data;
-    isOrgBalance = true;
-  } else {
-    // Individual user - query user-level balance
-    const { data, error } = await supabase
-      .from('ai_credit_balances')
-      .select('*')
-      .eq('user_id', userId)
-      .is('org_id', null)
-      .lte('period_start', now.toISOString())
-      .gt('period_end', now.toISOString())
-      .maybeSingle();
-
-    if (!data || error) {
-      return; // No balance row configured
-    }
-
-    balanceData = data;
+  if (!balanceData) {
+    return; // No balance configured
   }
 
   const currentUsed = safeParseFloat(balanceData.credits_used_usd || '0', 'credits_used_usd');
@@ -267,45 +245,16 @@ export async function deductCredits(
   costUsd: number,
   supabase: SupabaseClient
 ): Promise<void> {
-  const now = new Date();
-
   // Check if user belongs to org
   const orgId = await getUserOrgId(userId, supabase);
 
-  let balanceData;
+  const balanceData = await getActiveBalance(
+    supabase,
+    orgId ? { orgId } : { userId }
+  );
 
-  if (orgId) {
-    // User is org member - query org-level balance
-    const { data, error } = await supabase
-      .from('ai_credit_balances')
-      .select('*')
-      .eq('org_id', orgId)
-      .is('user_id', null)
-      .lte('period_start', now.toISOString())
-      .gt('period_end', now.toISOString())
-      .maybeSingle();
-
-    if (!data || error) {
-      return; // No org balance to deduct from
-    }
-
-    balanceData = data;
-  } else {
-    // Individual user - query user-level balance
-    const { data, error } = await supabase
-      .from('ai_credit_balances')
-      .select('*')
-      .eq('user_id', userId)
-      .is('org_id', null)
-      .lte('period_start', now.toISOString())
-      .gt('period_end', now.toISOString())
-      .maybeSingle();
-
-    if (!data || error) {
-      return; // No balance to deduct from
-    }
-
-    balanceData = data;
+  if (!balanceData) {
+    return; // No balance to deduct from
   }
 
   const currentUsed = safeParseFloat(balanceData.credits_used_usd || '0', 'credits_used_usd');
@@ -514,19 +463,10 @@ export async function handleStripeWebhook(
 
     // Get or create balance row for current period
     // If orgId is present, credit the org balance; otherwise credit user balance
-    const query = supabase
-      .from('ai_credit_balances')
-      .select('*')
-      .lte('period_start', now.toISOString())
-      .gt('period_end', now.toISOString());
-
-    if (orgId) {
-      query.eq('org_id', orgId).is('user_id', null);
-    } else {
-      query.eq('user_id', userId).is('org_id', null);
-    }
-
-    const { data: balanceRow } = await query.maybeSingle();
+    const balanceRow = await getActiveBalance(
+      supabase,
+      orgId ? { orgId } : { userId }
+    );
 
     if (balanceRow) {
       // Update existing balance

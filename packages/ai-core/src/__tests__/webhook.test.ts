@@ -34,20 +34,13 @@ describe('handleStripeWebhook', () => {
     mockSupabase = {
       from: vi.fn(() => ({
         select: vi.fn(() => ({
-          lte: vi.fn(() => ({  // .lte() can be called directly after .select()
-            gt: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                is: vi.fn(() => ({
-                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-                })),
-              })),
-            })),
-          })),
           eq: vi.fn(() => ({
             maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-            lte: vi.fn(() => ({
-              gt: vi.fn(() => ({
-                maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            is: vi.fn(() => ({
+              lte: vi.fn(() => ({
+                gt: vi.fn(() => ({
+                  maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+                })),
               })),
             })),
           })),
@@ -111,22 +104,14 @@ describe('handleStripeWebhook', () => {
       })),
     }));
 
-    // Mock no existing balance row
+    // Mock no existing balance row (getActiveBalance chain: .eq().is().lte().gt().maybeSingle())
     const balanceSelectMock = vi.fn(() => ({
-      lte: vi.fn(() => ({  // Support .select().lte() for webhook pattern
-        gt: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            is: vi.fn(() => ({
+      eq: vi.fn(() => ({
+        is: vi.fn(() => ({
+          lte: vi.fn(() => ({
+            gt: vi.fn(() => ({
               maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
             })),
-          })),
-          maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-      })),
-      eq: vi.fn(() => ({
-        lte: vi.fn(() => ({
-          gt: vi.fn(() => ({
-            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
           })),
         })),
       })),
@@ -244,22 +229,14 @@ describe('handleStripeWebhook', () => {
           })),
         };
       }
-      // Balance query - return existing row
+      // Balance query - return existing row (getActiveBalance chain: .eq().is().lte().gt().maybeSingle())
       return {
-        lte: vi.fn(() => ({  // Support .select().lte() for webhook pattern
-          gt: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              is: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          is: vi.fn(() => ({
+            lte: vi.fn(() => ({
+              gt: vi.fn(() => ({
                 maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
               })),
-            })),
-            maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
-          })),
-        })),
-        eq: vi.fn(() => ({
-          lte: vi.fn(() => ({
-            gt: vi.fn(() => ({
-              maybeSingle: vi.fn().mockResolvedValue({ data: balanceRow, error: null }),
             })),
           })),
         })),
