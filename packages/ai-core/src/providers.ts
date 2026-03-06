@@ -1,4 +1,18 @@
 /**
+ * @crumb
+ * @id sal-providers-adapters
+ * @intent Isolate provider-specific SDK logic behind a uniform adapter interface so the client never couples to Anthropic/OpenAI/OpenRouter directly
+ * @responsibilities LLM client creation, request building, response parsing, stream chunk handling, adapter registry management
+ * @contracts ProviderAdapter = ChatProvider & StreamProvider; getAdapter(provider: string) => ProviderAdapter | throws Error; registerAdapter(provider, adapter) => void
+ * @hazards OpenRouterAdapter delegates to internal OpenAIAdapter — changes to OpenAIAdapter silently affect OpenRouter behavior; All adapter methods use `unknown` casts — runtime type mismatches throw untyped errors
+ * @area API
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/types.ts
+ * @trail chat-flow#4 | Provider adapter executes the actual LLM API call after key resolution and billing checks
+ * @dependencies @anthropic-ai/sdk, openai
+ * @prompt When adding a new provider, implement ProviderAdapter and register via registerAdapter() — never modify existing adapter classes
+ */
+
+/**
  * Provider adapters for LLM API calls
  *
  * SOLID principles applied:

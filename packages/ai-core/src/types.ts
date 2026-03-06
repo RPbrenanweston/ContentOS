@@ -1,4 +1,16 @@
 /**
+ * @crumb
+ * @id sal-types-contracts
+ * @intent Define the shared type contracts that all AI layer modules depend on so interfaces stay centralized and consistent
+ * @responsibilities Type definitions for client config, chat params/results, streaming chunks, messages, tools, credit balances, model info, checkout sessions
+ * @contracts AIClientConfig, AIClient, ChatParams, ChatResult, ChatChunk, Message, Tool, CreditBalance, ModelInfo, CreateCheckoutSessionParams, CheckoutSession
+ * @hazards Adding optional fields to ChatParams or ModelInfo silently passes through without validation — consumers may receive undefined where they expect values; Tool.input_schema typed as Record<string, unknown> loses JSON Schema validation at compile time
+ * @area DAT
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/providers.ts, packages/ai-core/src/billing.ts, packages/ai-core/src/models.ts
+ * @prompt When adding new types, place them here — never define shared interfaces inline in consuming modules
+ */
+
+/**
  * Core types for the AI layer
  */
 

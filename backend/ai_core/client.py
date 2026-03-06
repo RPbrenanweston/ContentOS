@@ -8,6 +8,33 @@ SOLID principles applied:
 Handles chat, streaming, and structured generation with automatic
 usage logging, key resolution, and credit checks.
 """
+#
+# @crumb
+# @id sal-py-client-orchestrator
+# @intent Orchestrate LLM calls through model resolution, key lookup, provider dispatch,
+#         and usage logging — Python equivalent of the TypeScript client for backend services.
+# @responsibilities
+#   - Resolve model info and API keys before each call
+#   - Delegate provider-specific execution via adapter pattern
+#   - Log usage metrics on both success and failure paths
+#   - Support both synchronous chat and async streaming responses
+# @contracts
+#   - Every call (success or failure) produces a usage log entry
+#   - Streaming yields start_stream → text_delta* → stop_stream sequence
+#   - Errors are classified before re-raising to preserve stack trace
+# @hazards
+#   - Fire-and-forget logging silently drops write failures — data loss possible
+#   - Stream context manager entered but never explicitly exited on error path
+#   - generate() raises NotImplementedError — callers must guard against it
+# @area API
+# @refs providers.py, keys.py, models.py, usage.py, retry.py, errors.py, types.py
+# @trail chat-flow#1 | Orchestrate: resolve model → resolve key → call provider → log usage
+# @trail byok-flow#2 | Use resolved key (managed or BYOK) for provider call
+# @crumbfn chat | Execute non-streaming LLM call with full lifecycle logging | fire-and-forget log may silently fail +L42-L141
+# @crumbfn chat_stream | Execute streaming LLM call yielding ChatChunk sequence | stream context manager leak on error +L143-L261
+# @prompt What failure modes exist when log_usage silently fails during high-throughput streaming?
+# @/crumb
+#
 
 import time
 from typing import Any, AsyncIterable, Optional

@@ -3,6 +3,30 @@ Usage logging to Supabase
 
 Fire-and-forget logging of all AI calls to ai_usage_log table.
 """
+#
+# @crumb
+# @id sal-py-usage-logger
+# @intent Record every AI call's token consumption and cost to Supabase for billing
+#         reconciliation and usage analytics — failures are swallowed to never block callers.
+# @responsibilities
+#   - Build usage log row with user, model, cost, and timing data
+#   - Insert to ai_usage_log table via Supabase client
+#   - Swallow all exceptions to maintain fire-and-forget contract
+# @contracts
+#   - Never raises — all exceptions caught and printed to stdout
+#   - created_at always set to UTC ISO timestamp at call time
+#   - metadata defaults to empty dict if None
+# @hazards
+#   - Silent exception swallowing means usage data loss goes undetected
+#   - print() for error logging — not captured by structured logging systems
+# @area OBS
+# @refs client.py, types.py
+# @trail chat-flow#6 | Log token consumption after provider call completes
+# @trail billing-flow#2 | Record cost data for billing reconciliation
+# @crumbfn log_usage | Insert usage row to Supabase | silently swallows all errors +L11-L72
+# @prompt If Supabase is down during high traffic, how much usage data could be lost silently?
+# @/crumb
+#
 
 from typing import Any, Optional
 from datetime import datetime, timezone

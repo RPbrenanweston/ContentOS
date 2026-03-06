@@ -1,4 +1,19 @@
 /**
+ * @crumb
+ * @id sal-usage-logger
+ * @intent Record every LLM API call's token consumption and cost to Supabase for billing reconciliation and observability
+ * @responsibilities Usage event logging, fire-and-forget insert to ai_usage_log table
+ * @contracts logUsage(params: LogUsageParams) => void (fire-and-forget, never throws to caller)
+ * @hazards Fire-and-forget pattern silently drops failed inserts — usage data loss is invisible to callers; created_at uses client-side Date which may drift from server time
+ * @area OBS
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/billing.ts
+ * @trail chat-flow#6 | Log token consumption after successful LLM response and before credit deduction
+ * @trail billing-flow#2 | Log token usage after cost calculation and credit deduction complete
+ * @dependencies @supabase/supabase-js
+ * @prompt Never make logUsage awaitable — callers depend on fire-and-forget behavior to avoid blocking chat responses
+ */
+
+/**
  * Usage logging to Supabase
  */
 

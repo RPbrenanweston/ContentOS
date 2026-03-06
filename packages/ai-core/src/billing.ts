@@ -1,4 +1,20 @@
 /**
+ * @crumb
+ * @id sal-billing-credits
+ * @intent Gate every LLM call behind credit and spending-cap checks to prevent unbilled usage and budget overruns
+ * @responsibilities Credit balance resolution (user + org), spending cap enforcement, credit deduction, Stripe checkout session creation, webhook handling
+ * @contracts checkCredits(supabase, userId, cost) => void | throws InsufficientCreditsError; checkSpendingCap(supabase, userId, cost) => void | throws SpendingCapExceededError; deductCredits(supabase, userId, cost) => Promise<void>; createCheckoutSession(params) => Promise<CheckoutSession>; handleStripeWebhook(event) => Promise<void>
+ * @hazards Org-level balance check uses lower-of user/admin caps — cap misconfiguration silently blocks all org users; Stripe webhook idempotency relies on event.id dedup — replay attacks possible if dedup window expires
+ * @area SEC
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/usage.ts, packages/ai-core/src/types.ts, packages/ai-core/src/errors.ts
+ * @trail chat-flow#3 | Pre-check credits and spending caps before provider API call executes
+ * @trail chat-flow#7 | Post-deduct credits after usage is logged — fire-and-forget from client orchestrator
+ * @trail billing-flow#1 | Calculate cost and deduct credits after successful LLM response
+ * @dependencies @supabase/supabase-js, stripe
+ * @prompt When modifying cap logic, test both org-admin and org-member paths — they use different cap resolution strategies
+ */
+
+/**
  * Billing and credit management
  * Supports both user-level and org-level credit balances
  */

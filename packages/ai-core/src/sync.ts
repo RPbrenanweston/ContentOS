@@ -1,4 +1,18 @@
 /**
+ * @crumb
+ * @id sal-sync-openrouter
+ * @intent Synchronize the ai_models table with OpenRouter's live model catalog so pricing and availability stay current
+ * @responsibilities Fetch OpenRouter models API, upsert model rows to Supabase, deactivate removed models, skip zero-priced models
+ * @contracts syncOpenRouterModels(supabase: SupabaseClient) => Promise<SyncResult>; SyncResult { inserted, updated, deactivated }
+ * @hazards Individual model upsert failures are logged and skipped — partial sync can leave stale pricing for failed models; Zero-pricing filter silently excludes free-tier models that may be intentionally free
+ * @area DAT
+ * @refs packages/ai-core/src/models.ts, packages/ai-core/src/types.ts
+ * @trail model-sync-flow#1 | Fetch and upsert model data from OpenRouter before models.ts serves it
+ * @dependencies @supabase/supabase-js
+ * @prompt When adding new provider syncs, follow the same upsert-then-deactivate pattern — never delete models, only set is_active=false
+ */
+
+/**
  * OpenRouter model registry synchronization
  */
 

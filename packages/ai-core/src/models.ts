@@ -1,4 +1,18 @@
 /**
+ * @crumb
+ * @id sal-models-registry
+ * @intent Serve model metadata and pricing from the database so callers never hardcode provider-specific model details
+ * @responsibilities Model lookup by ID, default model resolution, cost calculation from token counts, database row mapping
+ * @contracts getModel(supabase, modelId) => Promise<ModelInfo> | throws ModelNotFoundError; getDefaultModel(supabase, provider) => Promise<ModelInfo>; calculateCost(model, tokensIn, tokensOut) => number
+ * @hazards safeParseFloat throws on NaN instead of defaulting — corrupted DB pricing rows crash cost calculation; getDefaultModel returns first match without deterministic ordering — multiple defaults yield inconsistent results
+ * @area DAT
+ * @refs packages/ai-core/src/sync.ts, packages/ai-core/src/client.ts, packages/ai-core/src/types.ts
+ * @trail model-sync-flow#2 | Serve model info that was previously synced and upserted by sync.ts
+ * @dependencies @supabase/supabase-js
+ * @prompt When adding model fields, update both ModelInfo type in types.ts and mapDatabaseToModel mapping here
+ */
+
+/**
  * Model registry and pricing helpers
  */
 

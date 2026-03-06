@@ -8,6 +8,32 @@ SOLID principles applied:
 
 Mirrors the TypeScript version at packages/ai-core/src/providers.ts
 """
+#
+# @crumb
+# @id sal-py-providers-adapters
+# @intent Abstract provider-specific SDK differences behind a uniform adapter interface
+#         so the client never couples to Anthropic, OpenAI, or OpenRouter directly.
+# @responsibilities
+#   - Define ChatProvider and StreamProvider ABCs for interface segregation
+#   - Implement AnthropicAdapter, OpenAIAdapter, OpenRouterAdapter concretely
+#   - Maintain mutable adapter registry for Open/Closed extensibility
+#   - Translate between provider-native response shapes and internal ChatCallResult/ChunkUsage
+# @contracts
+#   - get_adapter() raises ValueError for unknown providers — never returns None
+#   - OpenRouterAdapter delegates to OpenAIAdapter via composition (not inheritance)
+#   - register_adapter() overwrites existing entries without warning
+# @hazards
+#   - AnthropicAdapter.execute_stream enters context manager but never calls __exit__
+#   - Mutable _adapters dict is module-level global — not thread-safe for concurrent registration
+#   - OpenAI streaming chunk.choices may be empty list — guarded but could mask errors
+# @area API
+# @refs client.py, types.py
+# @trail chat-flow#4 | Execute provider-specific API call via adapter
+# @crumbfn execute_stream | Enter Anthropic stream context manager | context manager leak on error +L138-L142
+# @crumbfn get_adapter | Look up adapter from mutable registry | raises ValueError for unknown provider +L289-L294
+# @prompt What happens to the Anthropic stream context manager if an exception occurs mid-iteration?
+# @/crumb
+#
 
 from abc import ABC, abstractmethod
 from typing import Any

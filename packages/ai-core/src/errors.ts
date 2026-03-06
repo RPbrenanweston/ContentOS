@@ -1,4 +1,16 @@
 /**
+ * @crumb
+ * @id sal-errors-hierarchy
+ * @intent Define a typed error hierarchy so callers can catch and handle AI failures by category without parsing error strings
+ * @responsibilities Error class definitions (AIError, ProviderError subtypes), error classification from unknown errors, typed error throwing
+ * @contracts AIError (base) with code + statusCode; ProviderError extends AIError; classifyError(error) => AIError; throwTypedError(code, message, statusCode?) => never
+ * @hazards classifyError falls through to generic AIError for unrecognized shapes — novel provider errors lose their original context; Error subclasses expose statusCode which may leak internal HTTP details to end users
+ * @area ERR
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/billing.ts, packages/ai-core/src/keys.ts, packages/ai-core/src/retry.ts
+ * @prompt When adding new error types, extend AIError or ProviderError — never create standalone Error subclasses outside this hierarchy
+ */
+
+/**
  * AI-specific error types
  */
 

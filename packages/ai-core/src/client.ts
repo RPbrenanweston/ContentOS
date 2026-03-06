@@ -1,4 +1,19 @@
 /**
+ * @crumb
+ * @id sal-client-orchestrator
+ * @intent Orchestrate the full lifecycle of an LLM API call — from model resolution through billing to response delivery
+ * @responsibilities Chat request orchestration, streaming orchestration, dependency injection wiring, credit pre-check and post-deduction
+ * @contracts createAIClient(config: AIClientConfig) => AIClient; AIClient.chat(params) => Promise<ChatResult>; AIClient.chatStream(params) => AsyncGenerator<ChatChunk>
+ * @hazards Fire-and-forget credit deduction can silently fail leaving usage unbilled; Double model resolution in chatStream error path re-queries DB on every retry
+ * @area API
+ * @refs packages/ai-core/src/providers.ts, packages/ai-core/src/billing.ts, packages/ai-core/src/keys.ts, packages/ai-core/src/retry.ts, packages/ai-core/src/usage.ts, packages/ai-core/src/models.ts
+ * @trail chat-flow#1 | Entry point — receives chat request, resolves model, checks credits, delegates to provider
+ * @trail byok-flow#2 | Uses resolved key (BYOK or managed) when constructing the provider client
+ * @dependencies @anthropic-ai/sdk, openai, @supabase/supabase-js
+ * @prompt When modifying chat or chatStream, preserve the billing-before-call / deduct-after-call ordering — reversing this creates unbilled usage windows
+ */
+
+/**
  * Core AI client for calling LLM providers
  *
  * SOLID principles applied:

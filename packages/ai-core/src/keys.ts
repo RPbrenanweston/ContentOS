@@ -1,4 +1,19 @@
 /**
+ * @crumb
+ * @id sal-keys-resolver
+ * @intent Manage BYOK API key lifecycle (encrypt, store, resolve) so users can bring their own provider keys securely
+ * @responsibilities AES-256-GCM encryption/decryption, key storage in Supabase, key validation against provider APIs, key resolution (BYOK vs managed fallback)
+ * @contracts resolveKey(supabase, userId, provider) => Promise<ResolvedKey>; encrypt(plaintext, secret) => string; decrypt(ciphertext, secret) => string; saveKey(supabase, userId, provider, key, secret) => Promise<void>; validateKey(provider, apiKey) => Promise<boolean>
+ * @hazards Encryption secret comes from env var — if rotated, all existing encrypted keys become unreadable with no migration path; resolveKey silently falls back to managed key if BYOK decrypt fails — user may unknowingly consume managed credits
+ * @area SEC
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/providers.ts, packages/ai-core/src/errors.ts
+ * @trail chat-flow#2 | Resolve API key (BYOK or managed) before provider adapter creates LLM client
+ * @trail byok-flow#1 | Encrypt and store user-provided API keys with AES-256-GCM
+ * @dependencies @supabase/supabase-js
+ * @prompt Never log decrypted keys or include them in error messages — key material must stay in memory only
+ */
+
+/**
  * Key management and resolution
  */
 

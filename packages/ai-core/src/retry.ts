@@ -1,4 +1,17 @@
 /**
+ * @crumb
+ * @id sal-retry-backoff
+ * @intent Provide reusable exponential backoff retry logic as a cross-cutting concern decoupled from any specific caller
+ * @responsibilities Retryable error detection (429/5xx), exponential delay calculation with jitter, async retry wrapping
+ * @contracts retryWithBackoff<T>(operation, config?) => Promise<T>; isRetryableError(error) => boolean; RetryConfig { maxRetries, baseDelayMs, jitterFactor, isRetryable? }
+ * @hazards Math.random() jitter is not cryptographically secure but adequate for backoff timing; Non-retryable errors thrown immediately bypass retry count — custom isRetryable must handle all error shapes
+ * @area INF
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/providers.ts
+ * @trail chat-flow#5 | Wrap provider API calls with exponential backoff on 429/5xx transient failures
+ * @prompt Keep retry logic provider-agnostic — never import provider-specific types or error classes here
+ */
+
+/**
  * Retry utilities with exponential backoff
  *
  * Extracted from client.ts for Single Responsibility:

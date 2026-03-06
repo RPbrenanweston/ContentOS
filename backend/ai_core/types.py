@@ -3,6 +3,28 @@ Core types for the AI layer (Python)
 
 Mirrors the TypeScript interfaces from packages/ai-core/src/types.ts
 """
+#
+# @crumb
+# @id sal-py-types-contracts
+# @intent Define the canonical Pydantic data contracts and error hierarchy that all Python
+#         modules in the AI layer depend on for type safety and validation.
+# @responsibilities
+#   - Define request/response models (ChatParams, ChatResult, GenerateParams)
+#   - Define streaming models (ChatChunk, ChatChunkDelta, PartialTokens)
+#   - Define billing/usage models (UsageSummary, CreditBalance, DateRange)
+#   - Define typed error hierarchy rooted at AIError with string error codes
+# @contracts
+#   - All models extend Pydantic BaseModel — validated on construction
+#   - AIError subclasses carry both message and code attributes
+#   - GenerateParams uses output_schema (not schema) to avoid shadowing BaseModel.schema()
+# @hazards
+#   - AIClientConfig.supabase_client typed as Any — no compile-time safety
+#   - AsyncIterable imported but unused in this module — misleading import
+# @area DAT
+# @refs client.py, providers.py, billing.py, keys.py, models.py, usage.py
+# @prompt Why does GenerateParams rename 'schema' to 'output_schema' and what breaks if reverted?
+# @/crumb
+#
 
 from typing import Any, AsyncIterable, Literal, Optional
 from pydantic import BaseModel, Field

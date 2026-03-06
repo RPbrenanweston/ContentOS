@@ -1,6 +1,32 @@
 """
 OpenRouter model registry synchronization
 """
+#
+# @crumb
+# @id sal-py-sync-openrouter
+# @intent Synchronize the local ai_models table with OpenRouter's live model catalog —
+#         inserting new models, updating pricing, and deactivating removed ones.
+# @responsibilities
+#   - Fetch all models from OpenRouter public API (no auth required)
+#   - Upsert model rows with pricing, context limits, and capability flags
+#   - Deactivate models no longer present in the API response
+#   - Skip models with zero/missing pricing to avoid free-tier noise
+# @contracts
+#   - Returns summary dict with inserted/updated/deactivated counts
+#   - Raises Exception on network failure or API errors — never silently fails
+#   - Individual upsert failures are printed and skipped, not fatal
+# @hazards
+#   - 30-second timeout on requests.get — could block calling thread
+#   - Hardcoded supports_streaming=True and supports_tools=True for all models — inaccurate
+#   - Bare Exception catches mask distinct failure types (network vs. DB vs. parse)
+# @area DAT
+# @refs models.py, types.py
+# @trail model-sync-flow#1 | Fetch and upsert OpenRouter models into ai_models table
+# @crumbfn sync_openrouter_models | Full sync cycle: fetch → upsert → deactivate | blocks thread for up to 30s +L27-L149
+# @crumbfn safe_parse_float | Parse float with fallback to 0 | masks invalid pricing data silently +L9-L24
+# @prompt What happens if OpenRouter returns an empty data array — does it deactivate all existing models?
+# @/crumb
+#
 
 from typing import Dict, Any, Set
 import requests
