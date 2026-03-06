@@ -5,6 +5,25 @@ Extracted from providers.py for Single Responsibility:
 retry logic is a cross-cutting concern, not specific to provider adapters.
 """
 
+# @crumb
+# @id           sal-py-retry-backoff
+# @intent       Absorb transient 429/5xx failures with exponential backoff so caller code gets
+#               automatic resilience without embedding retry logic in every provider adapter
+# @responsibilities
+#               - Classify retryable errors (429 rate limit, 5xx server errors)
+#               - Calculate exponential backoff delay with jitter
+#               - Execute operation with configurable retry loop
+# @contracts    in: callable operation + retry config | out: operation result | raises last
+#               error after exhausted retries
+# @hazards      time.sleep() blocks the calling thread — not safe in async event loops; use
+#               asyncio.sleep equivalent if porting to async; unreachable raise last_error at
+#               L94 (for loop always raises before exhausting) — dead code, but documents intent
+# @area         INF
+# @trail        chat-flow#5      | Exponential backoff on transient provider failures
+# @refs         backend/ai_core/errors.py, packages/ai-core/src/retry.ts
+# @prompt       Should this be converted to async using asyncio.sleep for async provider calls?
+# @crumbfn retry_with_backoff | Core retry loop — synchronous only, blocks thread | +L55-L94
+
 import time
 import random
 

@@ -4,6 +4,23 @@ Model registry queries
 Functions to query ai_models table for model information and cost calculation.
 """
 
+# @crumb
+# @id           sal-py-models-registry
+# @intent       Serve model metadata (pricing, capabilities) from the Supabase cache populated
+#               by sync.py, decoupling provider API from per-request model lookups
+# @responsibilities
+#               - Query ai_models by model_id for active models
+#               - Query default model (is_default=true, is_active=true)
+#               - Calculate USD cost from input/output token counts
+# @contracts    in: model_id + supabase | out: ModelInfo | raises ModelNotFoundError if absent
+# @hazards      .single() throws on multiple matches (e.g., two active rows for same model_id
+#               — data integrity issue in DB); no in-memory caching, every call hits Supabase
+#               (potential performance bottleneck under concurrent load)
+# @area         DAT
+# @trail        model-sync-flow#2  | Serve model info from DB cache
+# @refs         backend/ai_core/types.py, backend/ai_core/sync.py, packages/ai-core/src/models.ts
+# @prompt       Should model lookups be cached in-process to reduce Supabase round-trips?
+
 from typing import Any
 from .types import ModelInfo, ModelNotFoundError
 

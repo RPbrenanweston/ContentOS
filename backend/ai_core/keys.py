@@ -4,6 +4,30 @@ BYOK key management and resolution
 Handles encryption, decryption, storage, and resolution of user API keys.
 """
 
+# @crumb
+# @id           sal-py-keys-resolver
+# @intent       Protect BYOK API keys at rest via AES-256-GCM and resolve correct key source
+#               so providers use user-owned keys rather than shared managed keys
+# @responsibilities
+#               - Encrypt/decrypt BYOK keys with AES-256-GCM (IV+AuthTag+Ciphertext format)
+#               - Upsert and soft-delete keys in ai_api_keys table
+#               - Validate key liveness via minimal Anthropic API call
+#               - Resolve key: BYOK first, managed env var fallback
+# @contracts    in: user_id + provider + supabase | out: ResolvedKey(api_key, source)
+# @hazards      SHA-256 used as KDF for AES key — no PBKDF2/Argon2, acceptable for env-var
+#               secrets but not password-derived keys; last_used_at update is fire-and-forget
+#               (synchronous supabase call, errors logged but not raised); resolve_key uses
+#               .single() which throws if multiple active keys exist for same user+provider
+# @area         SEC
+# @trail        chat-flow#2      | Resolve API key (managed or BYOK)
+# @trail        byok-flow#1      | Encrypt/decrypt user-provided API keys (AES-256-GCM)
+# @refs         backend/ai_core/types.py, packages/ai-core/src/keys.ts
+# @prompt       Is SHA-256 key derivation acceptable long-term or should PBKDF2 be added?
+# @crumbfn encrypt | AES-256-GCM encrypt; format IV+AuthTag+Ciphertext must match TS decrypt | +L48-L83
+# @crumbfn decrypt | AES-256-GCM decrypt; auth tag validation catches tampering | +L86-L128
+# @crumbfn save_key | Upsert-based; handles duplicate user+provider via on_conflict | +L131-L173
+# @crumbfn resolve_key | BYOK-first resolution with managed env var fallback | +L244-L293
+
 import base64
 import hashlib
 import os
