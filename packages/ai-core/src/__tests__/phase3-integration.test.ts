@@ -1,4 +1,17 @@
 /**
+ * @crumb
+ * @id sal-ts-phase3-billing-tests
+ * @intent Verify credit lifecycle correctness so billing regressions surface before production — covers purchase, deduction, cap enforcement, and idempotency
+ * @responsibilities Test Stripe webhook→credit creation, chat deducts credits (fire-and-forget), spending cap blocks calls, duplicate webhooks don't double-credit, BYOK bypasses credit system
+ * @contracts in: vitest mocked Anthropic + Stripe SDKs | out: test assertions | no real Stripe or Anthropic calls
+ * @hazards fire-and-forget deduction uses setTimeout(100ms) timing hack — flaky under high CI load; vi.mock('stripe') means real Stripe webhook signature validation never exercised
+ * @area API
+ * @trail billing-flow#3 | Verify credit lifecycle: purchase → deduct → cap
+ * @refs packages/ai-core/src/billing.ts, packages/ai-core/src/client.ts, packages/ai-core/src/__tests__/test-utils.ts
+ * @prompt Should the 100ms setTimeout in the deduction test be replaced with a waitFor() utility to eliminate timing flakiness?
+ */
+
+/**
  * Phase 3 Integration Tests: Billing Flow
  *
  * Tests the complete credit purchase → usage → deduction → cap enforcement flow

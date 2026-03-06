@@ -1,4 +1,17 @@
 /**
+ * @crumb
+ * @id sal-ts-test-utils
+ * @intent Centralize mock factories so test files share consistent fixtures instead of duplicating setup across 12+ test files
+ * @responsibilities Factory functions for mock AI model objects (Anthropic/OpenAI/OpenRouter), mock credit balance objects, chainable Supabase mock via buildChain/buildEqChain
+ * @contracts in: optional override objects | out: typed mock fixtures | no external calls, no side effects
+ * @hazards createMockSupabase uses buildChain returning itself — only simulates first-level chains; nested query patterns fail silently; createMockModel uses hardcoded defaults masking DB schema drift until runtime
+ * @area INF
+ * @refs packages/ai-core/src/__tests__/integration.test.ts, packages/ai-core/src/__tests__/phase3-integration.test.ts
+ * @prompt Should mock factories validate override keys against real schema to catch drift?
+ * @crumbfn createMockSupabase | Chainable Supabase mock; only first-level chains simulated | +L103-L181
+ */
+
+/**
  * Shared test utilities for AI Core tests
  *
  * Consolidates mock factories that were previously duplicated

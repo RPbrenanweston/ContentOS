@@ -1,4 +1,16 @@
 /**
+ * @crumb
+ * @id sal-ts-integration-tests
+ * @intent Validate end-to-end chat flows so regressions in module wiring are caught before production — covers client, usage logging, and billing integration
+ * @responsibilities Test chat() and chatStream() against mocked Anthropic SDK, verify usage rows written to Supabase, confirm zero-balance guard blocks managed-key calls, test retry on 429
+ * @contracts in: vitest mocked Anthropic SDK + Supabase | out: test assertions | all HTTP calls mocked, no real API calls
+ * @hazards vi.mock('@anthropic-ai/sdk') is module-level — shared across all tests; incomplete beforeEach reset leaves inter-test pollution; stream ordering test relies on Promise resolution order, not guaranteed
+ * @area API
+ * @refs packages/ai-core/src/client.ts, packages/ai-core/src/__tests__/test-utils.ts
+ * @prompt Should streaming tests use a proper async iterator instead of relying on Promise resolution order?
+ */
+
+/**
  * Integration tests for AI Core client
  * Tests end-to-end flows across modules: client → usage logging → billing
  */
