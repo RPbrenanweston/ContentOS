@@ -8,44 +8,34 @@
 // edge:../outputs/route.ts -> RELATES (jobs created by output generation endpoint)
 // prompt: Add x-ratelimit headers; sanitize error messages; verify requester owns job via user_id before returning
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { withApiHandler } from '@/lib/api-handler';
 
-interface RouteParams {
-  params: Promise<{ jobId: string }>;
-}
+export const GET = withApiHandler(async (ctx) => {
+  const { jobId } = ctx.params;
+  const supabase = createServerClient();
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
-    const { jobId } = await params;
-    const supabase = createServerClient();
+  const { data, error } = await supabase
+    .from('studio_jobs')
+    .select('*')
+    .eq('id', jobId)
+    .single();
 
-    const { data, error } = await supabase
-      .from('studio_jobs')
-      .select('*')
-      .eq('id', jobId)
-      .single();
-
-    if (error || !data) {
-      return NextResponse.json(
-        { data: null, error: { code: 'NOT_FOUND', message: 'Job not found' } },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      data: {
-        id: data.id,
-        outputId: data.output_id,
-        status: data.status,
-        progress: data.progress,
-        errorMessage: data.error_message,
-      },
-    });
-  } catch {
+  if (error || !data) {
     return NextResponse.json(
-      { data: null, error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch job status' } },
-      { status: 500 }
+      { data: null, error: { code: 'NOT_FOUND', message: 'Job not found' } },
+      { status: 404 }
     );
   }
-}
+
+  return NextResponse.json({
+    data: {
+      id: data.id,
+      outputId: data.output_id,
+      status: data.status,
+      progress: data.progress,
+      errorMessage: data.error_message,
+    },
+  });
+});

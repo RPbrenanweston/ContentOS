@@ -4,100 +4,56 @@
 // in:[/api/content/[id]] out:[JSON-node-with-segments|204-success] err:[404-not-found|validation-error|delete-cascade-failure]
 // hazard: No validation on node ID format; malformed UUIDs silently pass to repo layer
 // hazard: DELETE cascades without checking reference counts; orphaned assets possible if external systems reference deleted content
-// hazard: PATCH validation delegates entirely to schema; no business logic checks for conflicting status transitions (e.g., published → draft)
+// hazard: PATCH validation delegates entirely to schema; no business logic checks for conflicting status transitions (e.g., published -> draft)
 // hazard: GET segments loaded without pagination; large documents with thousands of segments cause memory spike
-// hazard: await params promise but no timeout; client disconnect leaves orphaned service instances
 // hazard: Error responses expose internal schema validation details that could inform attack strategies
 // edge:../../services/container.ts -> USES (getServices, dependency injection)
 // edge:../../infrastructure/supabase/client.ts -> USES (createServiceClient)
 // edge:../../lib/validation.ts -> USES (updateContentNodeSchema)
 // edge:../../lib/errors.ts -> USES (NotFoundError)
 // edge:../route.ts -> RELATED (sibling GET/POST list endpoint)
-// prompt: Add ID format validation before repo calls; check reference counts before DELETE cascade; implement segment pagination with maxResults limit; add timeout to params promise; reduce error details in 4xx responses
+// prompt: Add ID format validation before repo calls; check reference counts before DELETE cascade; implement segment pagination with maxResults limit; reduce error details in 4xx responses
 // prompt: Consider optimistic locking for PATCH to prevent concurrent edit conflicts; add audit logging for DELETE operations
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { withApiHandler } from '@/lib/api-handler';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';
 import { updateContentNodeSchema } from '@/lib/validation';
 import { NotFoundError } from '@/lib/errors';
 
 // GET /api/content/[id] — Get content node with segments
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-    const supabase = createServiceClient();
-    const { contentNodeRepo, segmentRepo } = getServices(supabase);
+export const GET = withApiHandler(async (ctx) => {
+  const { params } = ctx;
+  const id = params.id;
+  const supabase = createServiceClient();
+  const { contentNodeRepo, segmentRepo } = getServices(supabase);
 
-    const node = await contentNodeRepo.findById(id);
-    const segments = await segmentRepo.findByNodeId(id);
+  const node = await contentNodeRepo.findById(id);
+  const segments = await segmentRepo.findByNodeId(id);
 
-    return NextResponse.json({ ...node, segments });
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
-    }
-    console.error('GET /api/content/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to get content node' },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({ ...node, segments });
+});
 
 // PATCH /api/content/[id] — Update content node
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-    const body = await request.json();
-    const parsed = updateContentNodeSchema.safeParse(body);
+export const PATCH = withApiHandler<z.infer<typeof updateContentNodeSchema>>(async (ctx) => {
+  const { params, body } = ctx;
+  const id = params.id;
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: 'Validation failed', details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
+  const supabase = createServiceClient();
+  const { contentNodeRepo } = getServices(supabase);
 
-    const supabase = createServiceClient();
-    const { contentNodeRepo } = getServices(supabase);
-
-    const node = await contentNodeRepo.update(id, parsed.data);
-    return NextResponse.json(node);
-  } catch (error) {
-    if (error instanceof NotFoundError) {
-      return NextResponse.json({ error: error.message }, { status: 404 });
-    }
-    console.error('PATCH /api/content/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to update content node' },
-      { status: 500 },
-    );
-  }
-}
+  const node = await contentNodeRepo.update(id, body);
+  return NextResponse.json(node);
+}, { schema: updateContentNodeSchema });
 
 // DELETE /api/content/[id] — Delete content node (cascades)
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  try {
-    const { id } = await params;
-    const supabase = createServiceClient();
-    const { contentNodeRepo } = getServices(supabase);
+export const DELETE = withApiHandler(async (ctx) => {
+  const { params } = ctx;
+  const id = params.id;
+  const supabase = createServiceClient();
+  const { contentNodeRepo } = getServices(supabase);
 
-    await contentNodeRepo.delete(id);
-    return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    console.error('DELETE /api/content/[id] error:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete content node' },
-      { status: 500 },
-    );
-  }
-}
+  await contentNodeRepo.delete(id);
+  return new NextResponse(null, { status: 204 });
+});

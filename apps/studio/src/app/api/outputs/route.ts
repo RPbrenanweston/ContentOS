@@ -9,34 +9,27 @@
 // edge:./[outputId]/route.ts -> RELATES (fetch generated output once job completes)
 // prompt: Add user ownership validation before job dispatch; constrain type to enum; sanitize service errors
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { generateOutputSchema } from '@/lib/utils/validation';
 import { createOutputJob } from '@/lib/services/output.service';
+import { withApiHandler } from '@/lib/api-handler';
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const parsed = generateOutputSchema.safeParse(body);
+export const POST = withApiHandler(async (ctx) => {
+  const body = await ctx.request.json();
+  const parsed = generateOutputSchema.safeParse(body);
 
-    if (!parsed.success) {
-      return NextResponse.json(
-        { data: null, error: { code: 'VALIDATION_ERROR', message: parsed.error.issues.map((i) => i.message).join('; ') } },
-        { status: 400 }
-      );
-    }
-
-    const result = await createOutputJob({
-      type: parsed.data.type,
-      breadcrumbId: parsed.data.breadcrumbId,
-      compilationId: parsed.data.compilationId,
-    });
-
-    return NextResponse.json({ data: result }, { status: 201 });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to create output';
+  if (!parsed.success) {
     return NextResponse.json(
-      { data: null, error: { code: 'INTERNAL_ERROR', message } },
-      { status: 500 }
+      { data: null, error: { code: 'VALIDATION_ERROR', message: parsed.error.issues.map((i) => i.message).join('; ') } },
+      { status: 400 }
     );
   }
-}
+
+  const result = await createOutputJob({
+    type: parsed.data.type,
+    breadcrumbId: parsed.data.breadcrumbId,
+    compilationId: parsed.data.compilationId,
+  });
+
+  return NextResponse.json({ data: result }, { status: 201 });
+});
