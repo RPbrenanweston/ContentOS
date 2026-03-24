@@ -4,7 +4,7 @@
 // in:[currentTime, onClick callback] out:[button DOM, click event] err:[state, event errors]
 // hazard: No debounce on rapid clicks—multiple markers could be created at identical timestamps
 // hazard: No visual feedback while capturing—user may think button is unresponsive
-// edge:apps/studio/src/components/console/MasterTimecode.tsx -> CALLS
+// edge:apps/studio/src/components/console/MasterTimecode.tsx -> RELATES
 // prompt: Add debounce/throttle to capture, implement visual feedback (loading state), add success toast
 
 'use client';

@@ -1,7 +1,7 @@
 /**
  * @crumb
  * id: media-transformation-interface
- * AREA: DAT
+ * AREA: DOM
  * why: Define contract for video clip extraction and thumbnail generation—timestamp precision and format flexibility
  * in: ClipParams {sourceUrl, startMs, endMs, format, maxSizeMb}; ThumbnailParams implicit {videoUrl, timestampMs}
  * out: ClipResult {url, durationMs, sizeMb}; ThumbnailUrl (string)

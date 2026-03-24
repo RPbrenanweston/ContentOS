@@ -8,7 +8,7 @@
 // hazard: Race condition: useEffect reads stored state but toggle() updates it; rapid toggles could desync UI from localStorage
 // hazard: Hard-coded class name 'light' scattered across component; refactoring class strategy would require multiple edits
 // hazard: CSS variable fallback not checked; if --theme-muted is undefined, button color becomes transparent
-// edge:../../domain/theme.ts -> IMPORTS-FROM (if theme constants exist)
+// edge:../../app/layout.tsx -> SERVES
 // prompt: Wrap localStorage access in try-catch; validate theme value against allowed set (light|dark); consolidate class name as constant; debounce toggle() calls
 'use client';
 

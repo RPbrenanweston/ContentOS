@@ -7,7 +7,7 @@
 // hazard: Joins multiple platforms but doesn't validate all platform data is present; missing metrics on failed posts could crash rendering
 // hazard: No auth check; any assetId reveals posting history, metrics, platform credentials metadata exposure risk
 // hazard: No filtering by owner; user can query jobs for other users' assets if they guess assetId
-// edge:../../../infrastructure/supabase/repositories/job.repo.ts -> QUERIES
+// edge:../../../infrastructure/supabase/repositories/distribution-job.repo.ts -> QUERIES
 // edge:../publish/route.ts -> RELATED (creates these jobs)
 // edge:../accounts/route.ts -> REFERENCES-ACCOUNTS
 // prompt: Add assetId format validation; implement pagination with maxResults limit; add auth check for asset ownership; validate all job records have required metrics fields before response

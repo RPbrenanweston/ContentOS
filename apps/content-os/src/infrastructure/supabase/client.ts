@@ -6,7 +6,8 @@
 // hazard: Mixed use of anon/service keys can leak permissions across auth levels
 // edge:../repositories/content-node.repo.ts -> SERVES
 // edge:../repositories/content-segment.repo.ts -> SERVES
-// edge:../../app/api -> SERVES
+// edge:../../app/api/content/route.ts -> SERVES
+// edge:packages/ai-core/src/client.ts -> RELATES
 // prompt: Verify env vars loaded before instantiation; audit caller context (browser vs server)
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';

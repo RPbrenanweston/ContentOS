@@ -1,7 +1,7 @@
 /**
  * @crumb
  * id: publishing-orchestration-interface
- * AREA: DAT
+ * AREA: DOM
  * why: Define contract for cross-platform asset publishing—job coordination and metrics aggregation
  * in: PublishParams {asset, accounts[], scheduledAt, mediaUrls[]}
  * out: DistributionJob[] {id, status, externalPostId, publishedAt}

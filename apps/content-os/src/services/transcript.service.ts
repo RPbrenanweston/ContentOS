@@ -12,6 +12,7 @@
  * edge: SERVES decomposition.service.ts (transcript input for segment analysis)
  * edge: CALLS Deepgram API (nova-2 model with utterance-level punctuation)
  * edge: READS source audio/video files (via URL fetch)
+ * edge: infra/freeflow/docker-compose.yml -> READS
  * prompt: Test API key validation; verify timestamp edge cases (zero duration, out-of-order segments); confirm timeout abort behavior
  */
 

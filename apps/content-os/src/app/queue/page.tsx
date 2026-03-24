@@ -5,8 +5,7 @@
 // hazard: No error state UI for failed Promise.all; API errors silently fail and UI remains in loading state indefinitely
 // hazard: slotsByDate grouping assumes valid scheduledFor ISO string; malformed dates crash toLocaleDateString
 // hazard: SlotCard accesses slot.asset without null check after status==='filled'; if asset is null, body access throws
-// edge:/api/queue -> API-ENDPOINT
-// edge:/api/queue/slots -> API-ENDPOINT
+// edge:../../services/queue.service.ts -> CALLS
 // prompt: Add error boundary for failed slot loads; validate date parsing before grouping; add null-check for slot.asset in SlotCard
 'use client';
 

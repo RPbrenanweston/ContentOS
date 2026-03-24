@@ -1,7 +1,7 @@
 /**
  * @crumb
  * id: asset-generation-interface
- * AREA: DAT
+ * AREA: DOM
  * why: Define contract for platform-aware asset generation from content segments—support multiple formats and regeneration workflows
  * in: GenerateAssetParams {contentNodeId, assetType, sourceSegments[], platform, tone, maxLength, userId}
  * out: DerivedAsset (without id/timestamps) {body, title, assetType, platformHint, status}

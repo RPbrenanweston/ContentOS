@@ -8,7 +8,7 @@
 // hazard: Inline decompose fallback has no timeout; long-running decomposition blocks request indefinitely
 // hazard: Job data doesn't include retryCount, priority, or deadletter routing; failed jobs disappear
 // hazard: Node existence check uses findByIdOrSlug but doesn't validate content exists before enqueue (could queue empty job)
-// edge:../../services/content-decompose.ts -> USES
+// edge:../../services/decomposition.service.ts -> USES
 // edge:../../infrastructure/queue/pg-boss.ts -> ENQUEUES
 // edge:../../../domain/content.ts -> REFERENCES
 // prompt: Add ID format validation; move status transitions to domain ContentNode state machine; implement queue retry policy with exponential backoff; add timeout to inline fallback; include job metadata (retryCount, priority); validate content before enqueue

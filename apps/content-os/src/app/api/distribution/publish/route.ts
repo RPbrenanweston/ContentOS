@@ -8,8 +8,8 @@
 // hazard: scheduledAt validation missing; accepts any date string including past dates, causing immediate or erratic scheduling
 // hazard: mediaUrl fallback to [asset.mediaUrl] could pass null/undefined to adapters expecting valid URLs; platform adapters crash on null media
 // hazard: Error response exposes full service errors; could leak API keys or rate limit information from platform adapters
-// edge:../../../infrastructure/supabase/repositories/asset.repo.ts -> LOADS
-// edge:../../../infrastructure/supabase/repositories/account.repo.ts -> LOADS
+// edge:../../../infrastructure/supabase/repositories/derived-asset.repo.ts -> LOADS
+// edge:../../../infrastructure/supabase/repositories/distribution-account.repo.ts -> LOADS
 // edge:../../../services/distribution.service.ts -> ENQUEUES
 // edge:../jobs/route.ts -> RELATED (status query)
 // edge:../accounts/route.ts -> REFERENCES

@@ -6,6 +6,7 @@
 // hazard: Client auth token stored in localStorage; malicious XSS can extract JWT and impersonate user
 // edge:./server.ts -> RELATES (server-side counterpart with service role for privileged operations)
 // edge:../../services/media-processor.ts -> RELATES (uploadToStorage uses server client, not browser client)
+// edge:infra/supabase/docker-compose.yml -> READS
 // prompt: Audit RLS policies for all tables; implement Content Security Policy headers to prevent XSS token theft
 
 import { createBrowserClient } from '@supabase/ssr';
