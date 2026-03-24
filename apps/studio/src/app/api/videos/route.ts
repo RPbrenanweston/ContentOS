@@ -1,10 +1,11 @@
 // @crumb videos-list-crud
 // API | video inventory | persistence
 // why: Provide endpoints for querying all videos and creating new videos for a user
-// in:[POST body with sourceType, sourceUrl, fileUrl, title, durationSeconds] out:[JSON array of videos | created video object] err:[DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
+// in:[GET query params limit/offset | POST body with sourceType, sourceUrl, fileUrl, title, durationSeconds] out:[JSON array of videos | created video object] err:[DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
 // hazard: Missing validation of sourceUrl/fileUrl format before database insert
 // edge:../mappers -> CALLS to map database rows to API response format
 // edge:../validation -> CALLS createVideoSchema for input validation
+// edge:@/lib/pagination -> USES for limit/offset pagination
 // prompt: Verify sourceUrl and fileUrl are valid URLs before database persist
 
 import { NextResponse } from 'next/server';
@@ -12,15 +13,18 @@ import { createServerClient } from '@/lib/supabase/server';
 import { createVideoSchema } from '@/lib/utils/validation';
 import { mapVideo } from '@/lib/utils/mappers';
 import { withApiHandler } from '@/lib/api-handler';
+import { parsePagination } from '@/lib/pagination';
 
 export const GET = withApiHandler(async (ctx) => {
   const supabase = createServerClient();
+  const { limit, offset } = parsePagination(ctx.request.nextUrl.searchParams);
 
-  const { data, error } = await supabase
+  const { data, error, count } = await supabase
     .from('studio_videos')
-    .select('*')
+    .select('*', { count: 'exact' })
     .eq('user_id', ctx.userId)
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
     return NextResponse.json(
@@ -29,7 +33,9 @@ export const GET = withApiHandler(async (ctx) => {
     );
   }
 
-  return NextResponse.json({ data: (data ?? []).map(mapVideo) });
+  const headers = new Headers();
+  headers.set('x-total-count', String(count ?? 0));
+  return NextResponse.json({ data: (data ?? []).map(mapVideo) }, { headers });
 });
 
 export const POST = withApiHandler(async (ctx) => {

@@ -6,12 +6,12 @@
  * in: PublishingQueue {userId, distributionAccountId, timezone, schedules[]}, QueueSchedule {dayOfWeek, timeOfDay}
  * out: QueueSlot[] {scheduledFor, derivedAssetId, status}, filled slot count (int)
  * err: ProcessingError on invalid cron; ScheduleError on timezone conversion failure
- * hazard: Timezone-unaware scheduling breaks DST transitions—2am slot becomes 1am or 3am, causing skipped/duplicate posts
  * hazard: Auto-fill without approval validation publishes unapproved assets—no rollback mechanism for bad auto-fills
  * edge: CALLS slot materialization cron (background job)
  * edge: READS distribution_queues, queue_schedules, queue_slots, derived_assets tables
  * edge: WRITES queue_slots with status and asset links
  * edge: SERVES distribution workflow (feeds publishing pipeline with scheduled assets)
+ * edge: USES lib/timezone.ts for DST-safe scheduling and timezone validation
  * prompt: Test DST boundary dates; verify slot count consistency with schedule; validate auto-fill respects approval status
  */
 
@@ -21,6 +21,7 @@ import type {
   QueueSlot,
   DayOfWeek,
 } from '@/domain';
+import { isValidTimezone, getNextOccurrence } from '@/lib/timezone';
 
 /**
  * QueueService manages publishing cadences.
@@ -42,13 +43,18 @@ export class QueueService {
     timezone?: string;
     schedules: Array<{ dayOfWeek: DayOfWeek; timeOfDay: string }>;
   }): Promise<PublishingQueue> {
+    const timezone = params.timezone ?? 'UTC';
+    if (!isValidTimezone(timezone)) {
+      throw new Error(`Invalid timezone: "${timezone}". Must be a valid IANA timezone identifier.`);
+    }
+
     const { data: queue, error: queueError } = await this.supabase
       .from('publishing_queues')
       .insert({
         user_id: params.userId,
         distribution_account_id: params.distributionAccountId,
         name: params.name ?? 'Default',
-        timezone: params.timezone ?? 'UTC',
+        timezone,
       })
       .select()
       .single();
@@ -142,7 +148,9 @@ export class QueueService {
     const schedules = queue.queue_schedules ?? [];
     if (schedules.length === 0) return 0;
 
-    // Generate dates for next N days
+    const queueTimezone: string = queue.timezone ?? 'UTC';
+
+    // Generate DST-safe slots for next N days using wall-clock time in queue timezone
     const now = new Date();
     const slots: Array<{
       publishing_queue_id: string;
@@ -158,16 +166,20 @@ export class QueueService {
 
     for (let d = 0; d < daysAhead; d++) {
       const date = new Date(now);
-      date.setDate(date.getDate() + d);
-      const dayIndex = date.getDay();
+      date.setUTCDate(date.getUTCDate() + d);
+      const dayIndex = date.getUTCDay();
 
       for (const sched of schedules) {
         if (!sched.is_active) continue;
-        if (dayMap[sched.day_of_week] !== dayIndex) continue;
+        const schedDayIndex = dayMap[sched.day_of_week];
+        if (schedDayIndex === undefined || schedDayIndex !== dayIndex) continue;
 
-        const [hours, minutes] = sched.time_of_day.split(':').map(Number);
-        const slotTime = new Date(date);
-        slotTime.setHours(hours, minutes, 0, 0);
+        // DST-safe: resolve wall-clock time in the queue's IANA timezone
+        const slotTime = getNextOccurrence(
+          sched.time_of_day,
+          queueTimezone,
+          schedDayIndex,
+        );
 
         // Skip past times
         if (slotTime <= now) continue;

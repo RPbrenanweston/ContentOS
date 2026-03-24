@@ -9,35 +9,42 @@
 // hazard: No pagination on metrics aggregation results; large datasets (1000+ metrics) could exhaust memory or timeout
 // edge:../../infrastructure/supabase/client.ts -> USES
 // edge:../../services/container.ts -> USES
+// edge:../../lib/pagination.ts -> USES
 // edge:/api/jobs, /api/assets -> IMPLIED-DEPENDENCIES
-// prompt: Add ID format validation (UUID checks) before repo queries; implement pagination with limit/offset on metrics results; add auth middleware to verify asset ownership; reconcile metric object schema expectations; sanitize error responses
+// prompt: Add ID format validation (UUID checks) before repo queries; add auth middleware to verify asset ownership; reconcile metric object schema expectations; sanitize error responses
 
 
 import { NextResponse } from 'next/server';
 import { withApiHandler } from '@/lib/api-handler';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';
+import { parsePagination } from '@/lib/pagination';
 
 // GET /api/analytics — Get performance metrics
-// Query params: nodeId, assetId, jobId, from, to
+// Query params: nodeId, assetId, jobId, from, to, limit, offset
 export const GET = withApiHandler(async (ctx) => {
   const { request } = ctx;
-  const jobId = request.nextUrl.searchParams.get('jobId');
-  const assetId = request.nextUrl.searchParams.get('assetId');
-  const nodeId = request.nextUrl.searchParams.get('nodeId');
+  const searchParams = request.nextUrl.searchParams;
+  const jobId = searchParams.get('jobId');
+  const assetId = searchParams.get('assetId');
+  const nodeId = searchParams.get('nodeId');
+  const { limit, offset } = parsePagination(searchParams);
 
   const supabase = createServiceClient();
   const { metricRepo, jobRepo, assetRepo } = getServices(supabase);
 
   // Direct job metrics
   if (jobId) {
-    const metrics = await metricRepo.findByJobId(jobId);
-    return NextResponse.json({ metrics });
+    const metrics = await metricRepo.findByJobId(jobId, { limit, offset });
+    const total = Array.isArray(metrics) ? metrics.length : 0;
+    const headers = new Headers();
+    headers.set('x-total-count', String(total));
+    return NextResponse.json({ metrics }, { headers });
   }
 
   // Aggregate metrics for an asset (across all its distribution jobs)
   if (assetId) {
-    const jobs = await jobRepo.findByAssetId(assetId);
+    const jobs = await jobRepo.findByAssetId(assetId, { limit, offset });
     const allMetrics = await Promise.all(
       jobs.map((j) => metricRepo.findByJobId(j.id)),
     );
@@ -57,17 +64,19 @@ export const GET = withApiHandler(async (ctx) => {
       { impressions: 0, views: 0, clicks: 0, likes: 0, comments: 0, shares: 0, saves: 0 },
     );
 
+    const headers = new Headers();
+    headers.set('x-total-count', String(metrics.length));
     return NextResponse.json({
       metrics,
       totals,
       jobCount: jobs.length,
       publishedCount: jobs.filter((j) => j.status === 'published').length,
-    });
+    }, { headers });
   }
 
   // Aggregate metrics for a content node (across all derived assets)
   if (nodeId) {
-    const assets = await assetRepo.findByNodeId(nodeId);
+    const assets = await assetRepo.findByNodeId(nodeId, { limit, offset });
     const allJobs = await Promise.all(
       assets.map((a) => jobRepo.findByAssetId(a.id)),
     );
@@ -90,13 +99,15 @@ export const GET = withApiHandler(async (ctx) => {
       { impressions: 0, views: 0, clicks: 0, likes: 0, comments: 0, shares: 0, saves: 0 },
     );
 
+    const headers = new Headers();
+    headers.set('x-total-count', String(metrics.length));
     return NextResponse.json({
       metrics,
       totals,
       assetCount: assets.length,
       jobCount: jobs.length,
       publishedCount: jobs.filter((j) => j.status === 'published').length,
-    });
+    }, { headers });
   }
 
   return NextResponse.json(

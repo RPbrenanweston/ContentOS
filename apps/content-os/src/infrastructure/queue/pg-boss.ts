@@ -3,11 +3,12 @@
 // why: Provide lazy-loaded pg-boss instance with unified queue names and job type definitions
 // in:[SUPABASE_DB_URL env var] out:[PgBoss singleton] err:[MissingEnvError|ConnectionError]
 // hazard: Singleton pattern with null check can race if getQueue() called during startup
-// hazard: retryLimit 3 with 30s delay + backoff can cause 15+ minute retry window for failures
+// hazard: retryLimit 5 with 30s initial delay + exponential backoff reaches ~16 min total window
+// hazard: dead-letter queue (content-decompose-dlq) accumulates failed jobs indefinitely; add periodic purge
 // edge:../../../infrastructure/queue/workers.ts -> CALLED_BY
 // edge:../../../app/api/distribution/publish/route.ts -> CALLS
 // edge:../../../app/api/analytics/sync/route.ts -> CALLS
-// prompt: Add startup latch to prevent concurrent init; document retry strategy; test stopQueue cleanup
+// prompt: Add startup latch to prevent concurrent init; monitor DLQ depth; test stopQueue cleanup
 
 /**
  * pg-boss queue adapter for async content processing.
@@ -34,9 +35,10 @@ export async function getQueue(): Promise<PgBoss> {
   boss = new PgBoss({
     connectionString,
     schema: 'pgboss',
-    retryLimit: 3,
+    retryLimit: 5,
     retryDelay: 30,
     retryBackoff: true,
+    deadLetter: 'content-decompose-dlq',
     expireInHours: 24,
     archiveCompletedAfterSeconds: 86400, // 1 day
     deleteAfterDays: 7,

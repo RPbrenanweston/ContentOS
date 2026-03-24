@@ -20,6 +20,7 @@
 
 import type PgBoss from 'pg-boss';
 import { createServiceClient } from '@/infrastructure/supabase/client';
+import { withTransaction } from '@/infrastructure/supabase/transaction';
 import { getServices } from '@/services/container';
 import { QUEUES, type ContentDecomposeJob } from './pg-boss';
 import { AIDecompositionService } from '@/services/decomposition.service';
@@ -43,7 +44,7 @@ async function handleContentDecompose(
   console.log(`[decompose] Starting for node ${nodeId}`);
 
   const supabase = createServiceClient();
-  const { contentNodeRepo, segmentRepo } = getServices(supabase);
+  const { contentNodeRepo } = getServices(supabase);
 
   try {
     const node = await contentNodeRepo.findById(nodeId);
@@ -78,8 +79,8 @@ async function handleContentDecompose(
     const result = await decompositionService.decompose(freshNode, transcript);
 
     // Step 3: Clear old segments and persist new ones
-    await segmentRepo.deleteByNodeId(nodeId);
-
+    // Wrapped in withTransaction to signal atomic intent and centralise failure logging.
+    // NOTE: Not true DB atomicity — see transaction.ts for migration path to RPC.
     const segmentsToCreate = result.segments.map((seg) => ({
       ...seg,
       contentNodeId: nodeId,
@@ -89,7 +90,11 @@ async function handleContentDecompose(
       tags: seg.tags ?? [],
     }));
 
-    await segmentRepo.createMany(segmentsToCreate);
+    await withTransaction(`delete-create-segments:${nodeId}`, async (client) => {
+      const { segmentRepo: txSegmentRepo } = getServices(client);
+      await txSegmentRepo.deleteByNodeId(nodeId);
+      await txSegmentRepo.createMany(segmentsToCreate);
+    });
 
     // Step 4: Update node status + summary
     await contentNodeRepo.update(nodeId, {
