@@ -1,3 +1,15 @@
+// @crumb distribution-account-repository
+// DAT | OAuth credentials | Platform abstraction
+// why: Store linked social media accounts with soft-delete (deactivation) and external platform credentials
+// in:[CreateDistributionAccountParams] out:[DistributionAccount records] err:[DatabaseError|NotFoundError]
+// hazard: Storing oauth tokens in metadata without encryption exposes refresh tokens to DB breach
+// hazard: Deactivate-only (no hard delete) risks stale account reactivation with revoked credentials
+// edge:../client.ts -> READS
+// edge:../../../domain -> READS
+// edge:../../app/api/distribution/accounts/route.ts -> CALLS
+// edge:../distribution/platform-adapter.ts -> RELATES
+// prompt: Encrypt oauth_token fields before storage; audit credentials before reactivation; test token refresh
+
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type {
   CreateDistributionAccountParams,

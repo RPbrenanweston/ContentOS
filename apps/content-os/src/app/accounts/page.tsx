@@ -1,3 +1,12 @@
+// @crumb distribution-accounts
+// UI | account-manager | platform-connector
+// why: Displays connected distribution channels and enables creators to add new accounts for multi-platform publishing
+// in:[/api/distribution/accounts] out:[JSX-account-grid] err:[fetch-failure, post-failure]
+// hazard: handleConnect uses window.prompt (blocks main thread) with no validation of accountName input; empty/whitespace-only names create ghost accounts
+// hazard: No error recovery UI for failed connect request; user gets no feedback if POST fails
+// hazard: platforms.find() can return undefined; accessing platform.logo without null check in connected accounts section crashes
+// edge:/api/distribution/accounts -> API-ENDPOINT
+// prompt: Add input validation for accountName; show toast/error UI on connect failures; validate platform exists before accessing logo
 'use client';
 
 import { useEffect, useState } from 'react';

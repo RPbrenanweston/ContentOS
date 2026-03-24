@@ -1,3 +1,13 @@
+// @crumb publishing-queue
+// UI | timeline-view | scheduling-display
+// why: Visualizes publishing queue across channels; enables creators to review and manage scheduled content distribution rhythm
+// in:[/api/queue, /api/queue/slots] out:[JSX-timeline-ui] err:[fetch-failure, date-parse-error]
+// hazard: No error state UI for failed Promise.all; API errors silently fail and UI remains in loading state indefinitely
+// hazard: slotsByDate grouping assumes valid scheduledFor ISO string; malformed dates crash toLocaleDateString
+// hazard: SlotCard accesses slot.asset without null check after status==='filled'; if asset is null, body access throws
+// edge:/api/queue -> API-ENDPOINT
+// edge:/api/queue/slots -> API-ENDPOINT
+// prompt: Add error boundary for failed slot loads; validate date parsing before grouping; add null-check for slot.asset in SlotCard
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';

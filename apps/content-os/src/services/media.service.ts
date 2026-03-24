@@ -1,4 +1,20 @@
 /**
+ * @crumb
+ * id: media-processing
+ * AREA: DOM
+ * why: Extract platform-aware video clips and generate thumbnails—bridge transcript timestamps to distribution-ready assets
+ * in: ClipParams {sourceUrl, startMs, endMs, format, maxSizeMb}; ThumbnailParams {videoUrl, timestampMs}
+ * out: ClipResult {url, durationMs, sizeMb}; ThumbnailUrl (string)
+ * err: ProcessingError on FFmpeg unavailability; StorageError on Supabase upload failure
+ * hazard: Malformed timing ranges (startMs >= endMs) cause FFmpeg hangs with no timeout—process consumes CPU indefinitely
+ * hazard: Large video files consume unbounded disk in tmpdir—no cleanup on extraction failure leaves orphaned files
+ * edge: CALLED_BY distribution.service.ts (media URLs in publishing payloads)
+ * edge: SERVES clip extraction pipeline (timestamp to URL translation)
+ * edge: WRITES Supabase Storage (clips/ and thumbnails/ buckets)
+ * prompt: Test timing edge cases (startMs=endMs, negative values, out-of-bounds); verify temp file cleanup on network failure; validate maxSizeMb bitrate calculation
+ */
+
+/**
  * Media processing service using fluent-ffmpeg.
  *
  * Handles video clip extraction, format conversion, and thumbnail generation.

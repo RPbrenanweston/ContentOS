@@ -1,4 +1,21 @@
 /**
+ * @crumb
+ * id: service-dependency-registry
+ * AREA: INF
+ * why: Centralize service instantiation and caching—prevent duplicate repository connections and enforce singleton semantics
+ * in: supabase (SupabaseClient)
+ * out: ServiceContainer {repos[], services[]}
+ * err: No errors handled—propagates upstream
+ * hazard: Singleton caching prevents test isolation—tests share mutable state, causing flaky test suite with data leakage
+ * hazard: Hard coupling to Supabase via instanceof checks breaks with mocked clients—mock tests cannot swap implementations
+ * edge: SERVES all request handlers and background jobs
+ * edge: READS ServiceContainer interface (defines contract)
+ * edge: INSTANTIATES all repository and service classes
+ * edge: CALLED_BY route handlers, job processors, API controllers
+ * prompt: Verify container resets between tests; validate singleton equality check (supabase instance); ensure mock clients satisfy interface
+ */
+
+/**
  * Service container / dependency injection registry.
  */
 

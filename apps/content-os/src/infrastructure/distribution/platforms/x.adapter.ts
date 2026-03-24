@@ -1,3 +1,12 @@
+// @crumb x-twitter-adapter-implementation
+// API | Thread composition | PKCE flow
+// why: Implement X/Twitter OAuth2 PKCE, single tweets, thread chaining, and public metrics retrieval
+// in:[PlatformCredentials with accessToken] out:[Tweet IDs and URLs] err:[XOAuthError|RateLimitError|HttpError]
+// hazard: createThread partial failure (tweet N fails) leaves inconsistent thread chain
+// hazard: PKCE challenge hardcoded to state string (plain) instead of S256; production vulnerability
+// edge:../platform-adapter.ts -> IMPLEMENTS
+// edge:../../../../app/api/distribution/publish/route.ts -> CALLED_BY
+// prompt: Implement proper S256 PKCE challenge; wrap thread creation in transaction; validate metrics fields
 /**
  * X (Twitter) API v2 adapter.
  *

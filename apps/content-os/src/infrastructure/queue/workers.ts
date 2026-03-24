@@ -1,3 +1,13 @@
+// @crumb queue-workers-job-handlers
+// JOB | Async processors | Pipeline stages
+// why: Execute multi-stage content decomposition asynchronously (transcription → AI segmentation → persistence) with fault tolerance and retry semantics
+// in:[PgBoss.Job<ContentDecomposeJob>] out:[ContentSegment rows, updated ContentNode status] err:[TranscriptionError|AIError|ConstraintError|RetryableError]
+// hazard: Partial job failure (transcription succeeds, decomposition fails) leaves transcript stored but segments missing; status stuck in processing
+// hazard: segmentRepo.deleteByNodeId() + createMany() not atomic; concurrent job retry can create duplicate/orphaned segments
+// edge:../pg-boss.ts -> CALLED_BY
+// edge:../../app/api/distribution/publish/route.ts -> AWAITS
+// prompt: Wrap delete+create in transaction or use upsert; implement idempotency key for retries; add circuit breaker for Deepgram quota exhaustion
+
 /**
  * Queue workers for async content processing.
  *

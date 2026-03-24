@@ -1,3 +1,12 @@
+// @crumb linkedin-adapter-implementation
+// API | OAuth exchange | Media post creation
+// why: Implement LinkedIn-specific OAuth exchange, post publication, and profile metrics retrieval
+// in:[PlatformCredentials with accessToken] out:[LinkedIn externalPostId and profile URN] err:[LinkedInOAuthError|HttpError]
+// hazard: Profile URN extraction assumes sub field exists; missing sub crashes getProfileUrn
+// hazard: Scope 'w_member_social' insufficient for all metrics APIs (impressions require separate call)
+// edge:../platform-adapter.ts -> IMPLEMENTS
+// edge:../../../../app/api/distribution/publish/route.ts -> CALLED_BY
+// prompt: Add sub field null check; document partial metrics limitation; test scope permissions
 /**
  * LinkedIn Marketing API adapter.
  *

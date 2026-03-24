@@ -1,3 +1,18 @@
+// @crumb content-decompose-trigger
+// API | job-orchestration | workflow-trigger
+// why: Initiates content decomposition pipeline; validates content state before queueing async job to pg-boss with inline fallback
+// in:[contentId:string, authUser] out:[JobId|status:processing] err:[node-not-found, invalid-state, queue-failure]
+// hazard: No ID format validation on contentId parameter; accepts any string without UUID/slug validation
+// hazard: Status transition rule (draft|ready→processing) embedded in handler; no domain-layer state machine; transitions could be inconsistent
+// hazard: Queue failure triggers silent inline processing without retry mechanism; job loses durability, errors swallowed in fire-and-forget pattern
+// hazard: Inline decompose fallback has no timeout; long-running decomposition blocks request indefinitely
+// hazard: Job data doesn't include retryCount, priority, or deadletter routing; failed jobs disappear
+// hazard: Node existence check uses findByIdOrSlug but doesn't validate content exists before enqueue (could queue empty job)
+// edge:../../services/content-decompose.ts -> USES
+// edge:../../infrastructure/queue/pg-boss.ts -> ENQUEUES
+// edge:../../../domain/content.ts -> REFERENCES
+// prompt: Add ID format validation; move status transitions to domain ContentNode state machine; implement queue retry policy with exponential backoff; add timeout to inline fallback; include job metadata (retryCount, priority); validate content before enqueue
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';

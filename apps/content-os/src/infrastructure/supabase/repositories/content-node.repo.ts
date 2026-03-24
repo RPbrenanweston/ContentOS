@@ -1,3 +1,14 @@
+// @crumb content-node-repository
+// DAT | CRUD | Serialization | Filtering
+// why: Encapsulate content node database operations with typed row/entity mapping and multi-filter pagination
+// in:[CreateContentNodeParams|UpdateContentNodeParams] out:[ContentNode entities with pagination] err:[DatabaseError|NotFoundError]
+// hazard: Unfiltered user_id queries can expose other users' content if RLS fails
+// hazard: Type casting without validation on toEntity could corrupt domain model
+// edge:../client.ts -> READS
+// edge:../../../domain -> READS
+// edge:../../app/api/content/route.ts -> CALLS
+// prompt: Always validate user_id matches auth context before list/delete; verify RLS policy active on table
+
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type {
   ContentNode,

@@ -1,4 +1,20 @@
 /**
+ * @crumb
+ * id: asset-generation
+ * AREA: DOM
+ * why: Transform segments into platform-specific content—enforce tone, length, and format constraints per platform
+ * in: contentNodeId, assetType, sourceSegments[], platform, tone, maxLength, userId
+ * out: DerivedAsset {id, title, body, platformHint, mediaUrl, status}
+ * err: ValidationError on missing platform guidelines; ProcessingError on AI generation failure
+ * hazard: Platform format mismatches (e.g., X character limits) cause post truncation or rejection after publishing
+ * hazard: Regeneration with feedback loses lineage to original segments—traceability breaks
+ * edge: CALLED_BY distribution.service.ts (asset generation triggers publishing)
+ * edge: READS decomposition.service.ts (segments from decomposition)
+ * edge: WRITES derived_assets table
+ * prompt: Test each platform's constraints; verify regenerate preserves segment origin references; validate tone application
+ */
+
+/**
  * AI-powered derived asset generator.
  *
  * Uses @org/ai-core to generate platform-aware content from segments.

@@ -1,3 +1,20 @@
+// @crumb content-creation-editor
+// UI | editor | multi-format-authoring
+// why: Central authoring interface supporting blog, video, audio formats with planning guide, voice input, sprint timer, and media upload
+// in:[plan-data-localstorage] out:[JSX-editor-ui] err:[upload-failure, save-failure, storage-parse-error]
+// hazard: No error UI on file upload failures; upload error logs silently while user waits indefinitely
+// hazard: saveContent() doesn't validate editTitle non-empty; empty titles create malformed content nodes
+// hazard: Timer interval cleanup in useEffect doesn't fire on unmount if sprint "active"; memory leak + stale timer
+// hazard: voiceInputRef accessed without null check in handleVoiceToggle; throws error if ref attachment fails
+// hazard: localStorage.getItem('activePlan') parsed without try/catch; corrupted localStorage crashes component on mount
+// edge:../../components/editor/tiptap-editor.tsx -> USES
+// edge:../../hooks/use-voice-input.ts -> USES
+// edge:/api/media/upload -> API-ENDPOINT
+// edge:/api/content -> API-ENDPOINT
+// edge:../[id]/page.tsx -> NAVIGATES-TO
+// edge:./page.tsx -> localStorage-dependency
+// prompt: Add error boundary for upload failures; validate editTitle before save; implement robust interval cleanup; null-check voice ref; wrap localStorage parse in try/catch with fallback
+
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';

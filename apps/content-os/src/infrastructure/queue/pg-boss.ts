@@ -1,3 +1,14 @@
+// @crumb pg-boss-queue-singleton
+// JOB | Initialization | Singleton pattern
+// why: Provide lazy-loaded pg-boss instance with unified queue names and job type definitions
+// in:[SUPABASE_DB_URL env var] out:[PgBoss singleton] err:[MissingEnvError|ConnectionError]
+// hazard: Singleton pattern with null check can race if getQueue() called during startup
+// hazard: retryLimit 3 with 30s delay + backoff can cause 15+ minute retry window for failures
+// edge:../../../infrastructure/queue/workers.ts -> CALLED_BY
+// edge:../../../app/api/distribution/publish/route.ts -> CALLS
+// edge:../../../app/api/analytics/sync/route.ts -> CALLS
+// prompt: Add startup latch to prevent concurrent init; document retry strategy; test stopQueue cleanup
+
 /**
  * pg-boss queue adapter for async content processing.
  *

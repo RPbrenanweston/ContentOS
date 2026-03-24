@@ -1,20 +1,3 @@
-// @crumb content-detail-crud
-// API | route-handler | single-record-operations
-// why: Handles GET/PATCH/DELETE for individual content nodes; orchestrates segment loading for detail view and cascading deletes for data integrity
-// in:[/api/content/[id]] out:[JSON-node-with-segments|204-success] err:[404-not-found|validation-error|delete-cascade-failure]
-// hazard: No validation on node ID format; malformed UUIDs silently pass to repo layer
-// hazard: DELETE cascades without checking reference counts; orphaned assets possible if external systems reference deleted content
-// hazard: PATCH validation delegates entirely to schema; no business logic checks for conflicting status transitions (e.g., published → draft)
-// hazard: GET segments loaded without pagination; large documents with thousands of segments cause memory spike
-// hazard: await params promise but no timeout; client disconnect leaves orphaned service instances
-// hazard: Error responses expose internal schema validation details that could inform attack strategies
-// edge:../../services/container.ts -> USES (getServices, dependency injection)
-// edge:../../infrastructure/supabase/client.ts -> USES (createServiceClient)
-// edge:../../lib/validation.ts -> USES (updateContentNodeSchema)
-// edge:../../lib/errors.ts -> USES (NotFoundError)
-// edge:../route.ts -> RELATED (sibling GET/POST list endpoint)
-// prompt: Add ID format validation before repo calls; check reference counts before DELETE cascade; implement segment pagination with maxResults limit; add timeout to params promise; reduce error details in 4xx responses
-// prompt: Consider optimistic locking for PATCH to prevent concurrent edit conflicts; add audit logging for DELETE operations
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';

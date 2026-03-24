@@ -1,3 +1,16 @@
+// @crumb distribution-job-repository
+// DAT | Job tracking | Retry state
+// why: Audit trail for distribution jobs with status transitions, external post IDs, and retry counts
+// in:[CreateDistributionJobParams|JobStatus] out:[DistributionJob records] err:[DatabaseError|NotFoundError]
+// hazard: Retry count not capped can create infinite loops if caller doesn't check max retries
+// hazard: External post URL/ID mismatch if platform changes URL format post-publication
+// edge:../client.ts -> READS
+// edge:../../../domain -> READS
+// edge:../../app/api/distribution/jobs/route.ts -> CALLS
+// edge:../../app/api/distribution/publish/route.ts -> CALLS
+// edge:../queue/workers.ts -> CALLS
+// prompt: Enforce retry limit (5) in updateStatus; validate externalPostId format per platform; test idempotency
+
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type {
   CreateDistributionJobParams,

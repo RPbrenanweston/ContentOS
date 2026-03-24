@@ -1,4 +1,19 @@
 /**
+ * @crumb
+ * id: content-decomposition
+ * AREA: DOM
+ * why: Segment content structure for asset generation pipeline—enable lineage preservation and multi-type extraction
+ * in: contentNodeId (string), bodyText (string), language (string)
+ * out: DecompositionResult {segments: ContentSegment[], summary: string, suggestedAssetTypes: string[]}
+ * err: ProcessingError on AI service unavailability
+ * hazard: AI analysis failures cascade to downstream assets—no fallback recovery mechanism
+ * hazard: Word count extremes (empty or 100k+) cause segment extraction to fail or produce malformed structures
+ * edge: SERVES asset-generator.service.ts (segments feed asset generation pipeline)
+ * edge: READS ai.ts (Claude integration for content analysis)
+ * prompt: Verify segment count matches content complexity; test with <10 and 100k+ word samples; validate lineage tracking
+ */
+
+/**
  * Content decomposition service.
  *
  * Uses @org/ai-core (via lib/ai.ts) to analyze content and extract

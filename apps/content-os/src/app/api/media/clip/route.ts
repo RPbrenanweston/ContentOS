@@ -1,3 +1,18 @@
+// @crumb media-clip-extraction
+// API | media-processing | clip-generator
+// why: Extract time-bounded video clips via FFmpeg; validates start/end timestamps, processes source media, returns clipped output with format conversion
+// in:[{sourceUrl,startMs,endMs,format}] out:[{clipUrl,duration,format,filesize}] err:[validation-failed, invalid-range, extract-failed]
+// hazard: sourceUrl accepts any URL without validation; could trigger SSRF attacks to internal services or provide access to authenticated URLs user shouldn't reach
+// hazard: startMs/endMs validation only checks endMs > startMs, not against actual video duration; requesting clips beyond media length could hang FFmpeg or consume resources
+// hazard: No timeout on mediaService.extractClip(); long videos with large clip ranges could block indefinitely, exhausting worker threads
+// hazard: FFmpegMediaService instantiated per request (new FFmpegMediaService()) without connection pooling; no resource reuse across concurrent requests
+// hazard: No auth check; any client can extract clips from any URL without ownership verification or rate limiting
+// hazard: Error response exposes FFmpeg errors directly; could leak file paths, server configuration, or internal service details
+// edge:../../services/media.service.ts -> USES
+// edge:../upload/route.ts -> CONSUMES (uses uploaded source URLs)
+// edge:../../lib/validation.ts -> REFERENCES
+// prompt: Validate sourceUrl against whitelist/allowlist of supported domains; enforce timeout on clip extraction; implement FFmpegMediaService connection pooling; add auth checks for URL ownership; add rate limiting by userId; sanitize error responses
+//
 import { NextRequest, NextResponse } from 'next/server';
 import { clipExtractionSchema } from '@/lib/validation';
 import { FFmpegMediaService } from '@/services/media.service';

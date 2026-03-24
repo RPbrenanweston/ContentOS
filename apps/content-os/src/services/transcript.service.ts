@@ -1,4 +1,21 @@
 /**
+ * @crumb
+ * id: transcript-extraction
+ * AREA: DOM
+ * why: Extract word-level timestamps from audio/video—enable precise clip boundaries and segment timing
+ * in: fileUrl (string), mimeType (string)
+ * out: TranscriptResult {fullText, segments[], language, durationMs}
+ * err: ProcessingError on Deepgram API failure; ParsingError on malformed response
+ * hazard: Timestamp parsing failure (missing start/end fields) silently returns 0ms—segments become useless for clip extraction
+ * hazard: Deepgram timeout (>30s) blocks indefinitely—no abort mechanism, causes cascading failures downstream
+ * edge: SERVES media.service.ts (provides startMs/endMs for clip extraction)
+ * edge: SERVES decomposition.service.ts (transcript input for segment analysis)
+ * edge: CALLS Deepgram API (nova-2 model with utterance-level punctuation)
+ * edge: READS source audio/video files (via URL fetch)
+ * prompt: Test API key validation; verify timestamp edge cases (zero duration, out-of-order segments); confirm timeout abort behavior
+ */
+
+/**
  * Transcript service using Deepgram Nova-2.
  *
  * Provides word-level timestamps critical for video clip extraction.

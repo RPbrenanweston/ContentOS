@@ -1,3 +1,20 @@
+/**
+ * @crumb
+ * id: publishing-queue-management
+ * AREA: DOM
+ * why: Schedule recurring publishes across platforms—coordinate asset approval, slot materialization, and auto-fill cadence
+ * in: PublishingQueue {userId, distributionAccountId, timezone, schedules[]}, QueueSchedule {dayOfWeek, timeOfDay}
+ * out: QueueSlot[] {scheduledFor, derivedAssetId, status}, filled slot count (int)
+ * err: ProcessingError on invalid cron; ScheduleError on timezone conversion failure
+ * hazard: Timezone-unaware scheduling breaks DST transitions—2am slot becomes 1am or 3am, causing skipped/duplicate posts
+ * hazard: Auto-fill without approval validation publishes unapproved assets—no rollback mechanism for bad auto-fills
+ * edge: CALLS slot materialization cron (background job)
+ * edge: READS distribution_queues, queue_schedules, queue_slots, derived_assets tables
+ * edge: WRITES queue_slots with status and asset links
+ * edge: SERVES distribution workflow (feeds publishing pipeline with scheduled assets)
+ * prompt: Test DST boundary dates; verify slot count consistency with schedule; validate auto-fill respects approval status
+ */
+
 import type {
   PublishingQueue,
   QueueSchedule,

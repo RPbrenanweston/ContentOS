@@ -1,3 +1,15 @@
+// @crumb platform-adapter-interface
+// API | OAuth contract | Polymorphism
+// why: Define adapter contract for multiple social platforms with unified token, post, metrics, and OAuth flows
+// in:[Platform credentials] out:[PlatformAdapter implementations] err:[OAuthError|NetworkError|ValidationError]
+// hazard: Token expiration logic inconsistent across platforms can silently fail authorization
+// hazard: Registry mutability allows runtime adapter replacement, risking wrong implementation binding
+// edge:./platforms/linkedin.adapter.ts -> IMPLEMENTS
+// edge:./platforms/x.adapter.ts -> IMPLEMENTS
+// edge:../../app/api/distribution/accounts/route.ts -> READS
+// edge:../../app/api/distribution/publish/route.ts -> CALLS
+// prompt: Add token expiry validation in validateCredentials; make registry immutable post-init
+
 /**
  * Platform adapter interface.
  *

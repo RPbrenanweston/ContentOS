@@ -1,19 +1,3 @@
-// @crumb analytics-metrics-aggregation
-// API | metrics-aggregation | aggregator
-// why: Aggregates performance metrics across jobs, assets, and content nodes; surfaces publish performance and engagement data for insights dashboard
-// in:[query:jobId|assetId|nodeId|from|to] out:[JSON-metrics-array] err:[missing-param, fetch-failure]
-// hazard: N+1 query problem—Promise.all chains could trigger cascading lookups per asset or job without pagination or batch optimizations
-// hazard: No ID format validation on jobId, assetId, nodeId; invalid IDs could cause silent failures or unexpected repo behavior
-// hazard: Missing auth checks; any client can request metrics for any jobId/assetId/nodeId without ownership verification
-// hazard: Aggregation reduce logic assumes all metric objects have identical shape; missing or extra fields could break totals calculation
-// hazard: No pagination on metrics aggregation results; large datasets (1000+ metrics) could exhaust memory or timeout
-// hazard: Error response leaks internal error details (500 catch-all); could expose repo implementation details to attackers
-// edge:../../infrastructure/supabase/client.ts -> USES
-// edge:../../services/container.ts -> USES
-// edge:/api/jobs, /api/assets -> IMPLIED-DEPENDENCIES
-// prompt: Add ID format validation (UUID checks) before repo queries; implement pagination with limit/offset on metrics results; add auth middleware to verify asset ownership; reconcile metric object schema expectations; sanitize error responses
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';

@@ -1,3 +1,15 @@
+// @crumb performance-metric-repository
+// DAT | Analytics | Immutable snapshots
+// why: Store read-only snapshots of post performance metrics fetched from platforms at specific times
+// in:[CreatePerformanceMetricParams] out:[PerformanceMetric snapshots by job] err:[DatabaseError|ConstraintError]
+// hazard: Metrics timestamp (fetched_at) mismatch creates confusion on post performance timeline
+// hazard: No update/delete capability can bloat analytics tables if duplicate metrics synced repeatedly
+// edge:../client.ts -> READS
+// edge:../../../domain -> READS
+// edge:../../app/api/analytics/sync/route.ts -> CALLS
+// edge:../queue/workers.ts -> CALLS
+// prompt: Test metrics sync idempotency; add index on distribution_job_id; document fetched_at semantics
+
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type {
   CreatePerformanceMetricParams,

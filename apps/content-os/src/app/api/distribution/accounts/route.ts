@@ -1,3 +1,17 @@
+// @crumb distribution-accounts-crud
+// API | route-handler | platform-account-management
+// why: Manage OAuth-connected social media accounts; GET lists user's accounts, POST creates new connection with validation
+// in:[POST-body: platform|accountName|externalAccountId|metadata] out:[Account|Account[]] err:[validation-error, account-exists, create-failed]
+// hazard: userId hardcoded as TODO with fallback UUID; GET/POST both accept body.userId without auth validation allowing account hijacking
+// hazard: Platform enum validation missing; accepts any string as platform without checking against valid adapter list (x, linkedin, etc.)
+// hazard: No account uniqueness check (platform + externalAccountId); could create duplicate connections to same external account
+// hazard: POST metadata field accepts arbitrary JSON without validation; could inject malformed data that breaks adapter initialization
+// hazard: No auth header checks; any client can create accounts for any userId by spoofing body.userId
+// edge:../../../infrastructure/distribution/platforms/platform-adapter.ts -> REFERENCES
+// edge:../../../infrastructure/supabase/repositories/account.repo.ts -> MUTATES
+// edge:../jobs/route.ts -> READS-ACCOUNTS
+// prompt: Replace TODO userId with auth extraction; validate platform against adapter registry; check for duplicate connections before create; validate metadata schema; add auth middleware checks
+//
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';

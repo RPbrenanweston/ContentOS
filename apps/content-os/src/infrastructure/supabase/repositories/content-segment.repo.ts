@@ -1,3 +1,14 @@
+// @crumb content-segment-repository
+// DAT | Batch operations | Cascading deletes
+// why: Manage content segments (text chunks from parent nodes) with bulk insert and cascading cleanup
+// in:[CreateSegmentParams array] out:[ContentSegment entities] err:[DatabaseError|ConstraintError]
+// hazard: Cascade delete by nodeId orphans data if segment_type filtering is incorrect
+// hazard: Bulk insert without transaction can leave partial data on network failure
+// edge:../client.ts -> READS
+// edge:../../../domain -> READS
+// edge:../../app/api/content/[id]/segments/route.ts -> CALLS
+// prompt: Wrap createMany in transaction; validate contentNodeId exists before insert; test cascade deletes
+
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type {
   ContentSegment,

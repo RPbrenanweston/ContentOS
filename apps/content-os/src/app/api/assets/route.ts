@@ -1,3 +1,18 @@
+// @crumb asset-generation-api
+// API | route-handler | ai-orchestration
+// why: Generates AI-derived content variants (social posts, email, blog snippets) from source segments; orchestrates asset creation and persistence
+// in:[request-body-json, segmentIds, platform, tone] out:[json-asset-response] err:[validation-error, no-segments-error, generation-error]
+// hazard: userId extracted as TODO with hardcoded fallback UUID; production will fail when auth is implemented without updating this endpoint
+// hazard: No timeout on assetGeneratorService.generate(); LLM calls could hang indefinitely, blocking request thread and consuming server resources
+// hazard: segments filtering doesn't validate that filtered segments still match content type requirements; could generate asset from wrong content format
+// hazard: No de-duplication check; identical asset requests could be generated multiple times concurrently, wasting API credits
+// hazard: Error responses expose raw assetGeneratorService errors; may leak prompt text or API keys if logging includes full error objects
+// edge:../../infrastructure/supabase/client.ts -> USES
+// edge:../../services/container.ts -> USES
+// edge:../../services/asset-generator.service.ts -> USES
+// edge:../../domain/derived-asset.ts -> RESPONSE-TYPE
+// prompt: Replace TODO userId with auth extraction; add generation timeout with fallback; validate segment content types; implement idempotency key for de-duplication; sanitize error responses
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';

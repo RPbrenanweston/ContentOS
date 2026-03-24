@@ -1,3 +1,14 @@
+// @crumb derived-asset-repository
+// DAT | Versioning | Media tracking
+// why: Persist generated assets (cropped videos, rewritten posts) with media URLs and AI generation metadata
+// in:[CreateDerivedAssetParams|UpdateDerivedAssetParams] out:[DerivedAsset with version tracking] err:[DatabaseError|NotFoundError]
+// hazard: Media URLs pointing to external CDN could become stale or revoked without cleanup
+// hazard: Version field not auto-incremented on update can create drift if manual increment fails
+// edge:../client.ts -> READS
+// edge:../../../domain -> READS
+// edge:../../app/api/assets/route.ts -> CALLS
+// prompt: Implement media URL expiration check on findByNodeId; ensure version auto-increments via trigger
+
 import { type SupabaseClient } from '@supabase/supabase-js';
 import type {
   AssetStatus,

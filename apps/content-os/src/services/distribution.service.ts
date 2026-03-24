@@ -1,4 +1,20 @@
 /**
+ * @crumb
+ * id: distribution-orchestration
+ * AREA: DOM
+ * why: Coordinate publishing across platforms—manage job lifecycle and adapter delegation
+ * in: PublishParams {asset, accounts[], scheduledAt, mediaUrls}
+ * out: DistributionJob[] {status, externalPostId, externalPostUrl, publishedAt}
+ * err: ProcessingError on adapter unavailability; DistributionError on platform-specific failures
+ * hazard: Missing or dead adapters cause partial failures—no rollback mechanism for partial publishes
+ * hazard: Scheduled jobs lack retry strategy—failures stuck in 'failed' state indefinitely
+ * edge: CALLS LinkedIn and X adapters via platform-adapter registry
+ * edge: WRITES distribution_jobs table
+ * edge: READS distribution_accounts for platform metadata
+ * prompt: Test missing adapters; verify job status transitions; test cancellation side effects
+ */
+
+/**
  * Distribution service — orchestrates publishing across platforms.
  *
  * Creates one DistributionJob per account, delegates to platform adapters,

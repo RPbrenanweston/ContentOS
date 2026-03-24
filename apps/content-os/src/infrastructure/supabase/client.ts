@@ -1,3 +1,14 @@
+// @crumb supabase-client
+// INF | Initialization | Key management
+// why: Provide isolated database client factories for browser, service, and server contexts with proper credential separation
+// in:[env vars] out:[SupabaseClient instances] err:[MissingEnvError|ConnectionError]
+// hazard: Service key exposed in browser context would bypass row-level security
+// hazard: Mixed use of anon/service keys can leak permissions across auth levels
+// edge:../repositories/content-node.repo.ts -> SERVES
+// edge:../repositories/content-segment.repo.ts -> SERVES
+// edge:../../app/api -> SERVES
+// prompt: Verify env vars loaded before instantiation; audit caller context (browser vs server)
+
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

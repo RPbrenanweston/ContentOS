@@ -1,3 +1,18 @@
+// @crumb content-crud-api
+// API | route-handler | data-persistence
+// why: Handles creation and listing of content nodes; primary write/read endpoint for editorial content with validation and error handling
+// in:[request-body-json, query-params] out:[json-response] err:[validation-error, db-error, auth-error]
+// hazard: userId extracted as TODO with hardcoded fallback UUID; production will fail when auth is implemented without updating this endpoint
+// hazard: No pagination cursor validation; client can request unbounded page counts, potentially causing slow queries
+// hazard: safeParse succeeds but doesn't guarantee schema match for complex nested types; downstream code may receive unexpected shapes
+// hazard: Error responses expose raw error objects to client; may leak internal system details
+// hazard: No rate limiting on POST; attacker could spam content creation without throttling
+// edge:../../infrastructure/supabase/client.ts -> USES
+// edge:../../services/container.ts -> USES
+// edge:../../lib/validation.ts -> USES
+// edge:../../domain/content-node.ts -> RESPONSE-TYPE
+// prompt: Replace TODO userId with proper auth extraction; add pagination bounds validation; refine error responses (never expose raw error); add rate limiting middleware; validate schema completeness
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';
