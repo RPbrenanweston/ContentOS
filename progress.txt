@@ -1,0 +1,26 @@
+# Ralph Progress Log — PAI-Adjusted (Approach C)
+Started: 2026-03-24
+Project: Content Platform — Architectural Fixes
+Branch: ralph/architectural-fixes
+
+## Codebase Patterns
+- **Supabase client pattern:** Three client factories in content-os/src/infrastructure/supabase/client.ts — browser (anon), server (access token), service (bypasses RLS). Studio has separate clients at lib/supabase/client.ts and server.ts.
+- **Repository pattern:** DAT layer uses typed repos at infrastructure/supabase/repositories/ — each maps DB rows to domain entities.
+- **Service DI:** services/container.ts is the dependency injection root — creates all service instances with shared Supabase client.
+- **Platform adapter pattern:** infrastructure/distribution/platform-adapter.ts defines the interface. LinkedIn and X adapters implement getAuthUrl(), exchangeCode(), publish(), getMetrics().
+- **API route pattern:** Next.js App Router at src/app/api/. Currently NO middleware, NO auth, NO error wrapper. Stories 1-6 fix this.
+- **Breadcrumb format:** Line-comment style: // @crumb id / // [AREA] | tags / // why: / // in: out: err: / // hazard: / // edge: -> TYPE / // prompt:
+- **Domain models:** TypeScript interfaces at domain/ with enums.ts centralizing allowed values.
+- **Queue:** pg-boss for job processing at infrastructure/queue/pg-boss.ts. Workers at infrastructure/queue/workers.ts.
+- **Existing tests:** packages/ai-core has 18 TS tests + 6 Python tests. Apps have NO tests yet.
+- **Migration pattern:** Sequential numbered SQL files at supabase/migrations/001-013.
+
+## Key Context
+- This is a self-hosted Supabase platform (Docker Compose at infra/supabase/)
+- FreeFlow voice transcription at infra/freeflow/
+- Do NOT modify salesblock-io or jobtracker repos
+- All Supabase changes target self-hosted instance only
+- Content OS (port 3000), Studio (port 3100)
+- No tests exist in apps yet — don't add test-running to quality gates
+
+---
