@@ -1,3 +1,15 @@
+// @crumb asset-card
+// UI | Asset display | Inline editing | Status workflow
+// why: Visual card for derived assets with edit-in-place, approve, publish, and delete workflows
+// in:[asset, callbacks for update/approve/delete/publish] out:[renders card + triggers callbacks] err:[missing asset.id, null status]
+// hazard: Body text edited inline without length validation—could exceed downstream storage limits silently
+// hazard: Edit state toggle not cleared on error—user sees stale form after failed update API call
+// edge:./content/status-badge.tsx -> CALLS [renders status badge for asset.status]
+// edge:./publish-panel.tsx -> CALLS [PUBLISH button opens publish panel]
+// edge:../analytics/lineage-table.tsx -> RELATES [asset displays in lineage rows]
+// edge:../../domain/derived-asset.ts -> READS [DerivedAsset type]
+// prompt: Add maxlength validation on textarea. Clear editing state only after onUpdate success. Bind edit error callback.
+
 'use client';
 
 import { useState } from 'react';

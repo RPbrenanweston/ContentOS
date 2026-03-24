@@ -1,3 +1,14 @@
+// @crumb tiptap-editor
+// UI | Rich-text editing | Content composition | Bubble menu formatting
+// why: Distraction-free and feature-rich editor modes for blog and custom content authoring
+// in:[content, onChange, placeholder, mode] out:[HTML string, plain text] err:[editor null, extension config error]
+// hazard: Unvalidated HTML output from editor.getHTML() could expose XSS if sanitization is missing downstream
+// hazard: Image prompt URL input has no validation—malicious URLs could trigger CSRF or load tracking pixels
+// edge:../content/status-badge.tsx -> RELATES [status display]
+// edge:../../hooks/use-voice-input.ts -> SERVES [voice input could feed editor content]
+// edge:../../domain/derived-asset.ts -> WRITES [editor content becomes asset body]
+// prompt: Ensure HTML output sanitization before storage. Add URL validation for image insertion. Document write/edit mode differences.
+
 'use client';
 
 import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';

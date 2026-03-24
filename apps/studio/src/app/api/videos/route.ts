@@ -1,3 +1,13 @@
+// @crumb videos-list-crud
+// API | video inventory | persistence
+// why: Provide endpoints for querying all videos and creating new videos for a user
+// in:[POST body with sourceType, sourceUrl, fileUrl, title, durationSeconds] out:[JSON array of videos | created video object] err:[DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
+// hazard: MVP_USER_ID hardcoded prevents multi-tenant safety
+// hazard: Missing validation of sourceUrl/fileUrl format before database insert
+// edge:../mappers -> CALLS to map database rows to API response format
+// edge:../validation -> CALLS createVideoSchema for input validation
+// prompt: Verify sourceUrl and fileUrl are valid URLs before database persist; consider environment-based user_id injection
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, MVP_USER_ID } from '@/lib/supabase/server';
 import { createVideoSchema } from '@/lib/utils/validation';

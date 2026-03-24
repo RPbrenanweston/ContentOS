@@ -1,3 +1,16 @@
+// @crumb lineage-table
+// UI | Content lineage | Asset tracking | Distribution analytics
+// why: Master table showing content source nodes with derived assets and distribution job counts, clickable to drill-down
+// in:[rows: LineageRow[] (node+assets+jobs)] out:[HTML table with job status counts] err:[empty rows, missing row.node.id]
+// hazard: Click handler uses window.location.href—no loading state, user may click twice and trigger duplicate navigation
+// hazard: Job counts computed inline (filter on each render)—inefficient if hundreds of jobs; no memoization
+// edge:./asset-card.tsx -> RELATES [assets in row displayed as card list elsewhere]
+// edge:./status-badge.tsx -> CALLS [renders row node status badge]
+// edge:../../domain/content-node.ts -> READS [ContentNode type]
+// edge:../../domain/derived-asset.ts -> READS [DerivedAsset type]
+// edge:../../domain/distribution.ts -> READS [DistributionJob type]
+// prompt: Disable click during navigation. Memoize job count filters. Add keyboard navigation (Enter to drill down).
+
 'use client';
 
 import { StatusBadge } from '@/components/content/status-badge';

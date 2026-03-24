@@ -1,3 +1,15 @@
+// @crumb inline-decompose
+// DOM | Content decomposition | Queue fallback | Video/audio transcription
+// why: Synchronous fallback pipeline for decomposing content into segments when async queue (pg-boss) is unavailable
+// in:[nodeId: string] out:[void (persists segments, updates node status)] err:[node not found, transcription failure, decomposition error]
+// hazard: Transcription service called synchronously in request thread—large video files (500MB+) block server for minutes
+// hazard: Error recovery resets status to 'draft' but doesn't cancel partial segment persists—database could have orphaned segments
+// edge:../../services/decomposition.service.ts -> CALLS [AIDecompositionService.decompose for segment extraction]
+// edge:../../services/transcript.service.ts -> CALLS [DeepgramTranscriptService for audio/video transcription]
+// edge:../../services/container.ts -> READS [repository instances from container]
+// edge:../../domain/content-node.ts -> WRITES [updates node status, bodyText, wordCount, summary]
+// prompt: Add request timeout (30s max). Implement segment transaction rollback on error. Log partial states for debugging.
+
 /**
  * Inline decomposition fallback.
  *

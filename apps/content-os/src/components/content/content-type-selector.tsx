@@ -1,3 +1,13 @@
+// @crumb content-type-selector
+// UI | Content intake | Type selection | Source format chooser
+// why: Simple button set for user to select content source type (blog text, video, or audio) before upload/entry
+// in:[selected: ContentNodeType, onChange callback] out:[calls onChange with selected type] err:[invalid type value, null onChange]
+// hazard: No validation that selected type matches downstream handler—user selects VIDEO but paste text and decomposition fails silently
+// hazard: Button text and descriptions are hardcoded—localization or UX copy changes require code modification
+// edge:./content-node.ts -> READS [ContentNodeType enum values]
+// edge:../editor/tiptap-editor.tsx -> RELATES [BLOG type routes to editor]
+// prompt: Consider ContentNodeType to file handler mapping validation. Extract button labels to config object for i18n.
+
 'use client';
 
 import type { ContentNodeType } from '@/domain';

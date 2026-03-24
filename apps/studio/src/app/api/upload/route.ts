@@ -1,3 +1,13 @@
+// @crumb upload-handler
+// API | file persistence | storage delegation
+// why: Handle multipart file uploads to Supabase storage with path isolation per MVP user
+// in:[POST FormData with file field] out:[fileUrl and path] err:[VALIDATION_ERROR, UPLOAD_ERROR, INTERNAL_ERROR]
+// hazard: No file size limit checked before upload—unlimited files can exhaust storage quota
+// hazard: filename used directly in path without sanitization—special characters can create path traversal or encoding issues
+// hazard: No content-type validation—binary or executable files can be uploaded if mime-type claim is false
+// edge:../videos/route.ts -> SERVES (upload endpoint stores video files referenced by file_url)
+// prompt: Add file size ceiling; sanitize filename; validate content against claimed mime-type signature
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, MVP_USER_ID } from '@/lib/supabase/server';
 

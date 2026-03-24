@@ -1,3 +1,13 @@
+// @crumb compilation-breadcrumb-crud
+// API | compilation composition | breadcrumb sequencing
+// why: Support adding, reordering, and removing breadcrumbs from a compilation with independent order management
+// in:[POST compilationId + body with breadcrumbId/orderIndex] [PATCH compilationId + body with breadcrumbIds array] [DELETE compilationId + body with breadcrumbId] out:[created link] [reordered links] [deleted confirmation] err:[VALIDATION_ERROR, DB_ERROR, INTERNAL_ERROR]
+// hazard: PATCH deletes and re-inserts all links—vulnerable to race conditions if concurrent PATCH/POST/DELETE on same compilation
+// hazard: No validation that breadcrumbIds exist before insert—foreign key constraint will fail but with cryptic error
+// edge:../route.ts -> RELATES (breadcrumb management for parent compilation)
+// edge:../../breadcrumbs/route.ts -> RELATES (breadcrumbs belong to parent video)
+// prompt: Implement advisory locks or version timestamps for concurrent mutation safety; validate breadcrumbId existence pre-insert
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 

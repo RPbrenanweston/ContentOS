@@ -1,3 +1,13 @@
+// @crumb use-voice-input
+// UI | Voice input | Speech recognition | Hook abstraction
+// why: React hook abstracting browser SpeechRecognition API with roadmap to FreeFlow upgrade (streaming transcription + polishing)
+// in:[provider='browser', language='en-GB', onTranscript, onInterim callbacks] out:[{isRecording, start, stop, toggle, interimText}] err:[SpeechRecognition unavailable, browser unsupported]
+// hazard: Browser SpeechRecognition has no timeout—user can record forever without triggering stop, consuming memory
+// hazard: FreeFlow WebSocket code commented out but no documentation on upgrade path—future developers may skip Phase 2 implementation
+// edge:../../domain/content-node.ts -> WRITES [voice transcripts become contentNode.bodyText]
+// edge:../editor/tiptap-editor.tsx -> SERVES [voice input could feed editor content]
+// prompt: Add max recording duration (e.g. 5min) with auto-stop. Document FreeFlow Phase 2 requirements (gpt-4.1-nano, API keys). Test interimResults batching behavior.
+
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';

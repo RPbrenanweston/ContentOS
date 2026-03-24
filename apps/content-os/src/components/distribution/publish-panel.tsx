@@ -1,3 +1,15 @@
+// @crumb publish-panel
+// UI | Distribution control | Account selection | Scheduling
+// why: User-facing panel for publishing derived assets to multiple social/email platforms with optional scheduling
+// in:[assetId, onPublished callback] out:[DistributionJob[] array] err:[fetch failure, invalid datetime, no accounts]
+// hazard: Unhandled fetch errors silently fail (catch with no alert)—user thinks publish succeeded when API is down
+// hazard: Scheduled datetime stored as string without timezone normalization—daylight saving transitions could misfire jobs
+// edge:../content/status-badge.tsx -> RELATES [job status display]
+// edge:./asset-card.tsx -> CALLS [publish triggered from asset card PUBLISH button]
+// edge:../../domain/distribution.ts -> WRITES [creates DistributionJob records]
+// edge:../../services/distribution.service.ts -> CALLS [/api/distribution/publish endpoint]
+// prompt: Add explicit error UI for fetch failures. Convert scheduled datetime to ISO UTC before POST. Log skipped jobs clearly.
+
 'use client';
 
 import { useEffect, useState } from 'react';

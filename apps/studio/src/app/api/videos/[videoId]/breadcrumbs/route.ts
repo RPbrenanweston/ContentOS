@@ -1,3 +1,13 @@
+// @crumb breadcrumb-list-crud
+// API | temporal markers | video segmentation
+// why: Provide endpoints to list breadcrumbs for a video and create new breadcrumbs with temporal clamping
+// in:[GET videoId] [POST videoId + body with timestampSeconds, note, tags] out:[breadcrumb array] [created breadcrumb] err:[DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
+// hazard: Timestamp clamping uses ±10 second window hardcoded—no configuration for different video types or contexts
+// hazard: Order index auto-assigned by existing count without checking for race conditions in concurrent POST requests
+// edge:../mappers -> CALLS mapBreadcrumb to format breadcrumb responses
+// edge:../videos/[videoId]/route.ts -> RELATES (breadcrumbs belong to parent video)
+// prompt: Consider making ±10 second window configurable; use database-level ordering or timestamp-based ordering to avoid race conditions
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { createBreadcrumbSchema } from '@/lib/utils/validation';

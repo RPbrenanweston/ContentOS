@@ -1,3 +1,13 @@
+// @crumb metric-card
+// UI | Data display | Metric visualization | Analytics card
+// why: Simple reusable card for displaying single numeric metrics with auto-formatting (k suffix for thousands)
+// in:[label, value (number), optional suffix] out:[formatted metric display] err:[invalid number type, null label]
+// hazard: Auto-formatting uses toFixed(1) but k-formatting hides decimals—1234 shows as "1.2k" losing 34 units
+// hazard: No decimal rounding for non-k values—floating point display could show "1234.56789" for values > 1000
+// edge:../analytics/lineage-table.tsx -> RELATES [metric-card could display in analytics dashboard]
+// edge:../../domain/performance-metric.ts -> READS [metric value structure]
+// prompt: Document k-formatting precision loss. Add decimal control parameter. Validate label length for overflow.
+
 interface MetricCardProps {
   label: string;
   value: number;

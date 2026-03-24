@@ -1,3 +1,13 @@
+// @crumb video-detail-crud
+// API | video state | associated breadcrumbs
+// why: Support fetching video details with breadcrumbs, updating video metadata, and deleting videos
+// in:[GET videoId] [PATCH videoId + body with title/durationSeconds] [DELETE videoId] out:[video + breadcrumbs array] [updated video] [deleted confirmation] err:[NOT_FOUND, DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
+// hazard: Breadcrumbs auto-fetched with each GET but without pagination—can grow unbounded for long videos
+// hazard: PATCH allows updating durationSeconds without validating against actual media or breadcrumb ranges
+// edge:../mappers -> CALLS mapVideo, mapBreadcrumb to format responses
+// edge:./breadcrumbs/route.ts -> RELATES (GET fetches breadcrumbs for this video)
+// prompt: Consider paginating breadcrumbs array; validate durationSeconds against actual video duration if available
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient, MVP_USER_ID } from '@/lib/supabase/server';
 import { mapVideo, mapBreadcrumb } from '@/lib/utils/mappers';

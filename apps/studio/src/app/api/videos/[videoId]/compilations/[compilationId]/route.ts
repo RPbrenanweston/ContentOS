@@ -1,3 +1,13 @@
+// @crumb compilation-detail-crud
+// API | compilation state | breadcrumb join expansion
+// why: Support fetching compilation with linked breadcrumbs and cascading delete of compilation and links
+// in:[GET compilationId] [DELETE compilationId] out:[compilation + breadcrumbs array with full breadcrumb objects] [deleted confirmation] err:[NOT_FOUND, DB_ERROR, INTERNAL_ERROR]
+// hazard: GET performs nested join with studio_breadcrumbs—N+1 potential if breadcrumbs array grows large
+// hazard: DELETE only deletes compilation, not the studio_breadcrumbs records—orphaned records remain if constraints don't cascade
+// edge:../route.ts -> RELATES (individual compilations from parent list)
+// edge:./breadcrumbs/route.ts -> SERVES (breadcrumb link management for this compilation)
+// prompt: Consider pagination or nested select limit for breadcrumbs array; verify cascade delete rules in schema
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 

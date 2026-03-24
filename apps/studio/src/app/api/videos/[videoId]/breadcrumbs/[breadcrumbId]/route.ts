@@ -1,3 +1,13 @@
+// @crumb breadcrumb-detail-crud
+// API | temporal marker mutation | note and tag management
+// why: Support updating individual breadcrumb timestamps, notes, tags, and ordering; support deletion
+// in:[PATCH breadcrumbId + body with startTimeSeconds/endTimeSeconds/note/tags/orderIndex] [DELETE breadcrumbId] out:[updated breadcrumb] [deleted confirmation] err:[DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
+// hazard: No validation that startTimeSeconds < endTimeSeconds or that ranges don't exceed video duration
+// hazard: orderIndex updates not synchronized—manual updates can create gaps or duplicate indices in ordered list
+// edge:../route.ts -> RELATES (PATCH/DELETE operate on individual breadcrumbs from parent list)
+// edge:../mappers -> CALLS mapBreadcrumb to format response
+// prompt: Add constraint validation for time ranges; consider using transactional reordering when orderIndex changes
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { updateBreadcrumbSchema } from '@/lib/utils/validation';

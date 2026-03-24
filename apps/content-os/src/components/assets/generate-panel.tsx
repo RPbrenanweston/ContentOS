@@ -1,3 +1,14 @@
+// @crumb generate-panel
+// UI | Generation request | Form control | Asset type selection
+// why: User interface for requesting AI generation of derived assets with type and optional platform targeting
+// in:[onGenerate callback, generating bool] out:[calls onGenerate with {assetType, platform}] err:[invalid selection, callback failure]
+// hazard: Platform selection uses toggle but field is optional—inconsistent state if user expects platform to filter asset types
+// hazard: Generating state disables button but doesn't show progress—user can't tell if generation is stuck or pending
+// edge:./asset-card.tsx -> CALLS [GENERATE button routes to this panel in asset context]
+// edge:../../domain/derived-asset.ts -> READS [AssetType, Platform enums]
+// edge:../../services/asset-generator.service.ts -> CALLS [onGenerate triggers generation service]
+// prompt: Clarify platform field optionality in UI. Show generation progress with spinner. Validate generation duration timeout.
+
 'use client';
 
 import { useState } from 'react';

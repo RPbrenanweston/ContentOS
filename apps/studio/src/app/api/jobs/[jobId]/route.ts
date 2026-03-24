@@ -1,3 +1,13 @@
+// @crumb job-status-query
+// API | async work tracking | background task state
+// why: Provide endpoint to poll job status including progress and error messages for async output generation
+// in:[GET jobId] out:[job object with status, progress, errorMessage] err:[NOT_FOUND, INTERNAL_ERROR]
+// hazard: No polling rate limit—clients can hammer endpoint causing database load
+// hazard: Error messages returned raw without sanitization—stack traces or secrets could leak
+// hazard: No user authorization check—any client with a jobId can query status (privacy issue)
+// edge:../outputs/route.ts -> RELATES (jobs created by output generation endpoint)
+// prompt: Add x-ratelimit headers; sanitize error messages; verify requester owns job via user_id before returning
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 

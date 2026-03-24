@@ -1,3 +1,13 @@
+// @crumb compilation-list-crud
+// API | breadcrumb aggregation | reusable segmentation
+// why: Provide endpoints to list compilations for a video and create new compilations with optional breadcrumb linking
+// in:[GET videoId] [POST videoId + body with title, description, breadcrumbIds] out:[compilation array] [created compilation] err:[DB_ERROR, VALIDATION_ERROR, INTERNAL_ERROR]
+// hazard: Breadcrumb link insertion does not validate that breadcrumbIds belong to the video—orphaned references possible
+// hazard: Silent failure if breadcrumb links insert fails (error discarded)—no rollback of compilation creation
+// edge:../videos/[videoId]/route.ts -> RELATES (compilations are derived from video breadcrumbs)
+// edge:./[compilationId]/route.ts -> SERVES (GET/DELETE operations on individual compilations)
+// prompt: Validate breadcrumbIds exist and belong to video before linking; wrap both inserts in transaction or check link result
+
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { createCompilationSchema } from '@/lib/utils/validation';
