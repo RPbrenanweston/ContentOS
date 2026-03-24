@@ -1,0 +1,262 @@
+@import "tailwindcss";
+
+@theme {
+  /* Original design: sharp, dark, distinctive */
+  --color-primary: #D4F85A;
+  --color-primary-accent: #D4F85A;
+  --color-background: #111210;
+  --color-surface: #1E201D;
+  --color-foreground: #E1E5DF;
+  --color-muted: #6B7067;
+  --color-accent: #FF453A;
+  --color-border: #383C35;
+  --color-success: #10B981;
+
+  /* Typography: serif for content, sans for UI */
+  --font-serif: 'Georgia', 'Times New Roman', serif;
+  --font-sans: 'Inter', 'Archivo', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Space Mono', monospace;
+}
+
+/* =====================================================
+   DARK MODE (default)
+   ===================================================== */
+:root {
+  --theme-background: #111210;
+  --theme-surface: #1E201D;
+  --theme-foreground: #E1E5DF;
+  --theme-muted: #6B7067;
+  --theme-border: #383C35;
+  --theme-primary: #D4F85A;
+  --theme-accent: #FF453A;
+  --theme-success: #10B981;
+  --theme-selection-bg: #D4F85A;
+  --theme-selection-fg: #111210;
+  --theme-blockquote: #9CA3AF;
+  --theme-bubble-bg: #E1E5DF;
+  --theme-bubble-text: #6B7067;
+  --theme-bubble-active-bg: #111210;
+  --theme-bubble-active-text: #E1E5DF;
+  --theme-bubble-divider: #383C35;
+  --theme-pill-active-bg: #D4F85A;
+  --theme-pill-active-text: #111210;
+  --theme-pill-inactive-text: #6B7067;
+  --theme-btn-primary-bg: #D4F85A;
+  --theme-btn-primary-text: #111210;
+  --theme-btn-secondary-border: #383C35;
+  --theme-btn-secondary-text: #E1E5DF;
+  --theme-card-bg: #1E201D;
+  --theme-card-border: #383C35;
+  --theme-card-hover-border: #6B7067;
+  --theme-platform-linkedin: rgba(59, 130, 246, 0.15);
+  --theme-platform-linkedin-text: #93C5FD;
+  --theme-platform-x: rgba(107, 112, 103, 0.15);
+  --theme-platform-x-text: #E1E5DF;
+  --theme-nav-hover-bg: #1E201D;
+  --theme-nav-text: #6B7067;
+  --theme-nav-hover-text: #E1E5DF;
+  --theme-input-bg: transparent;
+  --theme-input-placeholder: #383C35;
+  --theme-tag-bg: rgba(212, 248, 90, 0.1);
+  --theme-tag-text: #D4F85A;
+  --theme-tag-border: rgba(212, 248, 90, 0.2);
+}
+
+/* =====================================================
+   LIGHT MODE
+   ===================================================== */
+.light {
+  --theme-background: #FFFFFF;
+  --theme-surface: #F5F5F0;
+  --theme-foreground: #111210;
+  --theme-muted: #6B7067;
+  --theme-border: #E0E2DC;
+  --theme-primary: #D4F85A;
+  --theme-accent: #FF453A;
+  --theme-success: #10B981;
+  --theme-selection-bg: #D4F85A;
+  --theme-selection-fg: #111210;
+  --theme-blockquote: #4B5563;
+  --theme-bubble-bg: #111210;
+  --theme-bubble-text: #6B7067;
+  --theme-bubble-active-bg: #FFFFFF;
+  --theme-bubble-active-text: #111210;
+  --theme-bubble-divider: #383C35;
+  --theme-pill-active-bg: #D4F85A;
+  --theme-pill-active-text: #111210;
+  --theme-pill-inactive-text: #6B7067;
+  --theme-btn-primary-bg: #D4F85A;
+  --theme-btn-primary-text: #111210;
+  --theme-btn-secondary-border: #E0E2DC;
+  --theme-btn-secondary-text: #111210;
+  --theme-card-bg: #FFFFFF;
+  --theme-card-border: #E0E2DC;
+  --theme-card-hover-border: #C8CBC4;
+  --theme-platform-linkedin: rgba(59, 130, 246, 0.1);
+  --theme-platform-linkedin-text: #2563EB;
+  --theme-platform-x: rgba(0, 0, 0, 0.05);
+  --theme-platform-x-text: #111210;
+  --theme-nav-hover-bg: #F5F5F0;
+  --theme-nav-text: #6B7067;
+  --theme-nav-hover-text: #111210;
+  --theme-input-bg: transparent;
+  --theme-input-placeholder: #C8CBC4;
+  --theme-tag-bg: rgba(212, 248, 90, 0.15);
+  --theme-tag-text: #4A6600;
+  --theme-tag-border: rgba(212, 248, 90, 0.4);
+}
+
+@layer base {
+  body {
+    background-color: var(--theme-background);
+    color: var(--theme-foreground);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--theme-selection-bg);
+    color: var(--theme-selection-fg);
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--theme-border);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-muted);
+  }
+}
+
+@layer utilities {
+  /* Editor prose styles */
+  .prose-editor {
+    font-family: var(--font-serif);
+    font-size: 20px;
+    line-height: 1.8;
+    color: var(--theme-foreground);
+    max-width: 720px;
+    margin: 0 auto;
+  }
+
+  .prose-editor h1 {
+    font-family: var(--font-sans);
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 2em;
+    margin-bottom: 0.5em;
+    letter-spacing: -0.02em;
+  }
+
+  .prose-editor h2 {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-top: 1.8em;
+    margin-bottom: 0.4em;
+    letter-spacing: -0.01em;
+  }
+
+  .prose-editor h3 {
+    font-family: var(--font-sans);
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.4;
+    margin-top: 1.5em;
+    margin-bottom: 0.3em;
+  }
+
+  .prose-editor p {
+    margin-bottom: 1.5em;
+  }
+
+  .prose-editor blockquote {
+    border-left: 3px solid var(--theme-primary);
+    padding-left: 1.5em;
+    margin: 2em 0;
+    font-style: italic;
+    color: var(--theme-blockquote);
+  }
+
+  .prose-editor code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--theme-surface);
+    padding: 0.15em 0.4em;
+    border-radius: 3px;
+  }
+
+  .prose-editor pre {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    background: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    padding: 1.5em;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 2em 0;
+  }
+
+  .prose-editor ul, .prose-editor ol {
+    padding-left: 1.5em;
+    margin-bottom: 1.5em;
+  }
+
+  .prose-editor li {
+    margin-bottom: 0.5em;
+  }
+
+  .prose-editor img {
+    max-width: 100%;
+    border-radius: 6px;
+    margin: 2em 0;
+  }
+
+  .prose-editor hr {
+    border: none;
+    border-top: 1px solid var(--theme-border);
+    margin: 3em 0;
+  }
+
+  .prose-editor .is-editor-empty:first-child::before {
+    color: var(--theme-muted);
+    font-style: italic;
+  }
+
+  /* UI typography */
+  .text-ui {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--theme-muted);
+  }
+
+  .text-ui-sm {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--theme-muted);
+  }
+
+  /* Nav items — CSS-driven hover for server components */
+  .nav-item {
+    color: var(--theme-nav-text);
+    transition: color 0.15s, background-color 0.15s;
+  }
+  .nav-item:hover {
+    color: var(--theme-nav-hover-text);
+    background-color: var(--theme-nav-hover-bg);
+  }
+}

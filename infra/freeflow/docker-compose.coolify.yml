@@ -1,0 +1,78 @@
+# ============================================================
+# FreeFlow Speech-to-Text — Coolify Deployment
+# Source: https://github.com/RPbrenanweston/freeflowforcontentOS
+#
+# Deploy in Coolify:
+#   1. New Resource → Docker Compose
+#   2. Paste this file (or point to repo)
+#   3. Set environment variables in Coolify UI
+#   4. Set domain in Coolify (e.g. freeflow.yourdomain.com)
+#   5. Deploy — Coolify handles SSL + reverse proxy
+#
+# After deploy:
+#   - Visit https://freeflow.yourdomain.com/health
+#   - Use BOOTSTRAP_TOKEN to create first admin
+# ============================================================
+
+services:
+  # ─── PostgreSQL ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-freeflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-freeflow}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-freeflow}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ─── FreeFlow Service ─────────────────────────────────────
+  # This is the service Coolify should route the domain to.
+  # Set your domain in Coolify UI → point to this service, port 8000.
+  freeflow:
+    build:
+      context: ./freeflow-repo/FreeFlowService/images/main
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      # ── OpenAI (set in Coolify UI) ──
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      REALTIME_MODEL: ${REALTIME_MODEL:-gpt-4o-realtime-preview}
+      POLISH_MODEL: ${POLISH_MODEL:-gpt-4.1-nano}
+
+      # ── Database (auto-connects to postgres service above) ──
+      DATABASE_URL: postgresql://${POSTGRES_USER:-freeflow}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-freeflow}
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: ${POSTGRES_USER:-freeflow}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+      PGDATABASE: ${POSTGRES_DB:-freeflow}
+
+      # ── Auth (set in Coolify UI) ──
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_URL: ${PUBLIC_URL:-https://freeflow.yourdomain.com}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN}
+
+      # ── Server ──
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      AUTH_PORT: "3456"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  pgdata:
