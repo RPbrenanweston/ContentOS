@@ -1,3 +1,19 @@
+/**
+ * @crumb
+ * id: queue-scheduling-entity
+ * AREA: DAT
+ * why: Define PublishingQueue, QueueSchedule, QueueSlot, and PublishingLog—coordinate recurring publication with asset-to-slot assignment and audit trail
+ * in: PublishingQueue {userId, distributionAccountId, timezone, isActive}; QueueSchedule {publishingQueueId, dayOfWeek, timeOfDay}; QueueSlot {publishingQueueId, queueScheduleId?, derivedAssetId?, scheduledFor, status}
+ * out: PublishingQueue {id, schedules?: QueueSchedule[], accountName?, platform?}; QueueSlot {id, scheduledFor, status, asset?: {id, title?, body, assetType}}; PublishingLog {id, userId, distributionJobId?, eventType, platform, externalPostId?, errorMessage?}
+ * err: No errors typed—timezone validation deferred; DST transitions not handled; QueueSlotStatus enum allows invalid transitions
+ * hazard: timeOfDay string (HH:MM format) unsanitized—malformed strings ("25:99") accepted, causing scheduling failures at materialization time
+ * hazard: timezone string accepts any value (e.g., "Invalid/Timezone")—DST-aware slot calculation will fail silently for edge cases (spring forward, fall back)
+ * edge: CREATED_BY queue.service.ts (materializeSlots() populates QueueSlot; autoFillSlots() assigns derived assets)
+ * edge: CALLS distribution.service.ts (publish() consumes filled slots, creates DistributionJob)
+ * edge: LOGS publishing attempts via PublishingLog for audit trail
+ * prompt: Test DST transition boundaries (spring forward, fall back); validate timeOfDay format strictly; test QueueSlotStatus transitions (empty→filled→published or empty→skipped); verify timezone validation against IANA database
+ */
+
 export type DayOfWeek =
   | 'monday'
   | 'tuesday'

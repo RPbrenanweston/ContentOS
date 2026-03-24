@@ -1,3 +1,15 @@
+// @crumb theme-toggle-control
+// UI | appearance-control | client-side-toggle
+// why: Manages user light/dark theme preference; persists selection to localStorage and applies classes to document root for CSS variable switching
+// in:[click-event] out:[DOM-class-applied, localStorage-updated] err:[none-critical]
+// hazard: localStorage access not wrapped in try-catch; blocks on localStorage.getItem if browser has localStorage API issues
+// hazard: document.documentElement.classList modified directly without checking if 'light' class already exists; potential duplicate application
+// hazard: No validation on stored theme value; accepts any string from localStorage without format check
+// hazard: Race condition: useEffect reads stored state but toggle() updates it; rapid toggles could desync UI from localStorage
+// hazard: Hard-coded class name 'light' scattered across component; refactoring class strategy would require multiple edits
+// hazard: CSS variable fallback not checked; if --theme-muted is undefined, button color becomes transparent
+// edge:../../domain/theme.ts -> IMPORTS-FROM (if theme constants exist)
+// prompt: Wrap localStorage access in try-catch; validate theme value against allowed set (light|dark); consolidate class name as constant; debounce toggle() calls
 'use client';
 
 import { useEffect, useState } from 'react';
