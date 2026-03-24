@@ -21,6 +21,7 @@
  */
 
 import PgBoss from 'pg-boss';
+import { logger } from '@/lib/logger';
 
 let boss: PgBoss | null = null;
 
@@ -45,7 +46,7 @@ export async function getQueue(): Promise<PgBoss> {
   });
 
   boss.on('error', (error) => {
-    console.error('[pg-boss] Queue error:', error);
+    logger.error('Queue error', { error: String(error) });
   });
 
   await boss.start();

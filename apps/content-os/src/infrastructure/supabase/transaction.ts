@@ -9,6 +9,7 @@
 // prompt: For true atomicity, move delete+create into a Postgres function and call via supabase.rpc('upsert_segments', {...})
 
 import { createServiceClient } from './client';
+import { logger } from '@/lib/logger';
 
 /**
  * Wraps a set of Supabase operations with structured error logging.
@@ -33,7 +34,7 @@ export async function withTransaction<T>(
     const result = await fn(client);
     return result;
   } catch (error) {
-    console.error(`[Transaction:${label}] Failed:`, error);
+    logger.error(`Transaction failed`, { label, error: String(error) });
     throw error;
   }
 }

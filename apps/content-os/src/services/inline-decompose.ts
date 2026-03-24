@@ -18,6 +18,7 @@
  */
 
 import { createServiceClient } from '@/infrastructure/supabase/client';
+import { logger } from '@/lib/logger';
 import { getServices } from '@/services/container';
 import { AIDecompositionService } from '@/services/decomposition.service';
 import { DeepgramTranscriptService } from '@/services/transcript.service';
@@ -76,7 +77,7 @@ export async function handleInlineDecompose(
 
     console.log(`[inline-decompose] Complete for node ${nodeId}`);
   } catch (error) {
-    console.error(`[inline-decompose] Failed for node ${nodeId}:`, error);
+    logger.error(`Failed for node ${nodeId}`, { nodeId, error: String(error) });
     try {
       await contentNodeRepo.update(nodeId, { status: 'draft' });
     } catch {

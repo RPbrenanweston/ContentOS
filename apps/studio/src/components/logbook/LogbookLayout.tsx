@@ -5,11 +5,13 @@
 // hazard: No error boundary—errors in ledger crash entire annotation interface
 // hazard: Panel states not persisted—users lose panel layout on refresh
 // edge:apps/studio/src/components/logbook/LedgerPanel.tsx -> SERVES
+// edge:../error-boundary.tsx -> USES
 // prompt: Add error boundary, persist panel layout to localStorage with version key
 
 'use client';
 
 import { ReactNode } from 'react';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 interface LogbookLayoutProps {
   videoSection: ReactNode;
@@ -18,16 +20,18 @@ interface LogbookLayoutProps {
 
 export function LogbookLayout({ videoSection, ledgerPanel }: LogbookLayoutProps) {
   return (
-    <div className="h-full flex">
-      {/* Video + mini timeline — 65% */}
-      <div className="w-[65%] h-full border-r border-border flex flex-col">
-        {videoSection}
-      </div>
+    <ErrorBoundary>
+      <div className="h-full flex">
+        {/* Video + mini timeline — 65% */}
+        <div className="w-[65%] h-full border-r border-border flex flex-col">
+          {videoSection}
+        </div>
 
-      {/* Ledger panel — 35% */}
-      <div className="w-[35%] h-full bg-surface overflow-hidden flex flex-col">
-        {ledgerPanel}
+        {/* Ledger panel — 35% */}
+        <div className="w-[35%] h-full bg-surface overflow-hidden flex flex-col">
+          {ledgerPanel}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
 }

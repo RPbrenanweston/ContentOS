@@ -7,10 +7,12 @@
 // hazard: suppressHydrationWarning on html element masks potential hydration mismatches
 // edge:../../components/ui/theme-toggle.tsx -> USES
 // edge:./globals.css -> IMPORTS
+// edge:../components/error-boundary.tsx -> USES
 // prompt: Validate CSS variable names match theme system; test hydration with client-side theme logic
 
 import type { Metadata } from 'next';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import { ErrorBoundary } from '@/components/error-boundary';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -71,7 +73,9 @@ export default function RootLayout({
 
           {/* Main Content */}
           <main className="flex-1 overflow-hidden" style={{ backgroundColor: 'var(--theme-background)' }}>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </main>
         </div>
       </body>

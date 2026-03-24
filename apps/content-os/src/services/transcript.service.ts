@@ -28,6 +28,7 @@ import type {
   TranscriptResult,
   TranscriptSegment,
 } from './interfaces/transcript.service';
+import { logger } from '@/lib/logger';
 
 export class DeepgramTranscriptService implements ITranscriptService {
   private apiKey: string;
@@ -36,7 +37,7 @@ export class DeepgramTranscriptService implements ITranscriptService {
   constructor(apiKey?: string) {
     this.apiKey = apiKey ?? process.env.DEEPGRAM_API_KEY ?? '';
     if (!this.apiKey) {
-      console.warn('[TranscriptService] No DEEPGRAM_API_KEY set — transcription will fail');
+      logger.warn('No DEEPGRAM_API_KEY set — transcription will fail');
     }
   }
 

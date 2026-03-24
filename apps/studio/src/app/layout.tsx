@@ -5,10 +5,12 @@
 // hazard: Missing error boundary for unhandled exceptions in child routes
 // hazard: Metadata not validated—could expose sensitive URLs or API endpoints in robots/sitemap
 // edge:apps/studio/src/app/console/page.tsx -> SERVES
+// edge:../components/error-boundary.tsx -> USES
 // prompt: Add error boundary, validate metadata before deployment, consider auth-gated public routes
 
 import type { Metadata } from 'next';
 import { Archivo, Space_Mono } from 'next/font/google';
+import { ErrorBoundary } from '@/components/error-boundary';
 import './globals.css';
 
 const archivo = Archivo({
@@ -37,7 +39,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${archivo.variable} ${spaceMono.variable}`}>
       <body className="min-h-screen bg-background text-text font-body antialiased">
-        {children}
+        <ErrorBoundary>
+          {children}
+        </ErrorBoundary>
       </body>
     </html>
   );

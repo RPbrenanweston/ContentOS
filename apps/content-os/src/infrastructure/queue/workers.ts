@@ -19,6 +19,7 @@
  */
 
 import type PgBoss from 'pg-boss';
+import { logger } from '@/lib/logger';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { withTransaction } from '@/infrastructure/supabase/transaction';
 import { getServices } from '@/services/container';
@@ -106,7 +107,7 @@ async function handleContentDecompose(
       `[decompose] Complete for node ${nodeId}: ${result.segments.length} segments extracted`,
     );
   } catch (error) {
-    console.error(`[decompose] Failed for node ${nodeId}:`, error);
+    logger.error(`Failed for node ${nodeId}`, { nodeId, error: String(error) });
 
     // Mark as failed so the UI shows the error state
     try {
