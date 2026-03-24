@@ -15,6 +15,7 @@
 //
 import { NextRequest, NextResponse } from 'next/server';
 import { clipExtractionSchema } from '@/lib/validation';
+import { validateExternalUrl } from '@/lib/url-validation';
 import { FFmpegMediaService } from '@/services/media.service';
 
 // POST /api/media/clip — Extract a video clip via FFmpeg
@@ -33,6 +34,14 @@ export async function POST(request: NextRequest) {
     if (parsed.data.endMs <= parsed.data.startMs) {
       return NextResponse.json(
         { error: 'endMs must be greater than startMs' },
+        { status: 400 },
+      );
+    }
+
+    const urlCheck = validateExternalUrl(parsed.data.sourceUrl);
+    if (!urlCheck.valid) {
+      return NextResponse.json(
+        { error: `Invalid source URL: ${urlCheck.reason}` },
         { status: 400 },
       );
     }

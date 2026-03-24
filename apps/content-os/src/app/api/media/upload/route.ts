@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient();
     const ext = file.name.split('.').pop() ?? 'bin';
     const timestamp = Date.now();
-    const path = `uploads/${timestamp}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const path = `uploads/${timestamp}-${crypto.randomUUID()}.${ext}`;
 
     const buffer = Buffer.from(await file.arrayBuffer());
 

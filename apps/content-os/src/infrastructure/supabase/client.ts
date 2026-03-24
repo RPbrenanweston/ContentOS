@@ -10,6 +10,9 @@
 // edge:packages/ai-core/src/client.ts -> RELATES
 // prompt: Verify env vars loaded before instantiation; audit caller context (browser vs server)
 
+// This module must only be imported in server-side code (API routes, server components, server actions).
+// The createServiceClient() function uses SUPABASE_SERVICE_KEY which bypasses Row-Level Security.
+import 'server-only';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;

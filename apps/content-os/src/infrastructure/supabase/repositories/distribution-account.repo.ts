@@ -17,6 +17,7 @@ import type {
   Platform,
 } from '@/domain';
 import { NotFoundError } from '@/lib/errors';
+import { encryptToken, decryptToken } from '@/lib/token-encryption';
 
 type DistributionAccountRow = {
   id: string;
@@ -31,6 +32,43 @@ type DistributionAccountRow = {
   updated_at: string;
 };
 
+/** OAuth token field names that require encryption at rest */
+const OAUTH_TOKEN_FIELDS = ['oauth_token', 'access_token', 'refresh_token'] as const;
+
+/**
+ * Encrypt known OAuth token fields within a metadata object before persistence.
+ * Non-token fields are stored as-is.
+ */
+function encryptMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  const encrypted: Record<string, unknown> = { ...metadata };
+  for (const field of OAUTH_TOKEN_FIELDS) {
+    const value = encrypted[field];
+    if (typeof value === 'string' && value.length > 0) {
+      encrypted[field] = encryptToken(value);
+    }
+  }
+  return encrypted;
+}
+
+/**
+ * Decrypt known OAuth token fields within a metadata object after retrieval.
+ * Fields that were not encrypted (or failed decryption) are returned as-is.
+ */
+function decryptMetadata(metadata: Record<string, unknown>): Record<string, unknown> {
+  const decrypted: Record<string, unknown> = { ...metadata };
+  for (const field of OAUTH_TOKEN_FIELDS) {
+    const value = decrypted[field];
+    if (typeof value === 'string' && value.length > 0) {
+      try {
+        decrypted[field] = decryptToken(value);
+      } catch {
+        // Value was stored unencrypted (legacy row) — leave as-is
+      }
+    }
+  }
+  return decrypted;
+}
+
 function toEntity(row: DistributionAccountRow): DistributionAccount {
   return {
     id: row.id,
@@ -40,7 +78,7 @@ function toEntity(row: DistributionAccountRow): DistributionAccount {
     externalAccountId: row.external_account_id,
     profileImageUrl: row.profile_image_url,
     isActive: row.is_active,
-    metadata: row.metadata,
+    metadata: row.metadata ? decryptMetadata(row.metadata) : row.metadata,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -54,7 +92,7 @@ function toRow(params: CreateDistributionAccountParams): Record<string, unknown>
     external_account_id: params.externalAccountId,
   };
   if (params.profileImageUrl !== undefined) row.profile_image_url = params.profileImageUrl;
-  if (params.metadata !== undefined) row.metadata = params.metadata;
+  if (params.metadata !== undefined) row.metadata = encryptMetadata(params.metadata as Record<string, unknown>);
   return row;
 }
 
