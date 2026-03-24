@@ -60,3 +60,83 @@ dist/
 
 # Ralph
 ralph-output.log
+
+# ========================================
+# LEGACY PROJECT FILES (Archived)
+# ========================================
+# These patterns prevent re-contamination of the root directory
+
+# PAI Legacy (Data pipeline - now in archive/pai-legacy/)
+BATCH_1_*
+ATTIO_*
+attio_*
+leadmagic_*
+smartlead_*
+validate_*
+enrich_*
+process_*
+complete_*
+auto_*
+fetch_*
+batch_*.py
+batch_*.json
+
+# Exprs.io GTM (now in archive/exprs-gtm/)
+exprs_*
+EXPRS_*
+URL_SOURCING_*
+URL_VERIFICATION_*
+
+# Wix Recruitment (now in archive/wix-recruitment/)
+WIX_*
+wix-*
+homepage-*
+
+# Social Media Tools (now in archive/social-media-tools/)
+create_draft*
+schedule_*
+post_*
+update_post*
+verify_*
+create_exprs*
+cyber_funding*
+draft_*
+
+# Test/Debug Scripts (now in archive/test-scripts/)
+test_*.py
+debug_*.py
+quick_*.py
+check_*.py
+monitor_*.py
+run_*.py
+
+# Documentation & Reports (now in archive/)
+*_SUMMARY*
+*_GUIDE*
+*_COMPLETION*
+*_IMPLEMENTATION*
+*_VALIDATION*
+*_INDEX*
+*_MASTER*
+DELIVERABLES.*
+SETUP_*
+README_*
+START_*
+immuta_*.md
+krissy_*.md
+pp_*.md
+
+# Generated Data Files (should use /data/outputs/)
+*_data.json
+*_results.json
+*_enriched.json
+*_validation.json
+*_connections.json
+*_connections.csv
+companies_*.json
+employees_*.json
+matched_*.json
+remaining_*.json
+nyc-*.json
+february_*.json
+broad_ai_*.json

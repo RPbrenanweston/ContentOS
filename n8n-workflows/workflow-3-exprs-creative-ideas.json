@@ -1,0 +1,317 @@
+{
+  "name": "Exprs Creative Ideas",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WORKFLOW 3: exprs-creative-ideas\n\n**TRIGGER:** Schedule (every 15 min)\n**COST:** ~$0.001/prospect (Spacebot Agent 05 / Nano)\n\n### FLOW\nSchedule → Supabase: Get Unprocessed →\n  Check Empty → Batch (1 at a time) →\n  Build Prompt → Spacebot Agent 05 →\n  Parse Response → Update Supabase →\n  Wait 300ms → loop\n\n### FORMAT ROUTING\n- **Golden** score → Format A (3 full bullet ideas)\n- **Strong** score → Format A (A/B test later)\n- **Must-have** score → Format B (one-liner)\n\n### QUERY FILTER\n`qualified = true AND creative_ideas IS NULL`\n\n### ENV VARS\n`SPACEBOT_BASE_URL`, `SPACEBOT_API_KEY`\n\n### NOTES\n- Processes 25 prospects per run max\n- 300ms delay between Spacebot calls\n- ~3–5 min for 100 prospects\n- Failed responses flagged with `status: 'failed'`",
+        "height": 480,
+        "width": 400,
+        "color": 6
+      },
+      "id": "node-sticky-overview",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [20, 60]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 15
+            }
+          ]
+        }
+      },
+      "id": "node-schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "notes": "Polls every 15 minutes for qualified prospects that need creative ideas. Adjust interval based on volume."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "prospects",
+        "returnAll": false,
+        "limit": 25,
+        "filterType": "string",
+        "filterString": "qualified=eq.true&creative_ideas=is.null&qualification=eq.must_have&order=created_at.asc",
+        "options": {}
+      },
+      "id": "node-fetch-prospects",
+      "name": "Supabase: Get Unprocessed",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Exprs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Check for Empty Results\n// If no prospects need processing, stop the workflow early\n// to avoid unnecessary API calls.\n// ============================================================\n\nconst items = $input.all();\n\nif (!items || items.length === 0 || !items[0].json.id) {\n  // No prospects to process — stop workflow\n  return [];\n}\n\nreturn items;"
+      },
+      "id": "node-check-empty",
+      "name": "Check Empty",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "node-batch-ideas",
+      "name": "Batch (1 at a time)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [920, 300],
+      "notes": "Process one prospect at a time to respect Spacebot rate limits. 200ms wait between calls."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Build Spacebot Prompt\n// Constructs the message payload for Agent 05 (Creative Ideas)\n// based on the prospect's score and enrichment data.\n// ============================================================\n\nconst p = $input.item.json;\n\n// Determine format based on score\n// golden → Format A (3 full bullet ideas)\n// strong → Format A (test — can switch to B)\n// must_have → Format B (one-liner)\nconst score = p.score || 'must_have';\nlet format = 'B'; // default: one-liner for volume\nif (score === 'golden' || score === 'strong') {\n  format = 'A'; // full 3 bullets for high-value\n}\n\n// Determine market\nconst country = (p.country || '').toUpperCase();\nconst market = (country === 'UK' || country === 'GB' || country === 'UNITED KINGDOM') ? 'UK' : 'US';\n\n// Build the prompt\nconst message = [\n  `Company: ${p.company_name}`,\n  `Description: ${p.company_description || 'No description available'}`,\n  `Industry: ${p.industry || 'Unknown'}`,\n  `Employee Count: ${p.employee_count || 'Unknown'}`,\n  `Market: ${market}`,\n  `Format: ${format}`,\n  `Business Type: ${p.business_type || 'B2B'}`,\n  p.total_funding ? `Funding: ${p.funding_stage || ''} — ${p.total_funding}` : '',\n  p.contact_title ? `Contact Role: ${p.contact_title}` : ''\n].filter(Boolean).join('\\n');\n\nreturn {\n  json: {\n    prospect_id: p.id,\n    prospect: p,\n    spacebot_payload: {\n      message: message\n    },\n    format: format,\n    market: market\n  }\n};"
+      },
+      "id": "node-build-prompt",
+      "name": "Build Spacebot Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1140, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SPACEBOT_BASE_URL }}/api/agents/05-creative-ideas/chat",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{ $env.SPACEBOT_API_KEY }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={{ JSON.stringify($json.spacebot_payload) }}",
+        "options": {
+          "timeout": 30000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-spacebot-ideas",
+      "name": "Spacebot: Agent 05 Ideas",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1380, 300],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "notes": "Calls Spacebot Agent 05 (Creative Ideas). Replace SPACEBOT_BASE_URL with your actual Spacebot instance URL."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Parse Spacebot Response\n// Extracts structured creative ideas from Agent 05's response.\n// Handles both Format A (3 bullets) and Format B (one-liner).\n// ============================================================\n\nconst input = $input.item.json;\nconst response = input; // The HTTP response\nconst prospect = $('Build Spacebot Prompt').item.json;\nconst format = prospect.format;\n\n// Extract the agent's text response\n// Adjust these field paths based on your Spacebot API response structure\nconst agentText = response.message || response.response || response.content || response.text || '';\n\nlet creativeIdeas = {};\n\nif (!agentText) {\n  // Agent returned empty — flag for retry\n  creativeIdeas = {\n    status: 'failed',\n    error: 'Empty response from Agent 05',\n    raw_response: JSON.stringify(response).substring(0, 500)\n  };\n} else if (format === 'A') {\n  // Format A: Extract 3 bullet ideas\n  // Try to parse numbered ideas (1. xxx  2. xxx  3. xxx)\n  const lines = agentText.split('\\n').filter(l => l.trim());\n  const ideas = [];\n  \n  for (const line of lines) {\n    const match = line.match(/^\\d+[\\.\\)]\\s*(.+)/);\n    if (match) {\n      ideas.push(match[1].trim());\n    }\n  }\n\n  // Fallback: if no numbered format found, split by sentences\n  if (ideas.length < 3) {\n    const sentences = agentText.split(/[.!?]+/).filter(s => s.trim().length > 20);\n    while (ideas.length < 3 && sentences.length > 0) {\n      ideas.push(sentences.shift().trim());\n    }\n  }\n\n  creativeIdeas = {\n    status: 'complete',\n    format: 'A',\n    idea_1: ideas[0] || '',\n    idea_2: ideas[1] || '',\n    idea_3: ideas[2] || '',\n    one_liner: ideas[0] || '', // Use first idea as one-liner fallback\n    raw_response: agentText\n  };\n} else {\n  // Format B: Extract one-liner\n  const oneLiner = agentText.split('\\n').filter(l => l.trim())[0] || agentText.substring(0, 200);\n  \n  creativeIdeas = {\n    status: 'complete',\n    format: 'B',\n    idea_1: '',\n    idea_2: '',\n    idea_3: '',\n    one_liner: oneLiner.trim(),\n    raw_response: agentText\n  };\n}\n\nreturn {\n  json: {\n    prospect_id: prospect.prospect_id,\n    creative_ideas: creativeIdeas\n  }\n};"
+      },
+      "id": "node-parse-response",
+      "name": "Parse Ideas Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 300]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "prospects",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.prospect_id }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "creative_ideas",
+              "fieldValue": "={{ JSON.stringify($json.creative_ideas) }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-update-supabase",
+      "name": "Supabase: Update Ideas",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1860, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Exprs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 0.3
+      },
+      "id": "node-wait-ratelimit",
+      "name": "Wait 300ms",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2060, 500],
+      "notes": "Rate limit delay between Spacebot calls. Adjust based on your plan limits."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Summary Stats\n// Logs processing results for monitoring.\n// ============================================================\n\nconst items = $('Supabase: Update Ideas').all();\nconst total = items.length;\nconst successful = items.filter(i => i.json.creative_ideas?.status === 'complete').length;\nconst failed = total - successful;\n\nreturn {\n  json: {\n    summary: {\n      total_processed: total,\n      successful: successful,\n      failed: failed,\n      timestamp: new Date().toISOString()\n    }\n  }\n};"
+      },
+      "id": "node-summary",
+      "name": "Processing Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2060, 300]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Get Unprocessed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Get Unprocessed": {
+      "main": [
+        [
+          {
+            "node": "Check Empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Empty": {
+      "main": [
+        [
+          {
+            "node": "Batch (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Batch (1 at a time)": {
+      "main": [
+        [
+          {
+            "node": "Build Spacebot Prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Spacebot Prompt": {
+      "main": [
+        [
+          {
+            "node": "Spacebot: Agent 05 Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Spacebot: Agent 05 Ideas": {
+      "main": [
+        [
+          {
+            "node": "Parse Ideas Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Ideas Response": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Update Ideas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Update Ideas": {
+      "main": [
+        [
+          {
+            "node": "Wait 300ms",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Processing Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 300ms": {
+      "main": [
+        [
+          {
+            "node": "Batch (1 at a time)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "exprs",
+      "id": "tag-exprs"
+    },
+    {
+      "name": "phase-1",
+      "id": "tag-phase-1"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0"
+}

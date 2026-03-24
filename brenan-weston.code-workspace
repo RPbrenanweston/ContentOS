@@ -1,0 +1,91 @@
+{
+  "folders": [
+    {
+      "name": "🏗️ shared-ai-layer (root)",
+      "path": "."
+    },
+    {
+      "name": "📋 jobtrackr",
+      "path": "jobtrackr"
+    },
+    {
+      "name": "🤖 codesignal-20 (Signal Platform)",
+      "path": "codesignal-20"
+    },
+    {
+      "name": "🛡️ escapement (AI Control Plane)",
+      "path": "escapement"
+    },
+    {
+      "name": "🌐 Ultralearning-Architect",
+      "path": "Ultralearning-Architect"
+    }
+  ],
+  "settings": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "editor.tabSize": 2,
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/.turbo": true,
+      "**/.vercel": true,
+      "**/dist": true
+    },
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/.next": true,
+      "**/dist": true,
+      "**/.turbo": true
+    },
+    "git.openRepositoryInParentFolders": "always",
+    "explorer.sortOrder": "type",
+    "workbench.editor.labelFormat": "short",
+    "window.title": "Brenan Weston — ${activeRepositoryName}: ${activeFolderShort}/${activeEditorShort}"
+  },
+  "extensions": {
+    "recommendations": [
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-typescript-next",
+      "prisma.prisma",
+      "github.vscode-github-actions",
+      "eamodio.gitlens"
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "jobtrackr: dev",
+        "type": "node",
+        "request": "launch",
+        "cwd": "${workspaceFolder:📋 jobtrackr}",
+        "runtimeExecutable": "npm",
+        "runtimeArgs": ["run", "dev"],
+        "console": "integratedTerminal",
+        "skipFiles": ["<node_internals>/**"]
+      },
+      {
+        "name": "codesignal-20: dev",
+        "type": "node",
+        "request": "launch",
+        "cwd": "${workspaceFolder:🤖 codesignal-20 (Signal Platform)}",
+        "runtimeExecutable": "bun",
+        "runtimeArgs": ["run", "dev"],
+        "console": "integratedTerminal"
+      },
+      {
+        "name": "escapement: dev",
+        "type": "node",
+        "request": "launch",
+        "cwd": "${workspaceFolder:🛡️ escapement (AI Control Plane)}",
+        "runtimeExecutable": "bun",
+        "runtimeArgs": ["run", "dev"],
+        "console": "integratedTerminal"
+      }
+    ]
+  }
+}

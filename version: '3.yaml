@@ -1,0 +1,171 @@
+version: '3.8'
+volumes:
+  supabase_db_data: null
+  supabase_storage_data: null
+  redis_data: null
+services:
+  supabase-db:
+    image: 'supabase/postgres:15.6.1.143'
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: '${POSTGRES_USER:-supabase}'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-changeme}'
+      POSTGRES_DB: postgres
+      JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      JWT_EXP: 3600
+      N8N_DB_PASSWORD: '${N8N_DB_PASSWORD:-changeme}'
+      TEABLE_DB_PASSWORD: '${TEABLE_DB_PASSWORD:-changeme}'
+      TYPEBOT_DB_PASSWORD: '${TYPEBOT_DB_PASSWORD:-changeme}'
+      CALCOM_DB_PASSWORD: '${CALCOM_DB_PASSWORD:-changeme}'
+      GITEA_DB_PASSWORD: '${GITEA_DB_PASSWORD:-changeme}'
+    volumes:
+      - 'supabase_db_data:/var/lib/postgresql/data'
+      - '/opt/exprs/infra/init-dbs.sh:/docker-entrypoint-initdb.d/init-dbs.sh:ro'
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'pg_isready -U $${POSTGRES_USER:-supabase} -d postgres'
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+  supabase-auth:
+    image: 'supabase/gotrue:v2.164.0'
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: '${SUPABASE_PUBLIC_URL:-http://localhost:8000}'
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: 'postgres://supabase_auth_admin:${POSTGRES_PASSWORD:-changeme}@supabase-db:5432/postgres?sslmode=disable'
+      GOTRUE_SITE_URL: '${SUPABASE_SITE_URL:-http://localhost:3000}'
+      GOTRUE_URI_ALLOW_LIST: ''
+      GOTRUE_JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_DISABLE_SIGNUP: 'false'
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: 'true'
+      GOTRUE_MAILER_AUTOCONFIRM: 'true'
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+  supabase-rest:
+    image: 'postgrest/postgrest:v12.2.3'
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: 'postgres://authenticator:${POSTGRES_PASSWORD:-changeme}@supabase-db:5432/postgres'
+      PGRST_DB_SCHEMAS: 'public,storage,graphql_public'
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      PGRST_DB_USE_LEGACY_GUCS: 'false'
+      PGRST_APP_SETTINGS_JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+  supabase-realtime:
+    image: 'supabase/realtime:v2.33.58'
+    restart: unless-stopped
+    environment:
+      PORT: 4000
+      DB_HOST: supabase-db
+      DB_PORT: 5432
+      DB_USER: supabase_admin
+      DB_PASSWORD: '${POSTGRES_PASSWORD:-changeme}'
+      DB_NAME: postgres
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: supabaserealtime
+      API_JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      SECRET_KEY_BASE: '${SUPABASE_SECRET_KEY_BASE}'
+      ERL_AFLAGS: '-proto_dist inet_tcp'
+      DNS_NODES: "''"
+      ENABLE_TAILSCALE: 'false'
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+  supabase-storage:
+    image: 'supabase/storage-api:v1.11.13'
+    restart: unless-stopped
+    environment:
+      ANON_KEY: '${SUPABASE_ANON_KEY}'
+      SERVICE_KEY: '${SUPABASE_SERVICE_ROLE_KEY}'
+      POSTGREST_URL: 'http://supabase-rest:3000'
+      PGRST_JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      DATABASE_URL: 'postgres://supabase_storage_admin:${POSTGRES_PASSWORD:-changeme}@supabase-db:5432/postgres'
+      FILE_SIZE_LIMIT: 52428800
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: us-east-1
+      GLOBAL_S3_BUCKET: stub
+    volumes:
+      - 'supabase_storage_data:/var/lib/storage'
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+      supabase-rest:
+        condition: service_started
+  supabase-kong:
+    image: 'kong:2.8.1'
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: 'off'
+      KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
+      KONG_DNS_ORDER: 'LAST,A,CNAME'
+      KONG_PLUGINS: 'request-transformer,cors,key-auth,acl,basic-auth'
+      KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
+      KONG_NGINX_PROXY_PROXY_BUFFERS: '64 160k'
+      SUPABASE_ANON_KEY: '${SUPABASE_ANON_KEY}'
+      SUPABASE_SERVICE_KEY: '${SUPABASE_SERVICE_ROLE_KEY}'
+    volumes:
+      - '/opt/exprs/infra/kong.yml:/var/lib/kong/kong.yml:ro'
+    depends_on:
+      supabase-auth:
+        condition: service_started
+      supabase-rest:
+        condition: service_started
+  supabase-studio:
+    image: 'supabase/studio:20241202-71e5240'
+    restart: unless-stopped
+    environment:
+      STUDIO_PG_META_URL: 'http://supabase-meta:8080'
+      POSTGRES_PASSWORD: '${POSTGRES_PASSWORD:-changeme}'
+      DEFAULT_ORGANIZATION_NAME: exprs
+      DEFAULT_PROJECT_NAME: exprs
+      SUPABASE_URL: 'http://supabase-kong:8000'
+      SUPABASE_PUBLIC_URL: '${SUPABASE_PUBLIC_URL:-http://localhost:8000}'
+      SUPABASE_ANON_KEY: '${SUPABASE_ANON_KEY}'
+      SUPABASE_SERVICE_KEY: '${SUPABASE_SERVICE_ROLE_KEY}'
+      AUTH_JWT_SECRET: '${SUPABASE_JWT_SECRET}'
+      NEXT_PUBLIC_ENABLE_LOGS: 'true'
+    depends_on:
+      supabase-kong:
+        condition: service_started
+  supabase-meta:
+    image: 'supabase/postgres-meta:v0.84.2'
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: supabase-db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: '${POSTGRES_USER:-supabase}'
+      PG_META_DB_PASSWORD: '${POSTGRES_PASSWORD:-changeme}'
+    depends_on:
+      supabase-db:
+        condition: service_healthy
+  redis:
+    image: 'redis:7-alpine'
+    restart: unless-stopped
+    command: 'redis-server --requirepass ${REDIS_PASSWORD:-changeme}'
+    volumes:
+      - 'redis_data:/data'
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - '-a'
+        - '${REDIS_PASSWORD:-changeme}'
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5

@@ -1,0 +1,2322 @@
+[
+  {
+    "name": "Nick Rickards",
+    "first_name": "Nick",
+    "last_name": "Rickards",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "I used to train humans to be better recruiters. Now I train AI to make recruiters unstoppable.",
+    "connected_on": "2026-02-02"
+  },
+  {
+    "name": "J\u00e9r\u00f4me Robert",
+    "first_name": "J\u00e9r\u00f4me",
+    "last_name": "Robert",
+    "title": "CEO & Co-Founder",
+    "company": "Symbiotic Security",
+    "persona": "Security/Risk",
+    "headline": "CEO & Co-Founder @ Symbiotic Security | Securing AI coding",
+    "connected_on": "2026-01-31"
+  },
+  {
+    "name": "Mark Tribe",
+    "first_name": "Mark",
+    "last_name": "Tribe",
+    "title": "UK Deployment Strategist",
+    "company": "Duality Technologies",
+    "persona": "Other",
+    "headline": "UK Deployment Strategist at Duality Technologies",
+    "connected_on": "2026-01-30"
+  },
+  {
+    "name": "Meghan Carpenter",
+    "first_name": "Meghan",
+    "last_name": "Carpenter",
+    "title": "Talent Acquisition",
+    "company": "Wiz",
+    "persona": "People/TA",
+    "headline": "Talent Acquisition @ Wiz",
+    "connected_on": "2026-01-30"
+  },
+  {
+    "name": "Ilan Asseo",
+    "first_name": "Ilan",
+    "last_name": "Asseo",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Let our AI Agents prospect, qualify & book meetings for you",
+    "connected_on": "2026-01-30"
+  },
+  {
+    "name": "Rui Qian",
+    "first_name": "Rui",
+    "last_name": "Qian",
+    "title": "Senior Software Engineer",
+    "company": "Bloomberg",
+    "persona": "Product/Engineering",
+    "headline": "Senior Software Engineer at Bloomberg",
+    "connected_on": "2026-01-30"
+  },
+  {
+    "name": "Wes van den Berg",
+    "first_name": "Wes",
+    "last_name": "van den Berg",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Senior Vice President & Managing Director, EMEA - Revenue, team and culture builder",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Maarten Stolk",
+    "first_name": "Maarten",
+    "last_name": "Stolk",
+    "title": null,
+    "company": null,
+    "persona": "Founder/Exec",
+    "headline": "Co-Founder & CEO Deeploy | Co-founder Enjins",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Jason Mueller",
+    "first_name": "Jason",
+    "last_name": "Mueller",
+    "title": "Vice President of Sales",
+    "company": "Opaque",
+    "persona": "GTM/Sales",
+    "headline": "Vice President of Sales at Opaque",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Tim Kleinloog",
+    "first_name": "Tim",
+    "last_name": "Kleinloog",
+    "title": "CTO / Co-Founder",
+    "company": "Deeploy",
+    "persona": "Product/Engineering",
+    "headline": "CTO / Co-Founder at Deeploy | Deploy AI with confidence",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Barry Padgett",
+    "first_name": "Barry",
+    "last_name": "Padgett",
+    "title": "Chief Growth Officer",
+    "company": "SentinelOne",
+    "persona": "Other",
+    "headline": "Chief Growth Officer @ SentinelOne",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Bastiaan van de Rakt",
+    "first_name": "Bastiaan",
+    "last_name": "van de Rakt",
+    "title": null,
+    "company": null,
+    "persona": "Founder/Exec",
+    "headline": "Co-founder: Deeploy & Enjins | Investor: Why Commit Capital, Volve Capital & AIXTerra",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Markus Heid",
+    "first_name": "Markus",
+    "last_name": "Heid",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "AI Governance | Strategy & Operations@Deeploy | COO | Ex-Strategy Consultant | LMU Munich",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Jason Stomieroski,  MBA",
+    "first_name": "Jason",
+    "last_name": "Stomieroski, MBA",
+    "title": "Federal Account Manager",
+    "company": "Offensive Security",
+    "persona": "Security/Risk",
+    "headline": "Federal Account Manager at Offensive Security",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Matthew Cappello",
+    "first_name": "Matthew",
+    "last_name": "Cappello",
+    "title": "VP North America Sales",
+    "company": "Synack",
+    "persona": "GTM/Sales",
+    "headline": "VP North America Sales @ Synack",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Cody Vitez",
+    "first_name": "Cody",
+    "last_name": "Vitez",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Strategic Programs Leader",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Pieter Berendsen",
+    "first_name": "Pieter",
+    "last_name": "Berendsen",
+    "title": "VP Sales EMEA & APAC",
+    "company": "Offensive Security",
+    "persona": "GTM/Sales",
+    "headline": "VP Sales EMEA & APAC @ Offensive Security | The path to a secure future",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Laerke Louise Lundgren",
+    "first_name": "Laerke",
+    "last_name": "Louise Lundgren",
+    "title": "Sales Director",
+    "company": "Synack",
+    "persona": "GTM/Sales",
+    "headline": "Sales Director at Synack",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Justin Schiefner",
+    "first_name": "Justin",
+    "last_name": "Schiefner",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Vice President, Global People Operations, Talent & Culture | Strategic Leader and Culture Champion | Driving Exceptional HR & People Programs Worldwide",
+    "connected_on": "2026-01-29"
+  },
+  {
+    "name": "Ron Reiter",
+    "first_name": "Ron",
+    "last_name": "Reiter",
+    "title": "Co-Founder & CTO",
+    "company": "Sentra",
+    "persona": "Product/Engineering",
+    "headline": "Co-Founder & CTO at Sentra",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Kaitlin O'Neil PHR",
+    "first_name": "Kaitlin",
+    "last_name": "O'Neil PHR",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "10 Years People Experience | Recruiting Leader | Mission Driven | Scaling World-Class Engineering & Security Teams",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Aaron Fulkerson",
+    "first_name": "Aaron",
+    "last_name": "Fulkerson",
+    "title": "CEO",
+    "company": "OPAQUE",
+    "persona": "Security/Risk",
+    "headline": "CEO @ OPAQUE | Confidential AI platform delivering verifiable privacy and runtime governance",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Colleen Barry",
+    "first_name": "Colleen",
+    "last_name": "Barry",
+    "title": "Chief Marketing Officer",
+    "company": "Ketch",
+    "persona": "Other",
+    "headline": "Chief Marketing Officer @ Ketch | Data Permissioning, Privacy, and Consent",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Tomer Hadassi",
+    "first_name": "Tomer",
+    "last_name": "Hadassi",
+    "title": "COO",
+    "company": "Upwind",
+    "persona": "Other",
+    "headline": "COO @ Upwind",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Taylor Tresselt",
+    "first_name": "Taylor",
+    "last_name": "Tresselt",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Test data fuels QA: get it automated, compliant and fast (and for SAP? Now it\u2019s native)",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Mallory Mazer, MBA",
+    "first_name": "Mallory",
+    "last_name": "Mazer, MBA",
+    "title": "Leading People",
+    "company": "Secureframe",
+    "persona": "People/TA",
+    "headline": "Leading People @ Secureframe",
+    "connected_on": "2026-01-28"
+  },
+  {
+    "name": "Rami Sass",
+    "first_name": "Rami",
+    "last_name": "Sass",
+    "title": null,
+    "company": null,
+    "persona": "Founder/Exec",
+    "headline": "Co-Founder and GM Mend AI",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Clinton Apos",
+    "first_name": "Clinton",
+    "last_name": "Apos",
+    "title": "Founder & CEO",
+    "company": "Artane Partners",
+    "persona": "Founder/Exec",
+    "headline": "Founder & CEO at Artane Partners",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Elena Bobkova, J.D., LL.M.",
+    "first_name": "Elena",
+    "last_name": "Bobkova, J.D., LL.M.",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "AI Governance & Cybersecurity | Lead Auditor | Professor of Practice in Law & Compliance | Public Speaker",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Katie Carter",
+    "first_name": "Katie",
+    "last_name": "Carter",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Lead Recruiter and HRBP",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "John Greene",
+    "first_name": "John",
+    "last_name": "Greene",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "GTM/CyberSecurity",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Dima Gorbonos",
+    "first_name": "Dima",
+    "last_name": "Gorbonos",
+    "title": "Global Director of Sales Engineering",
+    "company": "Mend.io",
+    "persona": "GTM/Sales",
+    "headline": "Global Director of Sales Engineering at Mend.io",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "John Spinelli",
+    "first_name": "John",
+    "last_name": "Spinelli",
+    "title": "Sales Engineer",
+    "company": "Abnormal Security",
+    "persona": "GTM/Sales",
+    "headline": "Sales Engineer at Abnormal Security",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Ben Dewar-Powell",
+    "first_name": "Ben",
+    "last_name": "Dewar-Powell",
+    "title": "CISO",
+    "company": "AISI",
+    "persona": "Security/Risk",
+    "headline": "CISO @ AISI | AI Security | Angel Investor | Advisor",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Jeffrey Martin",
+    "first_name": "Jeffrey",
+    "last_name": "Martin",
+    "title": "Vice President of Product",
+    "company": "Mend",
+    "persona": "Product/Engineering",
+    "headline": "Vice  President of Product at Mend",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Yael Sapir-Zehavi",
+    "first_name": "Yael",
+    "last_name": "Sapir-Zehavi",
+    "title": "Chief HR Officer",
+    "company": "Coralogix",
+    "persona": "People/TA",
+    "headline": "Chief HR Officer at Coralogix",
+    "connected_on": "2026-01-27"
+  },
+  {
+    "name": "Jake Meloche",
+    "first_name": "Jake",
+    "last_name": "Meloche",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Lead Solutions Engineer | Secure by Design | Cloud Native",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Ryan Monk",
+    "first_name": "Ryan",
+    "last_name": "Monk",
+    "title": "Principal, People & Networks",
+    "company": "Primary Venture Partners (he/him)",
+    "persona": "People/TA",
+    "headline": "Principal, People & Networks at Primary Venture Partners (he/him)",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Paul Ford",
+    "first_name": "Paul",
+    "last_name": "Ford",
+    "title": "Co-Founder",
+    "company": "Aboard",
+    "persona": "Founder/Exec",
+    "headline": "Co-Founder at Aboard",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Brian Polansky",
+    "first_name": "Brian",
+    "last_name": "Polansky",
+    "title": "0 CVEs. No app changes. Full speed ahead. | Building AI-Powered, CVE-Free Infrastructure",
+    "company": "Echo",
+    "persona": "Other",
+    "headline": "0 CVEs. No app changes. Full speed ahead. | Building AI-Powered, CVE-Free Infrastructure at Echo",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Dariya Sushko",
+    "first_name": "Dariya",
+    "last_name": "Sushko",
+    "title": "People Experience & Branding",
+    "company": "Echo \ud83c\udf31",
+    "persona": "People/TA",
+    "headline": "People Experience & Branding @ Echo \ud83c\udf31",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Nurit Bielorai",
+    "first_name": "Nurit",
+    "last_name": "Bielorai",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Head of Product",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Patrick Kelty",
+    "first_name": "Patrick",
+    "last_name": "Kelty",
+    "title": "Driving innovation in cloud security",
+    "company": "Echo",
+    "persona": "Security/Risk",
+    "headline": "Driving innovation in cloud security @ Echo",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Leo Unoki",
+    "first_name": "Leo",
+    "last_name": "Unoki",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Rust backend engineer | Distributed system",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Ron Davidi",
+    "first_name": "Ron",
+    "last_name": "Davidi",
+    "title": "Chief Revenue Officer (CRO)",
+    "company": "Coralogix",
+    "persona": "GTM/Sales",
+    "headline": "Chief Revenue Officer (CRO) at Coralogix",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Avi Golan",
+    "first_name": "Avi",
+    "last_name": "Golan",
+    "title": "Chief Product & Engineering Officer",
+    "company": "Alice",
+    "persona": "Product/Engineering",
+    "headline": "Chief Product & Engineering Officer @ Alice",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Zohar Cohen",
+    "first_name": "Zohar",
+    "last_name": "Cohen",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Alice COO | Security, Safety, and Trust for the AI Era",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Tony Allanson",
+    "first_name": "Tony",
+    "last_name": "Allanson",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Regional Sales Director - Astrix Security",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Michael Silva",
+    "first_name": "Michael",
+    "last_name": "Silva",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Security (AI/Identity/Cloud/K8s) | Public Speaker | Advisor | Mentor | Marine Veteran",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Ariel Assaraf",
+    "first_name": "Ariel",
+    "last_name": "Assaraf",
+    "title": "CEO",
+    "company": "Coralogix - Complete observability, Zero compromises",
+    "persona": "Founder/Exec",
+    "headline": "CEO at Coralogix - Complete observability, Zero compromises",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Clayton Baxter",
+    "first_name": "Clayton",
+    "last_name": "Baxter",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Head of Partnerships",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Eyal Reznik",
+    "first_name": "Eyal",
+    "last_name": "Reznik",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Global Talent Acquisition & HR Leader | Driving Growth in Cybersecurity & SaaS | AI/HR Tech Innovator | Building Inclusive, High-Impact Cultures",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Donal O'Neill",
+    "first_name": "Donal",
+    "last_name": "O'Neill",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Senior Account Executive - Coralogix | Full Stack Observability \ud83d\ude80 Logs | Metrics | Tracing | Security | Opentelemetry",
+    "connected_on": "2026-01-26"
+  },
+  {
+    "name": "Artur Okala-Kulak",
+    "first_name": "Artur",
+    "last_name": "Okala-Kulak",
+    "title": "COO",
+    "company": "Lambda Factor",
+    "persona": "Product/Engineering",
+    "headline": "COO at Lambda Factor | Building Efficient IT Teams, Processes & Digital Products",
+    "connected_on": "2026-01-25"
+  },
+  {
+    "name": "Roger Sramkoski",
+    "first_name": "Roger",
+    "last_name": "Sramkoski",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Bridging Sales Engineering & Product Marketing | Executing GTM Strategy | Analyst & Customer Evangelism",
+    "connected_on": "2026-01-23"
+  },
+  {
+    "name": "Oscar Lindhardt",
+    "first_name": "Oscar",
+    "last_name": "Lindhardt",
+    "title": null,
+    "company": null,
+    "persona": "Founder/Exec",
+    "headline": "Founder of WASP & Clearline Capital",
+    "connected_on": "2026-01-23"
+  },
+  {
+    "name": "Dor Sarig",
+    "first_name": "Dor",
+    "last_name": "Sarig",
+    "title": "CEO & Co-Founder",
+    "company": "Pillar Security",
+    "persona": "Security/Risk",
+    "headline": "CEO & Co-Founder at Pillar Security",
+    "connected_on": "2026-01-23"
+  },
+  {
+    "name": "Ben Elson",
+    "first_name": "Ben",
+    "last_name": "Elson",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Talent Acquisition & People Leader | Interim and Fractional TA Leader | Scaling \u201cCustomer\u201d first TA Teams | Tech and AI Enthusiast",
+    "connected_on": "2026-01-23"
+  },
+  {
+    "name": "Patrick Renouard",
+    "first_name": "Patrick",
+    "last_name": "Renouard",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "GTM Europe | $2B Global VC Fund",
+    "connected_on": "2026-01-23"
+  },
+  {
+    "name": "Rupa Ashwin (She/Her)",
+    "first_name": "Rupa",
+    "last_name": "Ashwin (She/Her)",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Global Talent Acquisition & People Programs Professional | Ex-Paxos, Zoom, AMD | CAPM\u00ae | AgilePM\u00ae | Change Management Practitioner",
+    "connected_on": "2026-01-23"
+  },
+  {
+    "name": "Stevie Case",
+    "first_name": "Stevie",
+    "last_name": "Case",
+    "title": "CRO",
+    "company": "Vanta",
+    "persona": "GTM/Sales",
+    "headline": "CRO @ Vanta | Driving Sales Growth, Customer Acquisition and Retention",
+    "connected_on": "2026-01-22"
+  },
+  {
+    "name": "Brad Russell",
+    "first_name": "Brad",
+    "last_name": "Russell",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Lead Sales Engineer",
+    "connected_on": "2026-01-22"
+  },
+  {
+    "name": "Priti Shah",
+    "first_name": "Priti",
+    "last_name": "Shah",
+    "title": "AVP, Solutions Engineering",
+    "company": "CHEQ",
+    "persona": "Product/Engineering",
+    "headline": "AVP, Solutions Engineering @ CHEQ",
+    "connected_on": "2026-01-22"
+  },
+  {
+    "name": "Jason Doris",
+    "first_name": "Jason",
+    "last_name": "Doris",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Dynamic Sales Executive in Cybersecurity | Driving Net New Logo Revenue Growth | Expert in Enterprise Sales, Strategic Alliances, and Market Expansion",
+    "connected_on": "2026-01-22"
+  },
+  {
+    "name": "Shailene Jackson",
+    "first_name": "Shailene",
+    "last_name": "Jackson",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Enterprise sales leader helping to secure today\u2019s software.",
+    "connected_on": "2026-01-21"
+  },
+  {
+    "name": "Luke Denyer",
+    "first_name": "Luke",
+    "last_name": "Denyer",
+    "title": "Software Engineer E1",
+    "company": "Nationwide Building Society",
+    "persona": "Product/Engineering",
+    "headline": "Software Engineer E1 @ Nationwide Building Society",
+    "connected_on": "2026-01-21"
+  },
+  {
+    "name": "Paul Perkins",
+    "first_name": "Paul",
+    "last_name": "Perkins",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "CRO(Chief Revenue Officer)",
+    "connected_on": "2026-01-20"
+  },
+  {
+    "name": "Irfan Hemani",
+    "first_name": "Irfan",
+    "last_name": "Hemani",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Cyber Security | Board Member | Cyber Researcher | Organisational Leadership Professional",
+    "connected_on": "2026-01-20"
+  },
+  {
+    "name": "Zulia Shavaeva",
+    "first_name": "Zulia",
+    "last_name": "Shavaeva",
+    "title": "EMEA GenAI IC Security Lead",
+    "company": "AWS",
+    "persona": "Security/Risk",
+    "headline": "EMEA GenAI IC Security Lead @ AWS | Transforming Organizations into AI Cloud Security Leaders",
+    "connected_on": "2026-01-19"
+  },
+  {
+    "name": "Sean Gnanarajah",
+    "first_name": "Sean",
+    "last_name": "Gnanarajah",
+    "title": "Strategic SE",
+    "company": "Wiz",
+    "persona": "Security/Risk",
+    "headline": "Strategic SE @ Wiz | Cloud & AI Security",
+    "connected_on": "2026-01-19"
+  },
+  {
+    "name": "Kyle Gorak",
+    "first_name": "Kyle",
+    "last_name": "Gorak",
+    "title": "Solutions Architect",
+    "company": "Elastic",
+    "persona": "Product/Engineering",
+    "headline": "Solutions Architect @ Elastic | Army Ranger | Cyber Capabilities Developer | SOTF Alumni, CISSP, TS/SCI",
+    "connected_on": "2026-01-19"
+  },
+  {
+    "name": "Victoria (Tori) Westerhoff",
+    "first_name": "Victoria",
+    "last_name": "(Tori) Westerhoff",
+    "title": "Principal AI Security Researcher, AI Red Team",
+    "company": "Microsoft",
+    "persona": "GTM/Sales",
+    "headline": "Principal AI Security Researcher, AI Red Team @ Microsoft | Specializing in Frontier Model Safety & Adversarial Machine Learning | Wharton MBA | Yale Neuroscience",
+    "connected_on": "2026-01-18"
+  },
+  {
+    "name": "Albert Ziegler",
+    "first_name": "Albert",
+    "last_name": "Ziegler",
+    "title": "Head of AI",
+    "company": "XBOW",
+    "persona": "Other",
+    "headline": "Head of AI at XBOW",
+    "connected_on": "2026-01-18"
+  },
+  {
+    "name": "Jake Piper",
+    "first_name": "Jake",
+    "last_name": "Piper",
+    "title": "Senior GTM Recruiter",
+    "company": "Feedzai",
+    "persona": "People/TA",
+    "headline": "Senior GTM Recruiter at Feedzai",
+    "connected_on": "2026-01-18"
+  },
+  {
+    "name": "Anna McAbee",
+    "first_name": "Anna",
+    "last_name": "McAbee",
+    "title": "Cloud Security",
+    "company": "Wiz",
+    "persona": "Security/Risk",
+    "headline": "Cloud Security @ Wiz",
+    "connected_on": "2026-01-18"
+  },
+  {
+    "name": "William Lipovsky",
+    "first_name": "William",
+    "last_name": "Lipovsky",
+    "title": "Head of Talent",
+    "company": "Conduit",
+    "persona": "People/TA",
+    "headline": "Head of Talent @ Conduit | We're Hiring!",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Akash Lankala",
+    "first_name": "Akash",
+    "last_name": "Lankala",
+    "title": "Datadog | Software & Solutions Engineer | CS",
+    "company": "Purdue",
+    "persona": "Product/Engineering",
+    "headline": "Datadog | Software & Solutions Engineer | CS @ Purdue",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Phil O'Hagan",
+    "first_name": "Phil",
+    "last_name": "O'Hagan",
+    "title": "VP Operations",
+    "company": "Maze",
+    "persona": "Other",
+    "headline": "VP Operations at Maze",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Andrew Koller",
+    "first_name": "Andrew",
+    "last_name": "Koller",
+    "title": "Director of Engineering, Crypto & Onchain",
+    "company": "Kraken",
+    "persona": "Product/Engineering",
+    "headline": "Director of Engineering, Crypto & Onchain @ Kraken",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Liam Sheen",
+    "first_name": "Liam",
+    "last_name": "Sheen",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Senior Sales Engineer",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Radhika Gupta",
+    "first_name": "Radhika",
+    "last_name": "Gupta",
+    "title": "Solutions Engineer",
+    "company": "vivenu",
+    "persona": "Product/Engineering",
+    "headline": "Solutions Engineer at vivenu | ex-Wiz, AWS",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Adris Urena",
+    "first_name": "Adris",
+    "last_name": "Urena",
+    "title": "Solutions Architect",
+    "company": "HashiCorp",
+    "persona": "Product/Engineering",
+    "headline": "Solutions Architect @ HashiCorp",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Nicholas Saremi",
+    "first_name": "Nicholas",
+    "last_name": "Saremi",
+    "title": "Co-founder",
+    "company": "Maverick Intelligence",
+    "persona": "Product/Engineering",
+    "headline": "Co-founder @ Maverick Intelligence | Applied AI | Engineering Mathematics | AWS ProServe",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Santiago Casti\u00f1eira",
+    "first_name": "Santiago",
+    "last_name": "Casti\u00f1eira",
+    "title": "Co-founder/CTO",
+    "company": "Maze",
+    "persona": "Product/Engineering",
+    "headline": "Co-founder/CTO @ Maze | AI Agents for Vuln. Mgmt.",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Miquel Casanovas",
+    "first_name": "Miquel",
+    "last_name": "Casanovas",
+    "title": "Strategy & Operations Lead",
+    "company": "Tracebit (Ex IB",
+    "persona": "Other",
+    "headline": "Strategy & Operations Lead @ Tracebit (Ex IB | HEC Paris)",
+    "connected_on": "2026-01-16"
+  },
+  {
+    "name": "Giorgio Patrini, PhD",
+    "first_name": "Giorgio",
+    "last_name": "Patrini, PhD",
+    "title": "CEO",
+    "company": "Sensity, Deepfake Detection",
+    "persona": "Founder/Exec",
+    "headline": "CEO at Sensity, Deepfake Detection",
+    "connected_on": "2026-01-15"
+  },
+  {
+    "name": "Hassan Sohail",
+    "first_name": "Hassan",
+    "last_name": "Sohail",
+    "title": "Security Researcher",
+    "company": "Varonis",
+    "persona": "Product/Engineering",
+    "headline": "Security Researcher @ Varonis | Email Security | Data Science | Cybersecurity Awareness & Training | Human Risk Management | ISO27001 Compliance",
+    "connected_on": "2026-01-15"
+  },
+  {
+    "name": "Joanna Pietropaoli",
+    "first_name": "Joanna",
+    "last_name": "Pietropaoli",
+    "title": "VP, People and Talent",
+    "company": "Yuma, A Digital Currency Group Company",
+    "persona": "People/TA",
+    "headline": "VP, People and Talent at Yuma, A Digital Currency Group Company",
+    "connected_on": "2026-01-15"
+  },
+  {
+    "name": "Carolina Khan",
+    "first_name": "Carolina",
+    "last_name": "Khan",
+    "title": "Talent",
+    "company": "OpenAI",
+    "persona": "People/TA",
+    "headline": "Talent @ OpenAI  | Ex-Meta",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Allie Howe",
+    "first_name": "Allie",
+    "last_name": "Howe",
+    "title": "Helping teams build trustworthy AI | AI Security | Founder",
+    "company": "Stealth Startup",
+    "persona": "Security/Risk",
+    "headline": "Helping teams build trustworthy AI | AI Security | Founder at Stealth Startup",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Sam Stepanyan",
+    "first_name": "Sam",
+    "last_name": "Stepanyan",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Application Security Architect / Cyber Security Consultant / OWASP London Chapter Leader / OWASP Global Board Member",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Harry Uffindell",
+    "first_name": "Harry",
+    "last_name": "Uffindell",
+    "title": "Founding Team & Chief People Officer",
+    "company": "Partly",
+    "persona": "People/TA",
+    "headline": "Founding Team & Chief People Officer @ Partly | Ex-Airbnb Head of BizOps & Strategy | Building High Performing Cultures & Scalable Ops | Angel x 40+",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Sarit Cypis",
+    "first_name": "Sarit",
+    "last_name": "Cypis",
+    "title": "Head of Talent Acquisition",
+    "company": "CHEQ",
+    "persona": "People/TA",
+    "headline": "Head of Talent Acquisition at CHEQ",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Matthew Hopkins",
+    "first_name": "Matthew",
+    "last_name": "Hopkins",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "AI Underlord",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Evan Finney",
+    "first_name": "Evan",
+    "last_name": "Finney",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Cyber Resilience & Incident Response | Former Professional Athlete",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Asim Khwaja",
+    "first_name": "Asim",
+    "last_name": "Khwaja",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "UK Gov Cyber Risk & Policy | Government Quantum Working Group | Critical National Infrastructure Security | PQC Migration | Ministerial & Board Advisory | AI+Quantum Cybersecurity Strategy & Education | Speaker | Author",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Bilal Dick-Ahmad",
+    "first_name": "Bilal",
+    "last_name": "Dick-Ahmad",
+    "title": "Talent Partner | AI Recruiting",
+    "company": "The Tech Talent Co.",
+    "persona": "People/TA",
+    "headline": "Talent Partner | AI Recruiting @ The Tech Talent Co. | Ex Meta & Alibaba",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Alex Harris",
+    "first_name": "Alex",
+    "last_name": "Harris",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Head of Gov Cyber Implementation",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Aaron Portnoy",
+    "first_name": "Aaron",
+    "last_name": "Portnoy",
+    "title": "Securing AI",
+    "company": "Mindgard",
+    "persona": "Other",
+    "headline": "Securing AI @ Mindgard | Hacker Fellow @ Dartmouth College",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Richard Horne",
+    "first_name": "Richard",
+    "last_name": "Horne",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "CEO, National Cyber Security Centre",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "John Sotiropoulos",
+    "first_name": "John",
+    "last_name": "Sotiropoulos",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Cyber for the Era of AI  - Deep Cyber  |  OWASP |  ETSI |  Best-selling author ( Adversarial AI)",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Michelle Yao",
+    "first_name": "Michelle",
+    "last_name": "Yao",
+    "title": "Co-Founder",
+    "company": "Cyberlite",
+    "persona": "Founder/Exec",
+    "headline": "Co-Founder at Cyberlite | Online Safety, Cyber and AI Safety Education | Child Online Protection Advocate",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Daniel Jones",
+    "first_name": "Daniel",
+    "last_name": "Jones",
+    "title": "Researcher in AI Red Team",
+    "company": "Microsoft",
+    "persona": "GTM/Sales",
+    "headline": "Researcher in AI Red Team at Microsoft",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Chris Hardley",
+    "first_name": "Chris",
+    "last_name": "Hardley",
+    "title": "International Policy Manager",
+    "company": "Ofcom - Telecoms",
+    "persona": "Other",
+    "headline": "International Policy Manager @ Ofcom - Telecoms | Digital Markets | Cyber",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Francesca Caravella",
+    "first_name": "Francesca",
+    "last_name": "Caravella",
+    "title": "Account Director UK-I",
+    "company": "Recorded Future",
+    "persona": "Product/Engineering",
+    "headline": "Account Director UK-I @ Recorded Future",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Annick O'Brien, CIPP/E, CIPM",
+    "first_name": "Annick",
+    "last_name": "O'Brien, CIPP/E, CIPM",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Award-winning cyber legal advice - keynote speaker - AI governance - cyber security risk management - helping organisations navigate privacy and security regulations without slowing down innovation.",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Jake Gillard",
+    "first_name": "Jake",
+    "last_name": "Gillard",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Talent Acquisition Partner - GTM",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Christian. Toon - FCIIS",
+    "first_name": "Christian.",
+    "last_name": "Toon - FCIIS",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Fractional Security & Cyber Leader. Purpose-driven leadership combining strategic oversight with practical incident readiness \u2013 protecting your people, clients, data, and trust.",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "John Lidstone",
+    "first_name": "John",
+    "last_name": "Lidstone",
+    "title": "Senior Software Engineer I",
+    "company": "Spring Health",
+    "persona": "Product/Engineering",
+    "headline": "Senior Software Engineer I at Spring Health",
+    "connected_on": "2026-01-14"
+  },
+  {
+    "name": "Tristan Petak",
+    "first_name": "Tristan",
+    "last_name": "Petak",
+    "title": "Senior Vice President of Sales",
+    "company": "Darktrace",
+    "persona": "GTM/Sales",
+    "headline": "Senior Vice President of Sales at Darktrace",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Cameron McAteer",
+    "first_name": "Cameron",
+    "last_name": "McAteer",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Vice President Software Engineer",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Zach A. Barnes",
+    "first_name": "Zach",
+    "last_name": "A. Barnes",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Search ML | Stanford CS",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Louise Devlin",
+    "first_name": "Louise",
+    "last_name": "Devlin",
+    "title": "Global Talent Lead",
+    "company": "Marqeta, Inc",
+    "persona": "People/TA",
+    "headline": "Global Talent Lead at Marqeta, Inc",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Will Grady",
+    "first_name": "Will",
+    "last_name": "Grady",
+    "title": "Ex-Google, Amazon & Meta Recruiter | 49% Lift in Submittal-to-Interview Ratios for Executive Search Firms via Big Tech Calibration Logic | Founder",
+    "company": "Futurizm.io",
+    "persona": "People/TA",
+    "headline": "Ex-Google, Amazon & Meta Recruiter | 49% Lift in Submittal-to-Interview Ratios for Executive Search Firms via Big Tech Calibration Logic | Founder @ Futurizm.io",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "William Hackett",
+    "first_name": "William",
+    "last_name": "Hackett",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Founding Machine Learning Engineer | Secure AI | Mindgard",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Nelson Santacruz Salazar",
+    "first_name": "Nelson",
+    "last_name": "Santacruz Salazar",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Cloud Presales Engineer | Presales Solution Architect | Infrastructure and Cloud Services | Cyber Security Advocate",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "James Ye",
+    "first_name": "James",
+    "last_name": "Ye",
+    "title": "Customer Solutions Engineer",
+    "company": "Unit21",
+    "persona": "Product/Engineering",
+    "headline": "Customer Solutions Engineer at Unit21",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Shelby Larson",
+    "first_name": "Shelby",
+    "last_name": "Larson",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Cybersecurity Professional | Technology Consultant | Software Development",
+    "connected_on": "2026-01-13"
+  },
+  {
+    "name": "Joseph Thacker",
+    "first_name": "Joseph",
+    "last_name": "Thacker",
+    "title": "Hacker, Advisor, and Founder",
+    "company": "the intersection of AI and Security.",
+    "persona": "Security/Risk",
+    "headline": "Hacker, Advisor, and Founder at the intersection of AI and Security.",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Chris Lee",
+    "first_name": "Chris",
+    "last_name": "Lee",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Forward Deployed Software Engineer",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Damian Tommasino",
+    "first_name": "Damian",
+    "last_name": "Tommasino",
+    "title": "Shaping the Future of Cybersecurity Sales | Advisor | Founder",
+    "company": "CI",
+    "persona": "GTM/Sales",
+    "headline": "Shaping the Future of Cybersecurity Sales | Advisor | Founder @ CI",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Alexander Anton",
+    "first_name": "Alexander",
+    "last_name": "Anton",
+    "title": "Solutions Engineer",
+    "company": "Darktrace",
+    "persona": "GTM/Sales",
+    "headline": "Solutions Engineer @ Darktrace | Pre-Sales in Network, Cloud, OT and Email Security, Leveraging AI and Machine Learning to protect Enterprises from sophisticated attacks on multiple vectors",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Tim Horoshin",
+    "first_name": "Tim",
+    "last_name": "Horoshin",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "AI Consultant | Cyber Expert | Working Hard and Smart | Startups lifestyle | GTM",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Mikhail Plakhov",
+    "first_name": "Mikhail",
+    "last_name": "Plakhov",
+    "title": "Quant",
+    "company": "Prop Trading",
+    "persona": "Other",
+    "headline": "Quant at Prop Trading",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Minjae You",
+    "first_name": "Minjae",
+    "last_name": "You",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Software Engineer",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "David Gorcey",
+    "first_name": "David",
+    "last_name": "Gorcey",
+    "title": "Enterprise Sales",
+    "company": "Stytch by Twilio",
+    "persona": "GTM/Sales",
+    "headline": "Enterprise Sales at Stytch by Twilio | Venture Partner, Rackhouse Venture Capital",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Tim Yakubson \ud83d\ude80",
+    "first_name": "Tim",
+    "last_name": "Yakubson \ud83d\ude80",
+    "title": "I teach you Clay or implement it for you - your choice \u2728 | Clay Expert (London-based) | Founder",
+    "company": "B2B Boosted",
+    "persona": "Founder/Exec",
+    "headline": "I teach you Clay or implement it for you - your choice \u2728 | Clay Expert (London-based) |  Founder @ B2B Boosted",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Charles Johnson",
+    "first_name": "Charles",
+    "last_name": "Johnson",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "AppSec your devs will love.",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Usman Gulfaraz",
+    "first_name": "Usman",
+    "last_name": "Gulfaraz",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Vice President of Sales EMEA-Torq",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Ben Wolz",
+    "first_name": "Ben",
+    "last_name": "Wolz",
+    "title": "FDSE",
+    "company": "Palantir Technologies",
+    "persona": "Product/Engineering",
+    "headline": "FDSE @ Palantir Technologies",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Piyush Patil",
+    "first_name": "Piyush",
+    "last_name": "Patil",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Senior Cloud Solution Architect (Forward Deployed Engineer) || AWS || GCP || AZURE || Infrastructure Modernization || Infrastructure Migration || AI & ML Specialist || Finops",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Viren Sachdev",
+    "first_name": "Viren",
+    "last_name": "Sachdev",
+    "title": "\u2699\ufe0f Member of Technical Staff",
+    "company": "LG",
+    "persona": "Product/Engineering",
+    "headline": "\u2699\ufe0f Member of Technical Staff @ LG | \ud83e\udd16 LLMs \u2022 \ud83d\udd01 Automation \u2022 \ud83d\udcc8 Data Intelligence | \ud83e\udded Technical Strategy & Leadership | work auth: \ud83d\udfe2 Green Card |",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Andy Sutcliffe",
+    "first_name": "Andy",
+    "last_name": "Sutcliffe",
+    "title": "Security Automations Specialist",
+    "company": "Torq",
+    "persona": "Security/Risk",
+    "headline": "Security Automations Specialist @ Torq",
+    "connected_on": "2026-01-12"
+  },
+  {
+    "name": "Zhihe Isabella Shen",
+    "first_name": "Zhihe",
+    "last_name": "Isabella Shen",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Software Engineer",
+    "connected_on": "2026-01-11"
+  },
+  {
+    "name": "Raul Villar Jr.",
+    "first_name": "Raul",
+    "last_name": "Villar Jr.",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Chief Executive Officer of AuditBoard",
+    "connected_on": "2026-01-11"
+  },
+  {
+    "name": "Eric Lo",
+    "first_name": "Eric",
+    "last_name": "Lo",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Software Engineer | JavaScript, Typescript, React, Redux, HTML, CSS, Ruby, Ruby on Rails, Mongoose, MongoDB, Node.js, Express.js, SQL, PostgreSQL, Typescript, AWS, Docker, Kubernetes",
+    "connected_on": "2026-01-10"
+  },
+  {
+    "name": "Matthew Wahlrab",
+    "first_name": "Matthew",
+    "last_name": "Wahlrab",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Vision \u2192 Focus \u2192 Results | I turn messy data into decisions",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Vikum Wijesinghe",
+    "first_name": "Vikum",
+    "last_name": "Wijesinghe",
+    "title": "Quantitative Developer",
+    "company": "WorldQuant UK",
+    "persona": "Product/Engineering",
+    "headline": "Quantitative Developer at WorldQuant UK | Software Engineer | Competitive Programmer | Data Structures and Algorithms | Certified Scrum Master | Kaggle Master | Ex-Meta (Incoming) | Ex-LSEG",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Lisa Chong",
+    "first_name": "Lisa",
+    "last_name": "Chong",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Director of Customer Success",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Hannah Meltzer",
+    "first_name": "Hannah",
+    "last_name": "Meltzer",
+    "title": "AI Recruiting",
+    "company": "HackerOne",
+    "persona": "People/TA",
+    "headline": "AI Recruiting @ HackerOne",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Richard Searle",
+    "first_name": "Richard",
+    "last_name": "Searle",
+    "title": null,
+    "company": null,
+    "persona": "Founder/Exec",
+    "headline": "Founder & CEO",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Adi Hirschtein",
+    "first_name": "Adi",
+    "last_name": "Hirschtein",
+    "title": "VP Product",
+    "company": "Duality",
+    "persona": "Product/Engineering",
+    "headline": "VP Product at Duality",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Patrick Conte",
+    "first_name": "Patrick",
+    "last_name": "Conte",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "CRO, Cyber Security Go-To-Market Leader.  Securing AI via Confidential Computing Evangelist.",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Katya Korepanova, M.A.",
+    "first_name": "Katya",
+    "last_name": "Korepanova, M.A.",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Dynamic HR Leader I Culture & Employee Engagement Wizard I HR Expert & Operational Efficiency Master I Blockchain & Tech",
+    "connected_on": "2026-01-09"
+  },
+  {
+    "name": "Ben Craig",
+    "first_name": "Ben",
+    "last_name": "Craig",
+    "title": "Head of International Talent",
+    "company": "OpenAI",
+    "persona": "People/TA",
+    "headline": "Head of International Talent at OpenAI",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Lauren Mirkovich Taft",
+    "first_name": "Lauren",
+    "last_name": "Mirkovich Taft",
+    "title": "Director of Global Recruiting",
+    "company": "Sift",
+    "persona": "People/TA",
+    "headline": "Director of Global Recruiting at Sift",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "vedant jain",
+    "first_name": "vedant",
+    "last_name": "jain",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Pioneering How Enterprises Design, Deploy & Defend AI || ex-Amazon | Databricks | Cloudera",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Raj Bharat Patel, CQF",
+    "first_name": "Raj",
+    "last_name": "Bharat Patel, CQF",
+    "title": "AI Transformation Lead",
+    "company": "Holistic AI",
+    "persona": "Product/Engineering",
+    "headline": "AI Transformation Lead @ Holistic AI | AI and ML specialist",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Faisal Khan",
+    "first_name": "Faisal",
+    "last_name": "Khan",
+    "title": "Founding Engineer",
+    "company": "Protect AI",
+    "persona": "Security/Risk",
+    "headline": "Founding Engineer @ Protect AI | AI Security, Research Software",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Krissy Salerno White",
+    "first_name": "Krissy",
+    "last_name": "Salerno White",
+    "title": "People + Talent",
+    "company": "Immuta",
+    "persona": "People/TA",
+    "headline": "People + Talent @ Immuta",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Stuart Davie",
+    "first_name": "Stuart",
+    "last_name": "Davie",
+    "title": "VP of AI and Data Science",
+    "company": "Peak",
+    "persona": "Product/Engineering",
+    "headline": "VP of AI and Data Science at Peak",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Anuj Jaiswal",
+    "first_name": "Anuj",
+    "last_name": "Jaiswal",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "CPO and GTM - Fortanix | Confidential Computing, Enterprise AI, Cyber Security | Startup - Builder, Advisor, Investor",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Nathan Smolenski",
+    "first_name": "Nathan",
+    "last_name": "Smolenski",
+    "title": "Chief Information Security Officer",
+    "company": "Cyera",
+    "persona": "Security/Risk",
+    "headline": "Chief Information Security Officer at Cyera",
+    "connected_on": "2026-01-08"
+  },
+  {
+    "name": "Robb Miller",
+    "first_name": "Robb",
+    "last_name": "Miller",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Chief Revenue Officer | International Head of Sales for Growing SaaS Firms | Building & Scaling Teams to Accelerate Global Expansion | Seed and Series A Investor",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Reza Salari",
+    "first_name": "Reza",
+    "last_name": "Salari",
+    "title": "CISO",
+    "company": "Pacific Life Re",
+    "persona": "Security/Risk",
+    "headline": "CISO @ Pacific Life Re",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "James Wilson, SPHR, STMP",
+    "first_name": "James",
+    "last_name": "Wilson, SPHR, STMP",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Senior Talent Partner - GTM Recruiting Expert",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Edward Merrett",
+    "first_name": "Edward",
+    "last_name": "Merrett",
+    "title": "Security",
+    "company": "Harmonic Security",
+    "persona": "Security/Risk",
+    "headline": "Security @ Harmonic Security",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Vinay Muttineni",
+    "first_name": "Vinay",
+    "last_name": "Muttineni",
+    "title": "Lead Product Manager, Agentic AI in Cybersecurity | Designing Analyst-Centric UX | Ex-ML Engineer & Ambulance Crew | Built",
+    "company": "Microsoft & eBay",
+    "persona": "GTM/Sales",
+    "headline": "Lead Product Manager, Agentic AI in Cybersecurity | Designing Analyst-Centric UX | Ex-ML Engineer & Ambulance Crew | Built at Microsoft & eBay",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Anand Kashyap",
+    "first_name": "Anand",
+    "last_name": "Kashyap",
+    "title": "Co-founder, CEO",
+    "company": "Fortanix",
+    "persona": "Founder/Exec",
+    "headline": "Co-founder, CEO at Fortanix",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Christina Caito",
+    "first_name": "Christina",
+    "last_name": "Caito",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Director of Strategic Accounts",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Alexandre Babeanu",
+    "first_name": "Alexandre",
+    "last_name": "Babeanu",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Technology Leadership | CTO & Product Innovator | Identity & Security Expert | Conference Speaker & Advisor",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Kerry Keating",
+    "first_name": "Kerry",
+    "last_name": "Keating",
+    "title": "Founding GTM Talent",
+    "company": "Doppel",
+    "persona": "People/TA",
+    "headline": "Founding GTM Talent @ Doppel",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Christopher Fagan",
+    "first_name": "Christopher",
+    "last_name": "Fagan",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Ex-Datadog: Ex-HashiCorp: Ex-Hyperscience",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Shannon Mrosko",
+    "first_name": "Shannon",
+    "last_name": "Mrosko",
+    "title": "Global Talent Acquisition Lead",
+    "company": "Fortanix",
+    "persona": "People/TA",
+    "headline": "Global Talent Acquisition Lead @ Fortanix",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Rob Stubbs \ud83d\udd11 \u2601 \ud83d\udd12",
+    "first_name": "Rob",
+    "last_name": "Stubbs \ud83d\udd11 \u2601 \ud83d\udd12",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Follow me for Key Management, HSM, PKI, PQC & all things crypto-related.",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Alex Harris",
+    "first_name": "Alex",
+    "last_name": "Harris",
+    "title": "Account Executive UK/I",
+    "company": "Feedzai",
+    "persona": "GTM/Sales",
+    "headline": "Account Executive UK/I at Feedzai",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Margarida Gato (she/her)",
+    "first_name": "Margarida",
+    "last_name": "Gato (she/her)",
+    "title": "Senior Tech Recruiter | Diversity, Equity & Inclusion Ambassador",
+    "company": "Feedzai",
+    "persona": "People/TA",
+    "headline": "Senior Tech Recruiter | Diversity, Equity & Inclusion Ambassador @ Feedzai",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Martyn Hughes",
+    "first_name": "Martyn",
+    "last_name": "Hughes",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Regional Sales Director - Northern, Western & Southern Europe, Africa.",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Brandon Rusboldt",
+    "first_name": "Brandon",
+    "last_name": "Rusboldt",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Customer Success Leader | Driving Growth in Fintech & SaaS | Fraud & Risk",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Tim Solovev",
+    "first_name": "Tim",
+    "last_name": "Solovev",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Senior Software Engineer | Golang | C++ | Ex-Nebius | Distributed systems | Highload | AWS | GCP | Azure | Microservices",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Issam Bhathal",
+    "first_name": "Issam",
+    "last_name": "Bhathal",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "General Manager - Cyber Security UK&I",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Neta Kazaz",
+    "first_name": "Neta",
+    "last_name": "Kazaz",
+    "title": "HR and Operations Manager",
+    "company": "Duality Technologies",
+    "persona": "People/TA",
+    "headline": "HR and Operations Manager at Duality Technologies",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Marc Ewin",
+    "first_name": "Marc",
+    "last_name": "Ewin",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "UK/Europe Sales Growth I Start-up Sales Leader I Cyber Security I Fraud Prevention I AI Governance I",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "Marilou Lourties",
+    "first_name": "Marilou",
+    "last_name": "Lourties",
+    "title": "GTM Senior Recruiter in EMEA",
+    "company": "OneTrust",
+    "persona": "People/TA",
+    "headline": "GTM Senior Recruiter in EMEA at OneTrust",
+    "connected_on": "2026-01-07"
+  },
+  {
+    "name": "\u26c5\ufe0f Marsha Wilson",
+    "first_name": "\u26c5\ufe0f",
+    "last_name": "Marsha Wilson",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Chief Customer Officer",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Jonathan Snyder",
+    "first_name": "Jonathan",
+    "last_name": "Snyder",
+    "title": "Senior Director, Cybersecurity",
+    "company": "FTI Consulting",
+    "persona": "Product/Engineering",
+    "headline": "Senior Director, Cybersecurity at FTI Consulting | Leading Strategic Security Initiatives & Project Delivery",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Marcus Crockett, CCM\u2122 (Zero Trust/Stealth Networks/TISAX)",
+    "first_name": "Marcus",
+    "last_name": "Crockett, CCM\u2122 (Zero Trust/Stealth Networks/TISAX)",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Invisible Security. Absolute Sovereignty. Powered by ENIGMA. Co-Founder ENIGMA Protocol (ENX)",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Anatoly Chikanov",
+    "first_name": "Anatoly",
+    "last_name": "Chikanov",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Senior Cybersecurity Executive | Healthcare, FinTech, Energy, Banking | AI | Risk & Governance | Security Engineering | Board Advisor | M&A Advisor | Former VP Security Engineering & Architecture",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Katelyn Aub\u00e9",
+    "first_name": "Katelyn",
+    "last_name": "Aub\u00e9",
+    "title": "GTM Talent Acquisition Partner",
+    "company": "Upwind Security \ud83c\udfc4\u200d\u2640\ufe0f",
+    "persona": "People/TA",
+    "headline": "GTM Talent Acquisition Partner at Upwind Security \ud83c\udfc4\u200d\u2640\ufe0f",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Paul Thompson",
+    "first_name": "Paul",
+    "last_name": "Thompson",
+    "title": "Technical Account Manager",
+    "company": "Obsidian Security",
+    "persona": "Security/Risk",
+    "headline": "Technical Account Manager at Obsidian Security",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Grace H. Cheong",
+    "first_name": "Grace",
+    "last_name": "H. Cheong",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "AI Security | Applied Research | Building Cool Things",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Wilson , Don",
+    "first_name": "Wilson",
+    "last_name": ", Don",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Visionary / CRS Principle / Founded PAIOS / United States Artificial Intelligence Institute (CAIC) / Provisionals: CAF ENGINE US #63/904684 / MAOS SECURITY / US #63/904693 NVERSEDEFENSE US #63/899742",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Swathi kesireddy",
+    "first_name": "Swathi",
+    "last_name": "kesireddy",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Lead Talent Partner@Aqua Security | Strategic Recruiter| Talent Scout-Product & Tech| Branding Enthusiast |Ex-TomTom, ICE, WMS/SG",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Jabez Reuben",
+    "first_name": "Jabez",
+    "last_name": "Reuben",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Building Kraken - Your Ai CMO | Showcase your brand where your ICP is",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Sivan Averbuch Gomeh",
+    "first_name": "Sivan",
+    "last_name": "Averbuch Gomeh",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Ex-Amazon TA/HR Lead",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Tobi Akerele",
+    "first_name": "Tobi",
+    "last_name": "Akerele",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Software Engineer",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Sam Poulis",
+    "first_name": "Sam",
+    "last_name": "Poulis",
+    "title": "Senior Sales Recruiter",
+    "company": "Chainguard",
+    "persona": "People/TA",
+    "headline": "Senior Sales Recruiter at Chainguard",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Albert Evans",
+    "first_name": "Albert",
+    "last_name": "Evans",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Chief Information Security Officer (CISO) | Fractional & Advisory CISO | Executive Cyber & AI Risk Leader | Boards, Critical Infrastructure, Cloud, Identity & Agentic AI Security",
+    "connected_on": "2026-01-06"
+  },
+  {
+    "name": "Tom McCrum",
+    "first_name": "Tom",
+    "last_name": "McCrum",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "AI Security | Securing AI models, apps & agents | CalypsoAI (Acquired by F5)",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Fadi Shini",
+    "first_name": "Fadi",
+    "last_name": "Shini",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Director of Sales - AI Clearing | Bringing AI & Innovation into the Energy & Infrastructure world",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Daniel Carroll",
+    "first_name": "Daniel",
+    "last_name": "Carroll",
+    "title": "CTO",
+    "company": "Cranium",
+    "persona": "Product/Engineering",
+    "headline": "CTO at Cranium",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Ted Nitka",
+    "first_name": "Ted",
+    "last_name": "Nitka",
+    "title": "Partnerships, Channel & Alliances",
+    "company": "F5 (formerly CalypsoAI)",
+    "persona": "GTM/Sales",
+    "headline": "Partnerships, Channel & Alliances @ F5 (formerly CalypsoAI)",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Shane Egan",
+    "first_name": "Shane",
+    "last_name": "Egan",
+    "title": "AI Security | Global GTM",
+    "company": "F5",
+    "persona": "GTM/Sales",
+    "headline": "AI Security | Global GTM @F5",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Ritvik Verma",
+    "first_name": "Ritvik",
+    "last_name": "Verma",
+    "title": "AI Project Manager",
+    "company": "AI Digital",
+    "persona": "Other",
+    "headline": "AI Project Manager @ AI Digital | CS @ NCL",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Zach Fry",
+    "first_name": "Zach",
+    "last_name": "Fry",
+    "title": "CTO",
+    "company": "Arthur",
+    "persona": "Product/Engineering",
+    "headline": "CTO @ Arthur | ex-Palantir",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Tom Finch",
+    "first_name": "Tom",
+    "last_name": "Finch",
+    "title": "Sales Engineering Leader",
+    "company": "Chainguard",
+    "persona": "GTM/Sales",
+    "headline": "Sales Engineering Leader @ Chainguard",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Will Wadwa",
+    "first_name": "Will",
+    "last_name": "Wadwa",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "Helping Engineering Leaders & CISOs Build Secure Software, Reduce Risk, & Ship Faster \ud83d\udc19",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Benjamin Murphy",
+    "first_name": "Benjamin",
+    "last_name": "Murphy",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Enterprise AI Security",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Ben Duggan",
+    "first_name": "Ben",
+    "last_name": "Duggan",
+    "title": "AI Security",
+    "company": "CalypsoAI (Acquired by F5)",
+    "persona": "Security/Risk",
+    "headline": "AI Security @ CalypsoAI (Acquired by F5)",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Ravi Patel",
+    "first_name": "Ravi",
+    "last_name": "Patel",
+    "title": "Global Alliances",
+    "company": "AuditBoard",
+    "persona": "Other",
+    "headline": "Global Alliances at AuditBoard",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Sara Schenkel",
+    "first_name": "Sara",
+    "last_name": "Schenkel",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Global HR & Talent Acquisition Partner",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Jack Miller",
+    "first_name": "Jack",
+    "last_name": "Miller",
+    "title": null,
+    "company": null,
+    "persona": "Product/Engineering",
+    "headline": "CTO and Co-Founder of HelmGuard AI",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Hedfran Frejat",
+    "first_name": "Hedfran",
+    "last_name": "Frejat",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Director of Global Total Rewards | HR Technology | HR Compliance | Global People Operations",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Ayelet Hammar",
+    "first_name": "Ayelet",
+    "last_name": "Hammar",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Chief HR Officer",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "John O'Donnell",
+    "first_name": "John",
+    "last_name": "O'Donnell",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "CRO / GTM Executive | Driving Revenue & Enterprise Sales for Series A\u2013C SaaS & AI | IPO & Scale Expert",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Guy Weigert",
+    "first_name": "Guy",
+    "last_name": "Weigert",
+    "title": "EVP Partnerships",
+    "company": "Alice",
+    "persona": "GTM/Sales",
+    "headline": "EVP Partnerships @ Alice | AI Geek | SaaS GTM Leader",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Judith Sjetske Begeer (She/Her)",
+    "first_name": "Judith",
+    "last_name": "Sjetske Begeer (She/Her)",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "AI Security and Safety | Emerging Threats and Trends | Information Integrity - Alice",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Hannah Price",
+    "first_name": "Hannah",
+    "last_name": "Price",
+    "title": "Talent Acquisition Director",
+    "company": "SAI360",
+    "persona": "People/TA",
+    "headline": "Talent Acquisition Director at SAI360",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Ryan Thompson-Hamilton",
+    "first_name": "Ryan",
+    "last_name": "Thompson-Hamilton",
+    "title": "Talent Acquisition Specialist",
+    "company": "SAI360",
+    "persona": "People/TA",
+    "headline": "Talent Acquisition Specialist at SAI360",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Catherine Jannetta",
+    "first_name": "Catherine",
+    "last_name": "Jannetta",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Director of European Sales",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Tetiana Tarnorutska",
+    "first_name": "Tetiana",
+    "last_name": "Tarnorutska",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Certified Lead Auditor | Security Expert | Driving Excellence in ISO 9001 and ISO 27001 Compliance",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "haythem hassayoun",
+    "first_name": "haythem",
+    "last_name": "hassayoun",
+    "title": "Quant Trader",
+    "company": "Kappa Lab",
+    "persona": "Other",
+    "headline": "Quant Trader at Kappa Lab",
+    "connected_on": "2026-01-05"
+  },
+  {
+    "name": "Itzik Alvas",
+    "first_name": "Itzik",
+    "last_name": "Alvas",
+    "title": "Co-Founder & CEO",
+    "company": "Entro Security",
+    "persona": "GTM/Sales",
+    "headline": "Co-Founder & CEO at Entro Security | Agentic AI & Non-Human Identity Security for CISOs and Security Teams | X-Microsoft | Cyber & Cloud Expert",
+    "connected_on": "2026-01-04"
+  },
+  {
+    "name": "Ian Schenkel",
+    "first_name": "Ian",
+    "last_name": "Schenkel",
+    "title": "Cybersecurity & SaaS Leader | World Champion",
+    "company": "Losing Sunglasses Overboard",
+    "persona": "Security/Risk",
+    "headline": "Cybersecurity & SaaS Leader | World Champion at Losing Sunglasses Overboard",
+    "connected_on": "2026-01-04"
+  },
+  {
+    "name": "Dan Ben Dor",
+    "first_name": "Dan",
+    "last_name": "Ben Dor",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Talent Acquisition | HRBP | Coaching & Development",
+    "connected_on": "2026-01-04"
+  },
+  {
+    "name": "Amjed Aboukhadijeh",
+    "first_name": "Amjed",
+    "last_name": "Aboukhadijeh",
+    "title": "VP of Sales",
+    "company": "Socket - we're hiring!",
+    "persona": "GTM/Sales",
+    "headline": "VP of Sales at Socket - we're hiring!",
+    "connected_on": "2026-01-04"
+  },
+  {
+    "name": "Tom Kanan",
+    "first_name": "Tom",
+    "last_name": "Kanan",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "\ud835\udc7b\ud835\udc89\ud835\udc86 Runtime Security Company | Security Fluency | GTM Execution",
+    "connected_on": "2026-01-03"
+  },
+  {
+    "name": "Julie Laurin",
+    "first_name": "Julie",
+    "last_name": "Laurin",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Human Behaviour, Governance & Security",
+    "connected_on": "2026-01-03"
+  },
+  {
+    "name": "Ilai (Angel) Ben-Nun",
+    "first_name": "Ilai",
+    "last_name": "(Angel) Ben-Nun",
+    "title": "HR Manager & Talent Acquisition Global",
+    "company": "Anecdotes Columbia University Alumni",
+    "persona": "People/TA",
+    "headline": "HR Manager & Talent Acquisition Global @ Anecdotes Columbia University Alumni",
+    "connected_on": "2026-01-03"
+  },
+  {
+    "name": "Chris Honda",
+    "first_name": "Chris",
+    "last_name": "Honda",
+    "title": "Security, Risk, and Compliance",
+    "company": "Plotly",
+    "persona": "Security/Risk",
+    "headline": "Security, Risk, and Compliance @ Plotly | GRC | Privacy | AI Governance | Speaker | Storyteller",
+    "connected_on": "2026-01-03"
+  },
+  {
+    "name": "Ross Hosman",
+    "first_name": "Ross",
+    "last_name": "Hosman",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "Chief Information Security Officer",
+    "connected_on": "2026-01-03"
+  },
+  {
+    "name": "Jake Bernardes",
+    "first_name": "Jake",
+    "last_name": "Bernardes",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "CISO | Advisor | Investor | Speaker | Podcaster",
+    "connected_on": "2026-01-03"
+  },
+  {
+    "name": "Kai Greshake",
+    "first_name": "Kai",
+    "last_name": "Greshake",
+    "title": null,
+    "company": null,
+    "persona": "Security/Risk",
+    "headline": "AI Security Specialist",
+    "connected_on": "2026-01-01"
+  },
+  {
+    "name": "Nanna Inie",
+    "first_name": "Nanna",
+    "last_name": "Inie",
+    "title": null,
+    "company": null,
+    "persona": "Founder/Exec",
+    "headline": "Assistant professor | Cognitive Cost of AI + Cognitive Augmentation Technology + AI Safety",
+    "connected_on": "2026-01-01"
+  },
+  {
+    "name": "Jacky Guo",
+    "first_name": "Jacky",
+    "last_name": "Guo",
+    "title": null,
+    "company": null,
+    "persona": "People/TA",
+    "headline": "Senior Tech Recruiter/Global Recruiting Leader/ AI, Infra, Cloud | Trusted Partner to Engineering Leaders / ex-VMware-Symantec-Manpower | MBA",
+    "connected_on": "2025-12-31"
+  },
+  {
+    "name": "Alex Goff",
+    "first_name": "Alex",
+    "last_name": "Goff",
+    "title": "UK&I Security Lead",
+    "company": "Amazon Web Services (AWS)",
+    "persona": "Security/Risk",
+    "headline": "UK&I Security Lead at Amazon Web Services (AWS)",
+    "connected_on": "2025-12-31"
+  },
+  {
+    "name": "Niroshan Rajadurai",
+    "first_name": "Niroshan",
+    "last_name": "Rajadurai",
+    "title": "Driving GTM for AI Powered Offensive Security",
+    "company": "XBOW",
+    "persona": "GTM/Sales",
+    "headline": "Driving GTM for AI Powered Offensive Security @ XBOW",
+    "connected_on": "2025-12-31"
+  },
+  {
+    "name": "Manny Johal",
+    "first_name": "Manny",
+    "last_name": "Johal",
+    "title": null,
+    "company": null,
+    "persona": "GTM/Sales",
+    "headline": "Director of Digital | CIO/CTO-Level Digital Transformation Leader | AI, Data & Enterprise Technology Strategy | Driving Growth Across Multi-Site Organisations",
+    "connected_on": "2025-12-31"
+  },
+  {
+    "name": "Chris Steele",
+    "first_name": "Chris",
+    "last_name": "Steele",
+    "title": "Senior Recruiter, EMEA",
+    "company": "HackerOne",
+    "persona": "People/TA",
+    "headline": "Senior Recruiter, EMEA at HackerOne",
+    "connected_on": "2025-12-31"
+  },
+  {
+    "name": "Taimur Ijlal",
+    "first_name": "Taimur",
+    "last_name": "Ijlal",
+    "title": "\u2601\ufe0f Senior Security Consultant",
+    "company": "AWS",
+    "persona": "Security/Risk",
+    "headline": "\u2601\ufe0f Senior Security Consultant @ AWS |   Agentic AI Security |  Cybersecurity Career Coach |  Best-Selling Author |  70K Students @ Udemy | YouTube @ Cloud Security Guy",
+    "connected_on": "2025-12-30"
+  },
+  {
+    "name": "Ayoub Fandi",
+    "first_name": "Ayoub",
+    "last_name": "Fandi",
+    "title": "Engineering the Future of GRC | GRC Engineer Podcast and Newsletter | Security Assurance Automation Team Lead (and Staff Engineer)",
+    "company": "GitLab",
+    "persona": "Product/Engineering",
+    "headline": "Engineering the Future of GRC | GRC Engineer Podcast and Newsletter | Security Assurance Automation Team Lead (and Staff Engineer) @ GitLab",
+    "connected_on": "2025-12-30"
+  },
+  {
+    "name": "Glyn Morgan",
+    "first_name": "Glyn",
+    "last_name": "Morgan",
+    "title": null,
+    "company": null,
+    "persona": "Other",
+    "headline": "Gain visibility and secure APIs, Agentic AI, and MCP Servers",
+    "connected_on": "2025-12-29"
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "rank": 1,
+    "first_name": "",
+    "last_name": "",
+    "full_name": "sarah james",
+    "job_title": "",
+    "company_name": "DrDoctor",
+    "company_url": "https://www.linkedin.com/company/drdoctor/",
+    "employees_in_dataset": 100,
+    "selection_method": "Top 5 companies by employee count; first listed employee",
+    "confidence": "LOW - Job titles are empty; selection based on company size heuristic only"
+  },
+  {
+    "rank": 2,
+    "first_name": "",
+    "last_name": "",
+    "full_name": "andy barclay",
+    "job_title": "",
+    "company_name": "heycar",
+    "company_url": "https://www.linkedin.com/company/heycar/",
+    "employees_in_dataset": 100,
+    "selection_method": "Top 5 companies by employee count; first listed employee",
+    "confidence": "LOW - Job titles are empty; selection based on company size heuristic only"
+  },
+  {
+    "rank": 3,
+    "first_name": "",
+    "last_name": "",
+    "full_name": "anca ciurlin",
+    "job_title": "",
+    "company_name": "Minerva Research Labs",
+    "company_url": "https://www.linkedin.com/company/minerva-research-labs-ltd/",
+    "employees_in_dataset": 100,
+    "selection_method": "Top 5 companies by employee count; first listed employee",
+    "confidence": "LOW - Job titles are empty; selection based on company size heuristic only"
+  },
+  {
+    "rank": 4,
+    "first_name": "",
+    "last_name": "",
+    "full_name": "anca ciurlin",
+    "job_title": "",
+    "company_name": "Sleek Events",
+    "company_url": "https://www.linkedin.com/company/sleek-events-ltd/",
+    "employees_in_dataset": 100,
+    "selection_method": "Top 5 companies by employee count; first listed employee",
+    "confidence": "LOW - Job titles are empty; selection based on company size heuristic only"
+  },
+  {
+    "rank": 5,
+    "first_name": "",
+    "last_name": "",
+    "full_name": "mia andrew",
+    "job_title": "",
+    "company_name": "StudioB",
+    "company_url": "https://www.linkedin.com/company/thestudiob/",
+    "employees_in_dataset": 100,
+    "selection_method": "Top 5 companies by employee count; first listed employee",
+    "confidence": "LOW - Job titles are empty; selection based on company size heuristic only"
+  }
+]

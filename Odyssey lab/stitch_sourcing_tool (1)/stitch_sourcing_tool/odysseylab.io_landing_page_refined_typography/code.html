@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Odysseylab.io | Precision Navigation for Global Talent</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;family=Lora:ital,wght@0,400..700;1,400..700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              colors: {
+                "primary": "#ec5b13",
+                "background-light": "#f8f6f6",
+                "background-dark": "#221610",
+              },
+              fontFamily: {
+                "sans": ["Inter", "sans-serif"],
+                "serif": ["Lora", "serif"],
+                "display": ["Lora", "serif"]
+              },
+              borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+            },
+          },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dot-grid {
+            background-image: radial-gradient(circle, currentColor 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 font-display">
+<div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+<!-- Header / Navigation -->
+<header class="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-800 bg-background-light/80 dark:bg-background-dark/80 backdrop-blur-md">
+<div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+<div class="flex items-center gap-2">
+<div class="text-primary">
+<span class="material-symbols-outlined text-3xl">explore</span>
+</div>
+<span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white font-sans">Odysseylab.io</span>
+</div>
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Platform</a>
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Intelligence</a>
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Solutions</a>
+<a class="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-primary transition-colors" href="#">Pricing</a>
+</nav>
+<div class="flex items-center gap-4">
+<button class="hidden sm:block text-sm font-semibold px-4 py-2 text-slate-700 dark:text-slate-200">Log in</button>
+<button class="bg-primary hover:bg-primary/90 text-white text-sm font-bold py-2 px-5 rounded-lg transition-all shadow-lg shadow-primary/20">
+                        Begin sourcing
+                    </button>
+</div>
+</div>
+</header>
+<!-- Hero Section -->
+<main class="flex-1">
+<section class="relative pt-20 pb-32 px-6 overflow-hidden">
+<div class="absolute inset-0 dot-grid opacity-[0.03] dark:opacity-[0.05] pointer-events-none text-slate-900 dark:text-white"></div>
+<div class="max-w-7xl mx-auto relative z-10">
+<div class="flex flex-col lg:flex-row items-center gap-16">
+<div class="flex-1 space-y-8 text-center lg:text-left">
+<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider font-sans uppercase tracking-[0.04em]">
+<span class="material-symbols-outlined text-sm">auto_awesome</span>
+                                Global Intelligence Engine
+                            </div>
+<h1 class="text-5xl lg:text-7xl font-extrabold tracking-tight leading-[1.1] text-slate-900 dark:text-white font-serif tracking-[-0.5px]">
+                                Frictionless Sourcing through <span class="text-primary">Global Intelligence</span>
+</h1>
+<p class="text-lg lg:text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+                                Chart your path to the world's most elusive talent. Precision-engineered navigation for the modern recruiter.
+                            </p>
+<div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
+<button class="w-full sm:w-auto min-w-[200px] h-14 bg-primary text-white rounded-xl font-bold text-lg shadow-xl shadow-primary/20 hover:scale-[1.02] transition-transform">
+                                    Start your journey
+                                </button>
+<button class="w-full sm:w-auto min-w-[200px] h-14 border border-slate-300 dark:border-slate-700 rounded-xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
+                                    View Documentation
+                                </button>
+</div>
+</div>
+<div class="flex-1 w-full max-w-2xl">
+<div class="relative aspect-square rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-2xl">
+<div class="absolute inset-0 bg-gradient-to-br from-background-light to-slate-200 dark:from-background-dark dark:to-slate-900"></div>
+<div class="absolute inset-0 flex items-center justify-center">
+<div class="w-full h-full bg-cover bg-center mix-blend-overlay opacity-60" data-alt="Abstract 3D data constellation and topographical grid pattern" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCV20H2lZVfqkGC6iZMy9J4okaNopZ86fSSI0qscSpseWZpUBLo3zq7ux6KORPO5ODksInIV3ewf6cl0NhOjARb-Tf_7ILUNiajIxooF-6x4SJDCvGHUcGfctyXytvnY7yT5i62T653hxERRedCmZO83pPIZ40PvszExA0u7IBV5bCipEdSrFDzU7x7JDnNE7RqARMqOfKtBe5HYQHt3yPPCLRPmi5bXauj_UQQmEK1aBMSGkPAcHf13pOry930WtBKgqAXZomF3tFI')"></div>
+<div class="absolute w-[80%] h-[80%] border border-primary/20 rounded-full animate-pulse"></div>
+<div class="absolute w-[60%] h-[60%] border border-primary/10 rounded-full"></div>
+<div class="absolute w-[40%] h-[40%] border border-primary/5 rounded-full"></div>
+<span class="material-symbols-outlined text-primary/40 text-8xl font-thin">target</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Features Grid -->
+<section class="py-24 px-6 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20">
+<div class="max-w-7xl mx-auto">
+<div class="mb-16">
+<h2 class="text-3xl font-bold tracking-tight mb-4 font-serif tracking-tight">Precision Navigation</h2>
+<p class="text-slate-600 dark:text-slate-400 max-w-xl">Move beyond traditional search with a document-native interface designed for high-stakes talent acquisition.</p>
+</div>
+<div class="grid md:grid-cols-3 gap-8">
+<!-- Feature 1 -->
+<div class="p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-colors group">
+<div class="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">analytics</span>
+</div>
+<h3 class="text-xl font-bold mb-3 font-serif">Predictive Intelligence</h3>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                Anticipating talent movements before they happen. Our proprietary trend analysis tracks career shifts with 94% accuracy.
+                            </p>
+</div>
+<!-- Feature 2 -->
+<div class="p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-colors group">
+<div class="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">hub</span>
+</div>
+<h3 class="text-xl font-bold mb-3 font-serif">Global Signals</h3>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                Unifying technical and executive ecosystems. We merge data streams from the world's most elite professional networks.
+                            </p>
+</div>
+<!-- Feature 3 -->
+<div class="p-8 rounded-2xl bg-white dark:bg-background-dark border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-colors group">
+<div class="size-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+<span class="material-symbols-outlined">filter_center_focus</span>
+</div>
+<h3 class="text-xl font-bold mb-3 font-serif">Precision X-Ray</h3>
+<p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                                The advanced search layer that penetrates deep into talent stacks. Filter by specific project experience, not just titles.
+                            </p>
+</div>
+</div>
+</div>
+</section>
+<!-- Stats Section -->
+<section class="py-20 px-6">
+<div class="max-w-7xl mx-auto flex flex-wrap gap-8 justify-between">
+<div class="flex-1 min-w-[240px] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center">
+<div class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2 font-serif">450M+</div>
+<div class="text-slate-500 text-sm font-medium uppercase tracking-widest">Data Points Mapping</div>
+</div>
+<div class="flex-1 min-w-[240px] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center">
+<div class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2 font-serif">Real-time</div>
+<div class="text-slate-500 text-sm font-medium uppercase tracking-widest">Global Talent Updates</div>
+</div>
+<div class="flex-1 min-w-[240px] p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center">
+<div class="text-4xl font-extrabold text-slate-900 dark:text-white mb-2 font-serif">99.8%</div>
+<div class="text-slate-500 text-sm font-medium uppercase tracking-widest">Signal Accuracy Rate</div>
+</div>
+</div>
+</section>
+<!-- Content Split Section -->
+<section class="py-24 px-6 bg-slate-900 dark:bg-black text-white overflow-hidden relative">
+<div class="absolute inset-0 dot-grid opacity-[0.1] pointer-events-none"></div>
+<div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 relative z-10">
+<div class="flex-1">
+<h2 class="text-4xl lg:text-5xl font-bold leading-tight mb-6 font-serif tracking-tight">The Instrument of Modern Search</h2>
+<p class="text-lg text-slate-400 mb-8 leading-relaxed">
+                            Our interface is designed for depth. No clutter, no noise. Just the signals you need to identify and engage the top 1% of global talent across any industry or vertical.
+                        </p>
+<ul class="space-y-4">
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="text-slate-300">Unified Executive &amp; Technical signals</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="text-slate-300">Automated talent pipeline orchestration</span>
+</li>
+<li class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">check_circle</span>
+<span class="text-slate-300">Deep-dive project and contribution analysis</span>
+</li>
+</ul>
+</div>
+<div class="flex-1 w-full">
+<div class="bg-slate-800/50 p-4 rounded-2xl border border-slate-700 shadow-3xl">
+<div class="w-full h-80 bg-cover bg-center rounded-lg" data-alt="Minimalist topographical data visualization in navy and sea foam" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAHfsuN4Y0Hn0SGxnk24drr3ZQB_XwEz_gxvhrPO4PMwxxmdsptBWtWlVW9STy2zLLbSZdxrKhqmUeq8j3OZPCSwhc5JTKrAURk3NtJVjYrvcKHchg8vJvL1vAoe5uFHSjujKp1_467SKQH-8xjX_JoLFPp_oNGIN4byljaVozhIDtoxaHe-O9WLcGOGCPiGzEmGC0hz5vM2nrr-UnQEqWJEIi-oEBPiwZG2bGIkIslTl5KjNlG-vBzArNr2LgVshuK42EKbYxEw4jT')"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- Final CTA -->
+<section class="py-32 px-6 text-center">
+<div class="max-w-4xl mx-auto space-y-10">
+<h2 class="text-4xl lg:text-6xl font-extrabold tracking-tight font-serif tracking-tight">Ready to chart your path?</h2>
+<p class="text-xl text-slate-600 dark:text-slate-400">Join the world's leading firms using Odysseylab.io to navigate the global talent landscape.</p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+<button class="w-full sm:w-auto px-10 py-5 bg-primary text-white rounded-xl font-bold text-xl hover:scale-105 transition-transform shadow-2xl shadow-primary/30">
+                            Begin sourcing now
+                        </button>
+<button class="w-full sm:w-auto px-10 py-5 border border-slate-200 dark:border-slate-800 rounded-xl font-bold text-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            Request Demo
+                        </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="py-12 px-6 border-t border-slate-200 dark:border-slate-800">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">explore</span>
+<span class="text-lg font-bold tracking-tight">Odysseylab.io</span>
+</div>
+<div class="flex gap-8 text-sm text-slate-500">
+<a class="hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="hover:text-primary transition-colors" href="#">Contact</a>
+</div>
+<div class="text-sm text-slate-400">
+                    © 2024 Odysseylab.io. Precision Navigation for Talent.
+                </div>
+</div>
+</footer>
+</div>
+</body></html>
