@@ -1,3 +1,12 @@
+// @crumb audio-mixer
+// [UI] | Volume controls | Audio levels
+// why: Audio mixing panel—controls volume levels, muting, and audio track routing
+// in:[audio tracks, volume levels, mute state] out:[mixer UI, volume sliders, mute toggles] err:[audio, routing errors]
+// hazard: Volume levels not persisted—user settings lost on refresh
+// hazard: No clipping detection—audio may distort at high volumes without warning
+// edge:apps/studio/src/components/logbook/RecordButton.tsx -> RELATES
+// prompt: Persist volume settings per video, add clipping detection with visual warning
+
 'use client';
 
 interface AudioMixerProps {

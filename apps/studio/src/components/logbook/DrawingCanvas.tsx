@@ -1,3 +1,12 @@
+// @crumb drawing-canvas
+// [UI] | Canvas drawing surface | Annotation canvas
+// why: HTML5 canvas for drawing annotations on video frames
+// in:[canvas context, brush settings, drawing events] out:[canvas content, bitmap data] err:[canvas, draw errors]
+// hazard: Canvas not high-DPI aware—drawings appear blurry on Retina displays
+// hazard: Undo/redo not implemented—users can't undo accidental strokes
+// edge:apps/studio/src/components/logbook/DrawingToolbar.tsx -> RELATES
+// prompt: Implement high-DPI scaling, add drawing history with undo/redo stack
+
 'use client';
 
 import { useRef, useState, useCallback, useEffect } from 'react';

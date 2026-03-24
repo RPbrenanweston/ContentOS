@@ -1,3 +1,12 @@
+// @crumb video-text-renderer
+// [UI] | Overlay renderer | Text compositor
+// why: Renders text overlays on video during playback—composites text layer over video
+// in:[text objects array, video frame, rendering context] out:[composite frame with overlays] err:[render, composite errors]
+// hazard: Text rendering not font-loaded aware—text may appear in wrong font during initial load
+// hazard: No caching of rendered text—each frame re-renders all overlays from scratch
+// edge:apps/studio/src/components/logbook/TextOverlayEditor.tsx -> RELATES
+// prompt: Implement font preload detection, add text rendering cache with frame ID key
+
 'use client';
 
 import { useMemo } from 'react';

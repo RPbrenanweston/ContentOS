@@ -1,3 +1,12 @@
+// @crumb music-picker
+// [UI] | Track selection | Music library
+// why: Component for selecting background music or audio tracks for video
+// in:[music library, selected track, preview state] out:[track list UI, audio preview] err:[fetch, preview errors]
+// hazard: No validation that music files actually exist—broken links may be referenced
+// hazard: Music preview may start playing on any track selection—no mute option for silent browsing
+// edge:apps/studio/src/components/logbook/AudioMixer.tsx -> SERVES
+// prompt: Validate music URLs on load, add mute toggle for preview, implement search/filter
+
 'use client';
 
 export interface MusicTrack {

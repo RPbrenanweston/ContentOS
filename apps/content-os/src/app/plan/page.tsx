@@ -1,3 +1,14 @@
+// @crumb planning-studio
+// UI | framework-selector | content-planning
+// why: Provides structured writing frameworks to guide content creation before drafting; enables creators to think through story arcs and key points systematically
+// in:[frameworkCategories-from-lib] out:[JSX-planner-ui] err:[none-critical]
+// hazard: Plans stored only in client state (useState); refresh loses all planning work (no persistence to backend/localStorage)
+// hazard: planTitle input vulnerable to injection if later used in database queries without sanitization
+// hazard: No validation that framework.sections array matches expected schema; malformed framework data crashes notes initialization
+// edge:../../lib/frameworks.ts -> USES (frameworkCategories, WritingFramework types)
+// edge:../content/new -> NAVIGATES-TO (after plan completed)
+// prompt: Implement plan persistence (localStorage or backend); sanitize planTitle input; validate framework shape before creating plan; add confirmation before discarding plans
+
 'use client';
 
 import { useState } from 'react';

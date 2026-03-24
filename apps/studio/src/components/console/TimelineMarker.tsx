@@ -1,3 +1,12 @@
+// @crumb timeline-marker
+// [UI] | Marker element | Timeline annotation
+// why: Individual marker rendered on timeline—represents clips, chapters, or annotations
+// in:[marker object, position, callbacks] out:[marker DOM, click handler] err:[render, interaction errors]
+// hazard: No validation that marker position is within video duration—orphaned markers may render off-timeline
+// hazard: Click handlers not throttled—rapid clicks may fire multiple callbacks
+// edge:apps/studio/src/components/console/WaveformTimeline.tsx -> SERVES
+// prompt: Add duration bounds check, throttle click handlers, implement marker drag validation
+
 'use client';
 
 import { useState } from 'react';

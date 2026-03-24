@@ -1,3 +1,12 @@
+// @crumb logbook-detail-page
+// [UI] | Annotation ledger | Editor workspace
+// why: Logbook view for video annotations, markers, clips, and text overlays
+// in:[videoId, markers, annotations, clips] out:[ledger UI, marker list, clip timeline] err:[auth, data fetch, render errors]
+// hazard: Marker list may contain stale references if clips are deleted without cascade update
+// hazard: No pagination on large marker lists—could cause performance degradation with 1000+ markers
+// edge:apps/studio/src/components/logbook/LogbookLayout.tsx -> SERVES
+// prompt: Implement marker pagination, add cascade delete handler, validate marker references on load
+
 'use client';
 
 import { useState, useCallback } from 'react';

@@ -1,3 +1,17 @@
+// @crumb insights-dashboard
+// UI | analytics-view | data-aggregation
+// why: Surfaces creation pipeline metrics and distribution lineage; enables data-driven decisions about content strategy and variant performance
+// in:[/api/content, /api/assets, /api/distribution/jobs] out:[JSX-dashboard-ui] err:[fetch-failure]
+// hazard: No error handling on cascading API fetches; if any single fetch fails, entire metrics state remains unset (undefined metrics rendered)
+// hazard: Nested Promise.all in load() doesn't validate response schemas; malformed API responses crash lineageRows construction
+// hazard: Filter state updates don't debounce; rapid filter changes trigger expensive re-renders across MetricCard and LineageTable
+// edge:../../components/analytics/metric-card.tsx -> USES
+// edge:../../components/analytics/lineage-table.tsx -> USES
+// edge:/api/content -> API-ENDPOINT
+// edge:/api/assets -> API-ENDPOINT
+// edge:/api/distribution/jobs -> API-ENDPOINT
+// prompt: Add granular error states for each API layer (nodes/assets/jobs); implement schema validation on all responses; debounce filter changes
+
 'use client';
 
 import { useEffect, useState } from 'react';

@@ -1,3 +1,12 @@
+// @crumb waveform-timeline
+// [UI] | Audio waveform display | Timeline scrubber
+// why: Renders audio waveform visualization and timeline scrubber for video editing
+// in:[audio data, current time, markers] out:[canvas waveform, scrubber handle] err:[render, audio errors]
+// hazard: Canvas rendering not optimized—large videos (1+ hour) may cause jank on low-end devices
+// hazard: Waveform cache not invalidated on video swap—old waveform may display briefly
+// edge:apps/studio/src/components/console/MasterTimecode.tsx -> RELATES
+// prompt: Implement waveform caching with video ID key, add off-screen rendering for large files
+
 'use client';
 
 import { useCallback, useRef } from 'react';

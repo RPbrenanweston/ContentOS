@@ -1,3 +1,12 @@
+# @crumb supabase-compose
+# [INF] | Postgres container | Dev database
+# why: Docker Compose configuration for local Supabase Postgres development database
+# in:[image version, port, volume mounts, env vars] out:[running Postgres container, mounted volumes] err:[docker, DB errors]
+# hazard: Database password hard-coded in compose file—commits secret to version control
+# hazard: Volume mount not tested for Windows paths—docker-compose may fail on Windows
+# edge:infra/scripts/run-migrations.sh -> CALLS
+# prompt: Use .env file for secrets, test paths on Windows and Mac, document volume setup
+
 # ============================================================
 # Self-Hosted Supabase Stack for Content Platform
 # ============================================================

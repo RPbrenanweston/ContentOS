@@ -1,3 +1,12 @@
+// @crumb render-queue
+// [UI] | Job queue display | Render progress
+// why: Displays active render jobs and their progress—shows queue status and cancellation
+// in:[render jobs array, job status, progress] out:[queue list DOM, progress bars] err:[job fetch, status errors]
+// hazard: Queue not persisted—jobs lost on page refresh without server feedback
+// hazard: No job cancellation UI—users can't stop running renders
+// edge:apps/studio/src/components/assembly/RenderButton.tsx -> RELATES
+// prompt: Implement WebSocket/polling for real-time job status, add cancel button per job
+
 'use client';
 
 import type { JobStatus } from '@/lib/types/api';

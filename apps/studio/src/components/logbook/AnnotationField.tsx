@@ -1,3 +1,12 @@
+// @crumb annotation-field
+// [UI] | Text editor | Marker notes
+// why: Text input field for editing marker annotations and notes
+// in:[annotation text, onChange callback, isEditing state] out:[textarea DOM, text content] err:[input, validation errors]
+// hazard: No character limit—very long notes may cause database storage issues
+// hazard: Unsaved changes not persisted—closing editor loses input
+// edge:apps/studio/src/components/logbook/MarkerCard.tsx -> CALLS
+// prompt: Add character limit with visual feedback, implement debounced auto-save to draft storage
+
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';

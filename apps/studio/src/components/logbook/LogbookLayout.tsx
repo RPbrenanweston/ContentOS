@@ -1,3 +1,12 @@
+// @crumb logbook-layout
+// [UI] | Ledger container | Annotation workspace
+// why: Main layout for logbook editor—organizes marker ledger, editor panels, and video viewport
+// in:[markers, video, selected marker] out:[layout DOM, panel states] err:[render, state sync errors]
+// hazard: No error boundary—errors in ledger crash entire annotation interface
+// hazard: Panel states not persisted—users lose panel layout on refresh
+// edge:apps/studio/src/components/logbook/LedgerPanel.tsx -> SERVES
+// prompt: Add error boundary, persist panel layout to localStorage with version key
+
 'use client';
 
 import { ReactNode } from 'react';

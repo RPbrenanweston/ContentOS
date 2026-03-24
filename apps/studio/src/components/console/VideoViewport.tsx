@@ -1,3 +1,12 @@
+// @crumb video-viewport
+// [UI] | Player viewport | Media container
+// why: Container and styling wrapper for video player—handles responsiveness and sizing
+// in:[video element, viewport size] out:[viewport DOM, resize listener] err:[resize, layout errors]
+// hazard: No ResizeObserver fallback for older browsers—viewport may not adapt properly
+// hazard: Hard-coded aspect ratios—non-16:9 videos may display with letterboxing issues
+// edge:apps/studio/src/components/console/YouTubePlayer.tsx -> SERVES
+// prompt: Add ResizeObserver polyfill, implement dynamic aspect ratio detection from video metadata
+
 'use client';
 
 import { useEffect, useRef, useCallback } from 'react';

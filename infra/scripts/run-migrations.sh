@@ -1,3 +1,12 @@
+# @crumb run-migrations-script
+# [INF] | Database migrations | Schema updater
+# why: Script running database migrations to update schema on new deployments
+# in:[database URL, migration directory, version] out:[migrated schema, migration log] err:[migration, SQL errors]
+# hazard: Database URL passed as argument—exposed in process list when script runs
+# hazard: No rollback mechanism—failed migration may leave schema in inconsistent state
+# edge:infra/supabase/docker-compose.yml -> CALLS
+# prompt: Use environment variables for credentials, implement migration rollback capability
+
 #!/usr/bin/env bash
 # ============================================================
 # Run all database migrations against self-hosted Supabase

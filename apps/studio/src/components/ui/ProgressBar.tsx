@@ -1,3 +1,12 @@
+// @crumb progress-bar-ui
+// [UI] | Progress indicator | Status display
+// why: Progress bar component showing task progress percentage
+// in:[progress value, max value, label] out:[progress bar DOM, fill width] err:[render, calc errors]
+// hazard: No animation—progress changes appear jarring and harsh
+// hazard: No accessible text alternative—screen readers can't determine progress value
+// edge:apps/studio/src/components/assembly/RenderQueue.tsx -> SERVES
+// prompt: Add smooth CSS transitions, implement aria-valuenow and ARIA live region
+
 'use client';
 
 import React from 'react';

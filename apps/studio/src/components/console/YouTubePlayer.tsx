@@ -1,3 +1,12 @@
+// @crumb youtube-player-wrapper
+// [UI] | YouTube embed | Media player
+// why: Integrates YouTube IFrame API with React—handles player events and timeline sync
+// in:[videoId, currentTime, playback state] out:[player DOM, event callbacks] err:[API load, embed errors]
+// hazard: YouTube IFrame API loaded asynchronously—race condition if used before fully loaded
+// hazard: No error recovery if YouTube CDN unavailable—player fails to initialize silently
+// edge:apps/studio/src/components/console/MasterTimecode.tsx -> CALLS
+// prompt: Add API load state check before calling methods, implement CDN fallback detection
+
 'use client';
 
 import { useEffect, useRef, useCallback, useState } from 'react';

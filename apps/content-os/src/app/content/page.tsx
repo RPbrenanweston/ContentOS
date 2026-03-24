@@ -1,3 +1,14 @@
+// @crumb content-library
+// UI | list-view | data-display
+// why: Displays all content nodes in tabular format with status visibility for library browsing and quick navigation
+// in:[/api/content-endpoint] out:[JSX-table-ui] err:[fetch-failure]
+// hazard: No error state UI; fetch failures silently leave spinner indefinitely
+// hazard: Row click uses window.location.href instead of router.push, breaks client-side routing
+// hazard: StatusBadge component imported but signature/props not validated
+// edge:../../components/content/status-badge.tsx -> USES
+// edge:../[id]/page.tsx -> NAVIGATES-TO
+// prompt: Add error boundary or error state UI; replace window.location.href with Next.js router; validate StatusBadge props
+
 'use client';
 
 import { useEffect, useState } from 'react';

@@ -1,3 +1,12 @@
+// @crumb button-ui
+// [UI] | Reusable button | Component primitive
+// why: Base button component used throughout studio app with variants and states
+// in:[children, onClick, variant, disabled state] out:[button DOM, styling classes] err:[event, styling errors]
+// hazard: No loading state variant—users can't show async operation feedback
+// hazard: Disabled state may not work correctly on mobile—touchend fires even when disabled
+// edge:apps/studio/src/components/console/CaptureButton.tsx -> SERVES
+// prompt: Add loading variant with spinner, fix disabled touch event handling
+
 'use client';
 
 import React from 'react';

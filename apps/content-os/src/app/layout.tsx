@@ -1,3 +1,14 @@
+// @crumb app-root-layout
+// UI | root-layout | entry-point
+// why: Establishes app shell with persistent sidebar navigation and theme context for all routes
+// in:[metadata-config] out:[JSX-html-document] err:[none-critical]
+// hazard: Theme-dependent styling with CSS variables could break if color tokens renamed
+// hazard: NavItem icon prop typing uses React.FC, vulnerable to icon component signature changes
+// hazard: suppressHydrationWarning on html element masks potential hydration mismatches
+// edge:../../components/ui/theme-toggle.tsx -> USES
+// edge:./globals.css -> IMPORTS
+// prompt: Validate CSS variable names match theme system; test hydration with client-side theme logic
+
 import type { Metadata } from 'next';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import './globals.css';

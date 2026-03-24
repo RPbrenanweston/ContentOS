@@ -1,3 +1,12 @@
+// @crumb assembly-detail-page
+// [UI] | Clip compositor | Export workflow
+// why: Assembly page for composing clips into final video—clip selection, ordering, export settings
+// in:[videoId, clips, export settings] out:[composer UI, render queue] err:[clip fetch, render errors]
+// hazard: Render queue not persisted—if browser crashes, render job is lost without recovery
+// hazard: No validation that all clips belong to same video—could assemble cross-video clips unintentionally
+// edge:apps/studio/src/components/assembly/AssemblyLayout.tsx -> SERVES
+// prompt: Add render queue persistence, validate clip ownership, implement job retry on failure
+
 'use client';
 
 import { useState, useCallback } from 'react';

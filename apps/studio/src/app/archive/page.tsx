@@ -1,3 +1,21 @@
+// @crumb archive-hub-page
+// [UI] | Project archive | History view
+// why: Archive page showing completed or archived videos and projects
+// in:[user session, archived videos list] out:[archived UI, project list] err:[data fetch, auth errors]
+// hazard: Archive list may contain deleted projects if soft-delete not cascaded properly
+// hazard: No pagination on archive list—large archives could cause memory issues
+// edge:apps/studio/src/components/shared/NavBar.tsx -> RELATES
+// prompt: Implement pagination for archive, add soft-delete cascade, add restore functionality
+
+// @crumb archive-hub-page
+// [UI] | Project archive | History view
+// why: Archive page showing completed or archived videos and projects
+// in:[user session, archived videos list] out:[archived UI, project list] err:[data fetch, auth errors]
+// hazard: Archive list may contain deleted projects if soft-delete not cascaded properly
+// hazard: No pagination on archive list—large archives could cause memory issues
+// edge:apps/studio/src/components/shared/NavBar.tsx -> RELATES
+// prompt: Implement pagination for archive, add soft-delete cascade, add restore functionality
+
 'use client';
 
 import Link from 'next/link';

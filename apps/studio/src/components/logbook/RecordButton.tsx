@@ -1,3 +1,12 @@
+// @crumb record-button
+// [UI] | Recording control | Voice capture
+// why: Button component for capturing voice-over audio during timeline playback
+// in:[isRecording state, audioContext, onRecordComplete callback] out:[button UI, recording state] err:[media, recording errors]
+// hazard: No microphone permission check—may fail silently on permission denial
+// hazard: No audio preview before export—user can't validate recording quality
+// edge:apps/studio/src/components/logbook/AudioMixer.tsx -> CALLS
+// prompt: Add permission check before recording, implement audio preview playback
+
 'use client';
 
 import { useState, useEffect } from 'react';

@@ -1,3 +1,12 @@
+// @crumb clean-youtube-player
+// [UI] | Minimal player | Testing component
+// why: Stripped-down YouTube player for testing or clean playback without editor UI
+// in:[videoId, playback controls] out:[player DOM, event handlers] err:[API errors]
+// hazard: Duplicate YouTube IFrame logic vs YouTubePlayer—maintenance burden if API changes
+// hazard: No fallback for embeds that fail—unclear error message to user
+// edge:apps/studio/src/components/console/YouTubePlayer.tsx -> RELATES
+// prompt: Consolidate YouTube logic into shared module, add embed validation before render
+
 'use client';
 
 import { useEffect, useRef, useState } from 'react';

@@ -1,3 +1,12 @@
+// @crumb text-overlay-editor
+// [UI] | Text placement | Overlay controls
+// why: Editor for adding and positioning text overlays on video—controls placement and styling
+// in:[text content, position, size, font, color] out:[overlay DOM, text styling] err:[render, input errors]
+// hazard: Text position not constrained—overlays may render outside video bounds
+// hazard: Font size not bounded—very large text may overflow container
+// edge:apps/studio/src/components/logbook/VideoTextRenderer.tsx -> SERVES
+// prompt: Add boundary constraints for positioning, bound font sizes, implement text preview
+
 'use client';
 
 import { useCallback } from 'react';

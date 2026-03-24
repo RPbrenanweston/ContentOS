@@ -1,3 +1,12 @@
+// @crumb clip-selector
+// [UI] | Clip picker | Track builder
+// why: Component for selecting and ordering clips into assembly—drag-drop reordering
+// in:[clips array, selected clips, drag state] out:[clip list DOM, reordered clips] err:[drag, selection errors]
+// hazard: Drag-drop state not validated—could drop clip onto itself or invalid position
+// hazard: No visual feedback during drag—users unsure if drag is working
+// edge:apps/studio/src/components/assembly/ExportSettings.tsx -> RELATES
+// prompt: Add drag validation, implement visual drop indicators, add animations for reordering
+
 'use client';
 
 import type { Breadcrumb } from '@/lib/types/domain';

@@ -1,3 +1,12 @@
+// @crumb assembly-layout
+// [UI] | Compositor container | Assembly workspace
+// why: Main layout for assembly editor—organizes clip selector, preview, and export settings
+// in:[clips array, video, export settings] out:[layout DOM, clip queue] err:[render, data sync errors]
+// hazard: No error boundary—errors in assembly crash entire export workflow
+// hazard: Assembly state not persisted—all work lost if browser crashes
+// edge:apps/studio/src/components/assembly/ClipSelector.tsx -> SERVES
+// prompt: Add error boundary, persist assembly session to IndexedDB with auto-recovery
+
 'use client';
 
 import { ReactNode } from 'react';

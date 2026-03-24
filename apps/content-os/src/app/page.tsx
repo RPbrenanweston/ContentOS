@@ -1,3 +1,12 @@
+// @crumb home-page
+// UI | welcome-screen | entry-point
+// why: Surfaces empty state with primary CTA to encourage first piece creation
+// in:[theme-variables] out:[JSX-landing] err:[none-critical]
+// hazard: Hardcoded href paths could break with routing changes
+// hazard: Theme-dependent styling vulnerable to CSS variable renames
+// edge:../../components/ui/theme-toggle.tsx -> USES
+// prompt: Keep CTAs aligned with theme-system; validate href paths on routing changes
+
 export default function HomePage() {
   return (
     <div className="h-full flex flex-col">

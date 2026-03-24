@@ -1,3 +1,12 @@
+# @crumb freeflow-setup
+# [INF] | Service initializer | Configuration builder
+# why: Setup script initializing Freeflow service configuration and dependencies
+# in:[env vars, config files, input prompts] out:[initialized service, config files] err:[setup, config errors]
+# hazard: Interactive prompts may hang in CI/CD without TTY allocation
+# hazard: Setup state not persisted—re-running script may overwrite manual config changes
+# edge:infra/scripts/generate-keys.sh -> CALLS
+# prompt: Add non-interactive flag for CI/CD, document config override locations, idempotent setup
+
 #!/bin/bash
 # ============================================================
 # FreeFlow Setup Script for Hetzner VPS

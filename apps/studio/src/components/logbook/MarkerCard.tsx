@@ -1,3 +1,12 @@
+// @crumb marker-card
+// [UI] | Marker item | Ledger entry
+// why: Individual marker card in ledger—shows timecode, type, and annotation preview
+// in:[marker object, isSelected state, onSelect callback] out:[card DOM, select handler] err:[render, event errors]
+// hazard: Truncated annotation text may not show full content—user can't preview long notes
+// hazard: No keyboard navigation—users must click to select markers
+// edge:apps/studio/src/components/logbook/AnnotationField.tsx -> RELATES
+// prompt: Add expandable annotation preview, implement arrow key navigation support
+
 'use client';
 
 import { useState } from 'react';

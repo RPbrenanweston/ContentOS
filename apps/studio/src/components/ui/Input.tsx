@@ -1,3 +1,12 @@
+// @crumb input-ui
+// [UI] | Form input | Text field primitive
+// why: Reusable input component for text fields throughout studio
+// in:[value, onChange, placeholder, type] out:[input DOM, text content] err:[input, validation errors]
+// hazard: No input validation built-in—validation logic scattered across forms
+// hazard: No accessible error state indicator—errors may not be conveyed to screen readers
+// edge:apps/studio/src/components/logbook/AnnotationField.tsx -> SERVES
+// prompt: Add validation prop support, implement accessible error message slots
+
 'use client';
 
 import React from 'react';

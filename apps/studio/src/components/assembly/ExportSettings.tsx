@@ -1,3 +1,12 @@
+// @crumb export-settings
+// [UI] | Render config | Export controls
+// why: Settings panel for configuring export parameters—resolution, format, quality
+// in:[export config object, presets] out:[settings UI, export config] err:[validation, input errors]
+// hazard: No preset validation—invalid presets may be saved without detection
+// hazard: Quality settings not mapped to actual encoder parameters—users unsure what values mean
+// edge:apps/studio/src/components/assembly/RenderButton.tsx -> SERVES
+// prompt: Add preset validation with error messages, implement quality preview thumbnails
+
 'use client';
 
 import { PLATFORM_PRESETS, WIDE_PRESETS, type PlatformPreset } from '@/lib/types/platforms';

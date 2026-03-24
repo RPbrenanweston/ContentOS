@@ -1,3 +1,12 @@
+// @crumb clip-trimmer
+// [UI] | Clip boundary editor | Duration control
+// why: Component for adjusting clip in/out points—allows frame-accurate trimming
+// in:[clip boundaries, video duration, scrubber position] out:[trimmed clip boundaries, visual markers] err:[render, trim errors]
+// hazard: Trim boundaries not validated against video length—could create clips beyond video end
+// hazard: No frame-accurate trimming UI—users can't align to specific frames
+// edge:apps/studio/src/components/logbook/TrimHandles.tsx -> SERVES
+// prompt: Add duration validation, implement frame scrubbing, add undo/redo for trim changes
+
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';

@@ -1,3 +1,12 @@
+# @crumb generate-keys-script
+# [INF] | Crypto key generator | Secret provisioning
+# why: Shell script generating RSA keys and secrets for app authentication and encryption
+# in:[key format, bit length parameters] out:[PEM keys, secret files] err:[key gen, write errors]
+# hazard: Keys written to shell history—potential exposure via bash history dump
+# hazard: No permission checks—script may write keys with world-readable permissions
+# edge:infra/freeflow/setup.sh -> CALLS
+# prompt: Redirect script output to /dev/null, chmod generated keys to 600, add setsecure history flag
+
 #!/usr/bin/env bash
 # ============================================================
 # Generate JWT keys for self-hosted Supabase

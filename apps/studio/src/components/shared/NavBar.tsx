@@ -1,3 +1,12 @@
+// @crumb navbar-component
+// [UI] | Navigation header | App router
+// why: Top navigation bar with branding, main menu, and user account menu
+// in:[user state, current route, navigation items] out:[navbar DOM, navigation links] err:[auth, routing errors]
+// hazard: No responsive design—navbar may overflow on mobile screens
+// hazard: Navigation items hard-coded—adding new routes requires code changes
+// edge:apps/studio/src/app/layout.tsx -> SERVES
+// prompt: Implement responsive hamburger menu, make nav items configurable
+
 'use client';
 
 import Link from 'next/link';

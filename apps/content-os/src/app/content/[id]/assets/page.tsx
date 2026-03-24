@@ -1,3 +1,17 @@
+// @crumb adapt-variants
+// UI | generation-ui | multi-platform-adaptation
+// why: Enables creators to generate and review platform-specific content variants from a single original piece; orchestrates generative pipeline with selective publishing
+// in:[/api/content/{id}, /api/assets?nodeId={id}] out:[JSX-grid-ui] err:[fetch-failure, generation-timeout]
+// hazard: No error state handling for failed variant generation; failed API calls silently log but don't update UI (user thinks generation is pending indefinitely)
+// hazard: loadAssets and handleGenerate don't validate response schemas; malformed API responses could crash component
+// hazard: selectedAssetId can become stale if asset is deleted externally; no sync mechanism to clear selection
+// edge:../../components/assets/asset-card.tsx -> USES
+// edge:../../components/assets/generate-panel.tsx -> USES
+// edge:../../components/distribution/publish-panel.tsx -> USES
+// edge:../page.tsx -> NAVIGATES-TO (back to editor)
+// edge:/api/assets -> API-ENDPOINT
+// prompt: Add error boundaries for generation/load failures; validate API response schemas; implement external asset deletion listener; add generation timeout fallback
+
 'use client';
 
 import { useEffect, useState, useCallback, use } from 'react';

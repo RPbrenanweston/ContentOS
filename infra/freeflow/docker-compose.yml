@@ -1,3 +1,12 @@
+# @crumb freeflow-compose
+# [INF] | Freeflow service | Job processor container
+# why: Docker Compose configuration for Freeflow background job processing service
+# in:[image version, environment config, port mapping] out:[running Freeflow container, job queue] err:[docker, service errors]
+# hazard: Service depends on external APIs that may not exist in dev environment
+# hazard: No health check—container may appear running but service not responsive
+# edge:infra/freeflow/setup.sh -> RELATES
+# prompt: Add health check endpoint, implement graceful degradation for missing dependencies
+
 version: "3.9"
 
 # ============================================================

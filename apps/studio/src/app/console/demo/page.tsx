@@ -1,3 +1,12 @@
+// @crumb console-demo-page
+// [UI] | Demo editor | Tutorial workspace
+// why: Read-only demo mode for console editor—allows users to explore features without video upload
+// in:[demo state, static video] out:[demo UI with disabled controls] err:[state errors]
+// hazard: Demo state hard-coded—may not reflect actual feature set if features added/removed
+// hazard: No indication that demo is read-only—users may attempt to save changes and fail silently
+// edge:apps/studio/src/app/console/\[videoId\]/page.tsx -> RELATES
+// prompt: Add visual badge indicating demo mode, implement demo state management in separate store
+
 'use client';
 
 import { Suspense, useState, useCallback } from 'react';

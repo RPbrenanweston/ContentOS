@@ -1,3 +1,14 @@
+// @crumb drafts-review
+// UI | review-panel | workflow-gate
+// why: Surfaces AI-generated variants awaiting approval; gates publication to ensure content quality before distribution
+// in:[/api/assets?status=draft] out:[JSX-review-ui] err:[fetch-failure]
+// hazard: No error handling on loadDrafts failures; API errors silently fail and UI remains in loading state indefinitely
+// hazard: openEditor/saveEdit don't validate editingDraft state; accessing nested properties without null checks risks runtime errors
+// hazard: TipTapEditor onChange receives HTML but component only uses text—potential mismatch if HTML parsing behavior changes
+// edge:../../components/editor/tiptap-editor.tsx -> USES
+// edge:/api/assets -> API-ENDPOINT
+// prompt: Add error boundary for failed asset loads; validate editingDraft before access; reconcile HTML/text handling in editor callback
+
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';

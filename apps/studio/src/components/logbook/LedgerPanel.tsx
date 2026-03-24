@@ -1,3 +1,12 @@
+// @crumb ledger-panel
+// [UI] | Marker list | Annotation ledger
+// why: Displays list of markers and annotations for video—allows selection and navigation
+// in:[markers array, selected marker ID] out:[marker list DOM, scroll position] err:[render, selection errors]
+// hazard: No virtualization—rendering 1000+ markers causes browser freeze
+// hazard: Marker deletions not cascaded—orphaned references may break clip references
+// edge:apps/studio/src/components/logbook/MarkerCard.tsx -> SERVES
+// prompt: Implement virtualization with react-window, add cascade delete on marker removal
+
 'use client';
 
 import type { Breadcrumb } from '@/lib/types/domain';

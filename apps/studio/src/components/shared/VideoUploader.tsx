@@ -1,3 +1,12 @@
+// @crumb video-uploader
+// [UI] | File input | Upload handler
+// why: Component for selecting and uploading video files to studio
+// in:[file input, upload progress, onUploadComplete callback] out:[upload progress UI, uploaded video] err:[file, upload errors]
+// hazard: No file type validation—users may upload unsupported formats and waste bandwidth
+// hazard: No size limit enforcement—very large files may timeout or fail to upload
+// edge:apps/studio/src/app/console/page.tsx -> SERVES
+// prompt: Add file type validation (mp4, webm, etc), add 5GB size limit check
+
 'use client';
 
 import { useState, useCallback, useRef } from 'react';

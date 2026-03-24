@@ -1,3 +1,12 @@
+// @crumb capture-button
+// [UI] | Capture control | Marker creation trigger
+// why: Button component for creating markers at current playback position
+// in:[currentTime, onClick callback] out:[button DOM, click event] err:[state, event errors]
+// hazard: No debounce on rapid clicks—multiple markers could be created at identical timestamps
+// hazard: No visual feedback while capturing—user may think button is unresponsive
+// edge:apps/studio/src/components/console/MasterTimecode.tsx -> CALLS
+// prompt: Add debounce/throttle to capture, implement visual feedback (loading state), add success toast
+
 'use client';
 
 import { useState } from 'react';

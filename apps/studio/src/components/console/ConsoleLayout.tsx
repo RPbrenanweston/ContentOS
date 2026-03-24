@@ -1,3 +1,12 @@
+// @crumb console-layout
+// [UI] | Main editor container | Layout orchestrator
+// why: Root layout component for console editor—arranges player, timeline, and controls
+// in:[video, markers, user state] out:[layout DOM, shared state] err:[render, state sync errors]
+// hazard: No error boundary—child component crashes crash entire editor view
+// hazard: State passed as props without memoization—parent re-renders cascade to all children
+// edge:apps/studio/src/components/console/YouTubePlayer.tsx -> SERVES
+// prompt: Add error boundary, memoize child props, implement state separation for performance
+
 'use client';
 
 import { ReactNode } from 'react';

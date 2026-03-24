@@ -1,3 +1,21 @@
+// @crumb logbook-demo-page
+// [UI] | Demo ledger | Read-only annotations
+// why: Demo mode for logbook editor—shows sample markers, clips, and annotations
+// in:[demo video, sample markers] out:[demo logbook UI, disabled editing] err:[state errors]
+// hazard: Sample markers hard-coded—may not match actual workflow if marker types change
+// hazard: No visual distinction between demo and live logbook—users may get confused
+// edge:apps/studio/src/app/logbook/[videoId]/page.tsx -> RELATES
+// prompt: Add demo mode badge, separate demo state from live logbook, document demo limitations
+
+// @crumb logbook-demo-page
+// [UI] | Demo ledger | Read-only annotations
+// why: Demo mode for logbook editor—shows sample markers, clips, and annotations
+// in:[demo video, sample markers] out:[demo logbook UI, disabled editing] err:[state errors]
+// hazard: Sample markers hard-coded—may not match actual workflow if marker types change
+// hazard: No visual distinction between demo and live logbook—users may get confused
+// edge:apps/studio/src/app/logbook/\[videoId\]/page.tsx -> RELATES
+// prompt: Add demo mode badge, separate demo state from live logbook, document demo limitations
+
 'use client';
 
 import { useState, useCallback, useRef, useEffect } from 'react';

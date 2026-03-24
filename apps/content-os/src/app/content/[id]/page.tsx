@@ -1,3 +1,16 @@
+// @crumb content-detail
+// UI | editor-console | content-management
+// why: Provides unified editor interface for viewing/editing content, managing segments, and triggering processing pipeline
+// in:[/api/content/{id}] out:[JSX-editor-ui] err:[fetch-failure,not-found]
+// hazard: handleSave uses direct API call; no optimistic updates or conflict resolution for concurrent edits
+// hazard: window.location.href in ASSEMBLY LINE link breaks client-side routing context
+// hazard: Processing status polling missing; user doesn't see real-time progress after PROCESS click
+// edge:../../components/editor/tiptap-editor.tsx -> USES
+// edge:../../components/content/status-badge.tsx -> USES
+// edge:./assets/page.tsx -> NAVIGATES-TO
+// edge:/api/content/[id] -> API-ENDPOINT
+// prompt: Implement optimistic updates with rollback; replace href with router.push; add processing status polling
+
 'use client';
 
 import { useEffect, useState, useCallback, use } from 'react';

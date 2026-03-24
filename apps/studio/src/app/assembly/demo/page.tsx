@@ -1,3 +1,21 @@
+// @crumb assembly-demo-page
+// [UI] | Demo compositor | Tutorial assembly
+// why: Demo mode for assembly—shows sample clips and render workflow
+// in:[demo clips, demo video] out:[demo assembly UI, disabled export] err:[state errors]
+// hazard: Demo render preview may not match actual renderer output quality
+// hazard: Hard-coded demo clips—no way to update demo if assembly workflow changes
+// edge:apps/studio/src/app/assembly/[videoId]/page.tsx -> RELATES
+// prompt: Refactor demo state to use factory function, add renderer preview accuracy note
+
+// @crumb assembly-demo-page
+// [UI] | Demo compositor | Tutorial assembly
+// why: Demo mode for assembly—shows sample clips and render workflow
+// in:[demo clips, demo video] out:[demo assembly UI, disabled export] err:[state errors]
+// hazard: Demo render preview may not match actual renderer output quality
+// hazard: Hard-coded demo clips—no way to update demo if assembly workflow changes
+// edge:apps/studio/src/app/assembly/\[videoId\]/page.tsx -> RELATES
+// prompt: Refactor demo state to use factory function, add renderer preview accuracy note
+
 'use client';
 
 import { useState, useCallback } from 'react';

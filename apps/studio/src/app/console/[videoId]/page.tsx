@@ -1,3 +1,12 @@
+// @crumb console-video-detail
+// [UI] | Video editor workspace | Primary studio view
+// why: Main editor page for single video—integrates player, waveform, markers, timeline
+// in:[videoId param, user session, video metadata] out:[rendered editor UI, waveform/markers] err:[auth, video fetch, render errors]
+// hazard: videoId parameter not validated—may expose unowned videos if permission checks fail
+// hazard: Heavy component tree may cause performance issues with large videos or sluggish networks
+// edge:apps/studio/src/components/console/ConsoleLayout.tsx -> SERVES
+// prompt: Add URL param validation, implement permission check for video ownership, consider code splitting
+
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';

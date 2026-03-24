@@ -1,3 +1,12 @@
+// @crumb drawing-toolbar
+// [UI] | Canvas tools | Drawing controls
+// why: Toolbar with brush settings, colors, and drawing tools for canvas editor
+// in:[tool selection, color, brush size] out:[toolbar UI, tool state] err:[render, selection errors]
+// hazard: Color picker not validated—invalid hex values may crash canvas rendering
+// hazard: Brush size not bounded—very large sizes may freeze canvas redraw
+// edge:apps/studio/src/components/logbook/DrawingCanvas.tsx -> CALLS
+// prompt: Add color validation and hex formatting, bound brush size to reasonable range (1-100)
+
 'use client';
 
 import type { DrawingTool } from './DrawingCanvas';
