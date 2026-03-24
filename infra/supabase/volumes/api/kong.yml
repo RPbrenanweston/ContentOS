@@ -1,3 +1,13 @@
+# @crumb kong-api-gateway
+# INF | api-routing | authentication
+# why: Kong API Gateway declarative configuration routing /auth/v1 /rest/v1 /realtime/v1 /storage/v1 /pg endpoints to backend services with auth plugins
+# in:[service routes plugins config] out:[Kong routes with CORS key-auth ACL per endpoint] err:[Invalid route paths, service hostname resolution, missing plugins]
+# hazard: Anon consumer uses NEXT_PUBLIC_SUPABASE_ANON_KEY in plaintext; if this YAML checked into repo, key is exposed
+# hazard: Key-auth plugin enabled with hide_credentials: false; API keys passed in headers will be logged and visible in network tools
+# edge:../../docker-compose.coolify.yml -> RELATES (Kong deployed as part of Supabase stack; routes to auth rest realtime storage services)
+# edge:../../../freeflow/nginx.conf -> RELATES (both Kong and Nginx on 443 could conflict if same server; need separate domains or ports)
+# prompt: Move SUPABASE_ANON_KEY and SUPABASE_SERVICE_KEY to Kong environment secrets; enable hide_credentials: true; add rate limiting per consumer group
+
 _format_version: "1.1"
 
 consumers:

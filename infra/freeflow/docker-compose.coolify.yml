@@ -1,3 +1,13 @@
+# @crumb docker-compose-coolify
+# INF | orchestration | speech-to-text-deployment
+# why: Coolify-compatible Docker Compose file deploying FreeFlow STT service with PostgreSQL backend and health checks; handles SSL/reverse proxy delegation to Coolify
+# in:[env vars POSTGRES_PASSWORD OPENAI_API_KEY BETTER_AUTH_SECRET BOOTSTRAP_TOKEN] out:[Two services: postgres:5432 freeflow:8000] err:[Missing env vars, Postgres init failure, FreeFlow startup timeout]
+# hazard: BOOTSTRAP_TOKEN visible in compose file and Coolify UI logs; if exposed, attacker can create admin users
+# hazard: depends_on uses service_healthy but no retry logic if health check flakes; deployment could hang
+# edge:./nginx.conf -> RELATES (nginx provides SSL termination for freeflow service on port 8000)
+# edge:../supabase/volumes/api/kong.yml -> RELATES (both use Coolify for domain routing; port conflicts possible if both deployed same server)
+# prompt: Move BOOTSTRAP_TOKEN to Coolify Secrets; add timeout and max_retries to health check; document ports 8000 and 3456 in Coolify networking
+
 # ============================================================
 # FreeFlow Speech-to-Text — Coolify Deployment
 # Source: https://github.com/RPbrenanweston/freeflowforcontentOS
