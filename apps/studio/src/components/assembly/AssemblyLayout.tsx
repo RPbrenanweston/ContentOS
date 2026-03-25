@@ -18,6 +18,7 @@ interface AssemblyLayoutProps {
   exportSettings: ReactNode;
   renderQueue: ReactNode;
   renderButton: ReactNode;
+  exportToContentOS?: ReactNode;
 }
 
 export function AssemblyLayout({
@@ -25,6 +26,7 @@ export function AssemblyLayout({
   exportSettings,
   renderQueue,
   renderButton,
+  exportToContentOS,
 }: AssemblyLayoutProps) {
   return (
     <ErrorBoundary>
@@ -40,9 +42,10 @@ export function AssemblyLayout({
           <div className="overflow-y-auto">{renderQueue}</div>
         </div>
 
-        {/* Bottom: Render button */}
-        <div className="border-t border-border p-4">
+        {/* Bottom: Render button + optional export */}
+        <div className="border-t border-border p-4 flex flex-col gap-2">
           {renderButton}
+          {exportToContentOS}
         </div>
       </div>
     </ErrorBoundary>

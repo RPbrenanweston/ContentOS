@@ -17,6 +17,7 @@ import { ClipSelector } from '@/components/assembly/ClipSelector';
 import { ExportSettings } from '@/components/assembly/ExportSettings';
 import { RenderQueue } from '@/components/assembly/RenderQueue';
 import { RenderButton } from '@/components/assembly/RenderButton';
+import { ExportToContentOS } from '@/components/assembly/ExportToContentOS';
 import { useVideo } from '@/lib/hooks/useVideo';
 import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs';
 import { useOutputPolling } from '@/lib/hooks/useOutputPolling';
@@ -201,6 +202,12 @@ export default function AssemblyPage() {
               onClick={handleRender}
               disabled={selectedIds.size === 0}
               rendering={rendering}
+            />
+          }
+          exportToContentOS={
+            <ExportToContentOS
+              videoId={videoId}
+              selectedBreadcrumbIds={Array.from(selectedIds)}
             />
           }
         />

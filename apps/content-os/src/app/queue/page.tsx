@@ -2,33 +2,155 @@
 // UI | timeline-view | scheduling-display
 // why: Visualizes publishing queue across channels; enables creators to review and manage scheduled content distribution rhythm
 // in:[/api/queue, /api/queue/slots] out:[JSX-timeline-ui] err:[fetch-failure, date-parse-error]
-// hazard: No error state UI for failed Promise.all; API errors silently fail and UI remains in loading state indefinitely
-// hazard: slotsByDate grouping assumes valid scheduledFor ISO string; malformed dates crash toLocaleDateString
-// hazard: SlotCard accesses slot.asset without null check after status==='filled'; if asset is null, body access throws
 // edge:../../services/queue.service.ts -> CALLS
-// prompt: Add error boundary for failed slot loads; validate date parsing before grouping; add null-check for slot.asset in SlotCard
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import type { QueueSlot, PublishingQueue } from '@/domain';
 
+/* ------------------------------------------------------------------ */
+/*  Helpers                                                           */
+/* ------------------------------------------------------------------ */
+
+function safeFormatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'No date';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Invalid date';
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return 'Invalid date';
+  }
+}
+
+function safeFormatDateGroup(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Unknown date';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return 'Unknown date';
+    return date.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+    });
+  } catch {
+    return 'Unknown date';
+  }
+}
+
+function safeFormatTime(dateStr: string | null | undefined): string {
+  if (!dateStr) return '--:--';
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return '--:--';
+    return date.toLocaleTimeString('en-GB', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return '--:--';
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Loading skeleton                                                  */
+/* ------------------------------------------------------------------ */
+
+function QueueSkeleton() {
+  return (
+    <div className="h-full flex flex-col">
+      <div className="h-14 flex items-center justify-between px-6" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+        <div className="h-5 w-20 rounded animate-pulse" style={{ backgroundColor: 'var(--theme-surface)' }} />
+        <div className="h-8 w-32 rounded-lg animate-pulse" style={{ backgroundColor: 'var(--theme-surface)' }} />
+      </div>
+      <div className="max-w-2xl mx-auto w-full py-8 px-6 space-y-6">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-4 w-40 rounded animate-pulse" style={{ backgroundColor: 'var(--theme-surface)' }} />
+            {[1, 2].map((j) => (
+              <div
+                key={j}
+                className="h-20 rounded-lg animate-pulse"
+                style={{ backgroundColor: 'var(--theme-surface)' }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Error state                                                       */
+/* ------------------------------------------------------------------ */
+
+function QueueError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="h-full flex items-center justify-center">
+      <div className="text-center max-w-sm">
+        <div
+          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4"
+          style={{ backgroundColor: 'var(--theme-surface)' }}
+        >
+          <svg className="w-8 h-8" style={{ color: 'var(--theme-muted)' }} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-foreground)' }}>
+          Failed to load queue
+        </h2>
+        <p className="text-sm mb-6" style={{ color: 'var(--theme-muted)' }}>
+          Something went wrong while fetching your publishing queue. Please try again.
+        </p>
+        <button
+          onClick={onRetry}
+          className="px-5 py-2.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+          style={{ backgroundColor: 'var(--theme-btn-primary-bg)', color: 'var(--theme-btn-primary-text)' }}
+        >
+          Retry
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Main page                                                         */
+/* ------------------------------------------------------------------ */
+
 export default function QueuePage() {
   const [queues, setQueues] = useState<PublishingQueue[]>([]);
   const [slots, setSlots] = useState<QueueSlot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(false);
     try {
       const [queuesRes, slotsRes] = await Promise.all([
         fetch('/api/queue'),
         fetch('/api/queue/slots?count=21'),
       ]);
+      if (!queuesRes.ok || !slotsRes.ok) {
+        throw new Error(`Fetch failed: queues=${queuesRes.status} slots=${slotsRes.status}`);
+      }
       const queuesData = await queuesRes.json();
       const slotsData = await slotsRes.json();
       setQueues(queuesData.queues ?? []);
       setSlots(slotsData.slots ?? []);
     } catch (e) {
       console.error('Failed to load queue:', e);
+      setError(true);
     } finally {
       setLoading(false);
     }
@@ -37,22 +159,18 @@ export default function QueuePage() {
   useEffect(() => { loadData(); }, [loadData]);
 
   const slotsByDate = slots.reduce<Record<string, QueueSlot[]>>((acc, slot) => {
-    const date = new Date(slot.scheduledFor).toLocaleDateString('en-GB', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-    });
+    const date = safeFormatDateGroup(slot.scheduledFor);
     if (!acc[date]) acc[date] = [];
     acc[date].push(slot);
     return acc;
   }, {});
 
   if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <p className="text-sm" style={{ color: 'var(--theme-muted)' }}>Loading queue...</p>
-      </div>
-    );
+    return <QueueSkeleton />;
+  }
+
+  if (error) {
+    return <QueueError onRetry={loadData} />;
   }
 
   return (
@@ -140,11 +258,12 @@ export default function QueuePage() {
   );
 }
 
+/* ------------------------------------------------------------------ */
+/*  Slot card                                                         */
+/* ------------------------------------------------------------------ */
+
 function SlotCard({ slot }: { slot: QueueSlot }) {
-  const time = new Date(slot.scheduledFor).toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const time = safeFormatTime(slot.scheduledFor);
 
   return (
     <div
@@ -162,12 +281,18 @@ function SlotCard({ slot }: { slot: QueueSlot }) {
 
       {slot.status === 'filled' && slot.asset ? (
         <div className="flex-1 min-w-0">
-          <p className="text-sm line-clamp-2" style={{ color: 'var(--theme-foreground)' }}>{slot.asset.body}</p>
+          <p className="text-sm line-clamp-2" style={{ color: 'var(--theme-foreground)' }}>
+            {slot.asset.body ?? 'Untitled'}
+          </p>
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-ui-sm capitalize">{slot.asset.platformHint}</span>
+            <span className="text-ui-sm capitalize">{slot.asset.platformHint ?? 'unknown'}</span>
             <span style={{ color: 'var(--theme-border)' }}>|</span>
-            <span className="text-ui-sm capitalize">{slot.asset.assetType?.replace('_', ' ')}</span>
+            <span className="text-ui-sm capitalize">{slot.asset.assetType?.replace('_', ' ') ?? 'unknown'}</span>
           </div>
+        </div>
+      ) : slot.status === 'filled' && !slot.asset ? (
+        <div className="flex-1 flex items-center">
+          <p className="text-sm italic" style={{ color: 'var(--theme-muted)' }}>Missing asset</p>
         </div>
       ) : (
         <div className="flex-1 flex items-center">
