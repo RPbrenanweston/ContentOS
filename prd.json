@@ -1,154 +1,410 @@
 {
-  "projectName": "Content Platform Feature Work",
+  "projectName": "ContentOS Full Product Build",
   "branchName": "claude/suspicious-mendel",
-  "description": "Flesh out stubbed/incomplete features in the content platform. Security stories (WS1-WS5) are done. This PRD covers the feature layer: AI client wiring, platform adapters, queue workers, analytics sync, asset regeneration, and Studio integration.",
+  "description": "Comprehensive product buildout: security hardening, image editor (inspired by Canva clone patterns using Fabric.js), content planner/calendar, blog/newsletter publishing adapters (Substack, Beehiiv, Medium, Ghost), and platform polish. Tiered model assignment: haiku for boilerplate, sonnet for moderate features, opus for complex architecture.",
   "userStories": [
     {
-      "id": "FW-001",
-      "title": "Wire AI client to @org/ai-core package",
-      "description": "Replace the stub in apps/content-os/src/lib/ai.ts with a real implementation that delegates to @org/ai-core's createAIClient().",
+      "id": "SEC-001",
+      "title": "Add account ownership check to publish API",
+      "description": "In apps/content-os/src/app/api/distribution/publish/route.ts, after loading accounts by accountIds, verify each account's userId matches the requesting user. Return 403 for unauthorized accounts. This prevents users from posting to accounts they don't own.",
       "acceptanceCriteria": [
-        "createContentOSAIClient() returns a working AIClient that delegates to @org/ai-core createAIClient()",
-        "AIChatParams maps correctly to ai-core ChatParams (userId, messages, model, maxTokens, temperature)",
-        "AIChatResult maps correctly from ai-core ChatResult (content, usage with tokensIn/tokensOut/costUsd, model, latencyMs)",
-        "aiClient singleton is initialized with appId 'content-os' and connects to Supabase for billing",
-        "TypeScript compiles with no errors (npm run typecheck passes)"
-      ],
-      "passes": true,
-      "priority": 1
-    },
-    {
-      "id": "FW-002",
-      "passes": true,
-      "title": "Implement Bluesky platform adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/bluesky.adapter.ts implementing PlatformAdapter interface. Use AT Protocol for posting. Bluesky uses app passwords stored in PlatformCredentials.accessToken (identifier in metadata.handle). getAuthUrl and exchangeCode should throw 'Bluesky uses app passwords, not OAuth' error. createPost: create session with com.atproto.server.createSession, then com.atproto.repo.createRecord for app.bsky.feed.post. deletePost: com.atproto.repo.deleteRecord. getMetrics: return zeroed PlatformMetrics (Bluesky has no public metrics API). validateCredentials: attempt createSession and check success. Register in platforms/index.ts. Follow the same class structure as linkedin.adapter.ts.",
-      "acceptanceCriteria": [
-        "BlueskyAdapter class implements PlatformAdapter interface with platform='bluesky'",
-        "createPost creates an AT Protocol record with text content via fetch to bsky.social PDS",
-        "deletePost removes the record via AT Protocol deleteRecord",
-        "getMetrics returns zeroed PlatformMetrics with a comment about no public API",
-        "validateCredentials verifies app password by calling createSession",
-        "Adapter exported from platforms/index.ts and registered via registerAdapter()",
+        "Publish API validates account ownership before creating distribution jobs",
+        "Returns 403 with clear error message for unauthorized accounts",
+        "Legitimate publish requests still succeed",
         "TypeScript compiles with no errors"
       ],
-      "priority": 2
+      "priority": 1,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 1,
+      "passes": false
     },
     {
-      "id": "FW-003",
-      "title": "Implement Threads platform adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/threads.adapter.ts implementing PlatformAdapter. Threads uses Meta's Threads API (graph.threads.net). OAuth via Meta. getAuthUrl: build URL to threads.net/oauth/authorize with threads_basic and threads_content_publish scopes. exchangeCode: POST to graph.threads.net/oauth/access_token. createPost: two-step \u2014 POST media container to {userId}/threads, then POST to {userId}/threads_publish. deletePost: DELETE to graph.threads.net/{postId}. getMetrics: GET {postId}/insights for views,likes,replies. validateCredentials: GET /me to check token validity. Register in platforms/index.ts.",
+      "id": "SEC-002",
+      "title": "Replace window.prompt with modal in accounts page",
+      "description": "In apps/content-os/src/app/accounts/page.tsx, replace window.prompt() calls for credential input with a proper React modal form. Use a controlled form with input validation. Never expose credentials in browser prompt dialogs.",
       "acceptanceCriteria": [
-        "ThreadsAdapter class implements PlatformAdapter with platform='threads'",
-        "OAuth flow generates correct Threads authorization URL with proper scopes",
-        "createPost uses two-step container+publish flow",
-        "getMetrics fetches insights (views, likes, replies, quotes)",
-        "Adapter exported from platforms/index.ts and registered",
+        "No window.prompt() calls remain in accounts page",
+        "Modal form captures credentials with proper input types",
+        "Form validates required fields before submission",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 2
+      "priority": 1,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 1,
+      "passes": false
     },
     {
-      "id": "FW-004",
-      "title": "Implement Reddit platform adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/reddit.adapter.ts implementing PlatformAdapter. Reddit OAuth2 via reddit.com. getAuthUrl: build URL to reddit.com/api/v1/authorize with identity,submit,read scopes, duration=permanent. exchangeCode: POST to reddit.com/api/v1/access_token with basic auth (clientId:clientSecret). createPost: POST to oauth.reddit.com/api/submit (kind=self, sr from metadata.subreddit, title from first line of text, text from rest). deletePost: POST to oauth.reddit.com/api/del. getMetrics: GET oauth.reddit.com/api/info?id=t3_{id} for score,ups,num_comments. validateCredentials: GET /api/v1/me. Register in platforms/index.ts.",
+      "id": "SEC-003",
+      "title": "Validate scheduledAt rejects past dates in publish route",
+      "description": "In the publish API route, validate that scheduledAt is in the future. Return 400 if the date is in the past. Allow null scheduledAt for immediate publishing.",
       "acceptanceCriteria": [
-        "RedditAdapter class implements PlatformAdapter with platform='reddit'",
-        "OAuth flow generates correct Reddit authorization URL with submit and read scopes",
-        "createPost submits a self-post to subreddit specified in metadata",
-        "getMetrics fetches post score, upvotes, num_comments",
-        "Adapter exported from platforms/index.ts and registered",
+        "Past dates rejected with 400 error and descriptive message",
+        "Null scheduledAt still works for immediate publishing",
+        "Timezone-aware comparison using UTC",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 2
+      "priority": 1,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 1,
+      "passes": false
     },
     {
-      "id": "FW-005",
-      "title": "Implement analytics batch sync loop",
-      "description": "Replace the TODO in apps/content-os/src/app/api/analytics/sync/route.ts. When no jobId provided: 1) Query distribution_jobs where status='published' AND (last_synced_at IS NULL OR last_synced_at < NOW() - INTERVAL '24 hours'). 2) For each job, call distributionService.fetchMetrics(job.id) wrapped in try/catch so one failure doesn't abort batch. 3) After fetching, update last_synced_at on the job. 4) Return { synced: N, errors: M, total: T }. Also register METRICS_SYNC queue worker in workers.ts that handles MetricsSyncJob by calling the same fetchMetrics logic for a single job. Add pg-boss cron schedule: boss.schedule('metrics-sync-cron', '0 */6 * * *', {}) to run every 6 hours.",
+      "id": "SEC-004",
+      "title": "Fix window.location.href to router.push in content list",
+      "description": "In apps/content-os/src/app/content/page.tsx, replace window.location.href navigation with Next.js router.push() to preserve client-side routing and avoid full page reloads.",
       "acceptanceCriteria": [
-        "POST /api/analytics/sync without jobId iterates all published jobs needing sync",
-        "Jobs synced within last 24 hours are skipped",
-        "Response includes { synced, errors, total } counts",
-        "Error in one job does not abort the batch",
-        "METRICS_SYNC worker registered in registerWorkers()",
+        "No window.location.href calls in content page",
+        "Navigation uses Next.js router.push()",
+        "Back button behavior preserved",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 3
+      "priority": 1,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 1,
+      "passes": false
     },
     {
-      "id": "FW-006",
-      "title": "Fix asset regeneration with context loading",
-      "description": "Fix the stub in apps/content-os/src/services/asset-generator.service.ts regenerate() method. The service needs a reference to the derived-asset repo. Add it as a constructor dependency (alongside the AI client). In regenerate(): 1) Load existing asset by assetId from derivedAssetRepo.findById(). 2) Build a prompt that includes original body, assetType, platformHint, and the user's feedback. 3) Call this.ai.chat() with the enriched prompt. 4) Return the new asset preserving contentNodeId, assetType, platformHint, sourceSegmentIds from original, incrementing version. Update the service container (services/container.ts) to pass the repo when constructing AssetGeneratorService.",
+      "id": "SEC-005",
+      "title": "Fix timer memory leak in content/new page",
+      "description": "In apps/content-os/src/app/content/new/page.tsx, the setInterval for auto-save is not cleaned up on component unmount. Add a useEffect cleanup function that clears the interval.",
       "acceptanceCriteria": [
-        "regenerate() loads existing asset by assetId from derived-asset repo",
-        "Prompt includes original body, asset type, platform hint, and user feedback",
-        "Returned asset preserves contentNodeId, assetType, sourceSegmentIds from original",
-        "Version number incremented from original asset version",
-        "Service container updated to pass derivedAssetRepo dependency",
+        "setInterval cleaned up in useEffect return function",
+        "No memory leak on page navigation",
+        "Auto-save still works while on page",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 3
+      "priority": 1,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 1,
+      "passes": false
     },
     {
-      "id": "FW-007",
-      "title": "Register clip-extract queue worker",
-      "description": "Add CLIP_EXTRACT worker in apps/content-os/src/infrastructure/queue/workers.ts. Handler receives ClipExtractJob {nodeId, segmentId, sourceUrl, startMs, endMs}. Steps: 1) Download source video to temp file. 2) Use fluent-ffmpeg to extract clip from startMs to endMs (output to temp). 3) Upload extracted clip to Supabase storage bucket 'clips' with path clips/{nodeId}/{segmentId}.mp4. 4) Create or update derived_asset record with mediaUrl = storage URL, assetType='clip', status='draft'. 5) Clean up temp files. Handle errors by logging and rethrowing for pg-boss retry.",
+      "id": "QUEUE-001",
+      "title": "Add queue creation UI with schedule builder",
+      "description": "Create a modal or dedicated page for creating publishing queues. Include: distribution account selector (multi-select from connected accounts), schedule builder (pick days of week + time slots), timezone picker, queue name input. Submit to POST /api/queue. The 'Create your first queue' button currently has no handler.",
       "acceptanceCriteria": [
-        "CLIP_EXTRACT worker registered in registerWorkers()",
-        "Worker extracts video clip using ffmpeg with startMs/endMs",
-        "Extracted clip uploaded to Supabase storage",
-        "Derived asset record created with mediaUrl",
-        "Temp files cleaned up in finally block",
+        "Queue creation form accessible from queue page",
+        "Account selector shows only user's connected accounts",
+        "Schedule builder allows selecting days and times",
+        "Timezone picker included with user's default pre-selected",
+        "Successful creation navigates to new queue view",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 4
+      "priority": 2,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 3,
+      "passes": false
     },
     {
-      "id": "FW-008",
-      "title": "Register distribution-publish queue worker",
-      "description": "Add DISTRIBUTION_PUBLISH worker in workers.ts. Handler receives DistributionPublishJob {jobId, assetId, accountId}. Steps: 1) Load distribution_job by jobId, update status to 'publishing'. 2) Load derived_asset by assetId for body text and mediaUrls. 3) Load distribution_account by accountId for credentials and platform. 4) Decrypt credentials using token-encryption. 5) Get platform adapter via getAdapter(account.platform). 6) Call adapter.createPost() with credentials and asset content. 7) On success: update job status='published', set externalPostId and externalUrl. 8) On failure: update job status='failed', set errorMessage.",
+      "id": "QUEUE-002",
+      "title": "Add analytics error isolation per metric",
+      "description": "In apps/content-os/src/app/analytics/page.tsx, wrap each metric fetch in independent try/catch so one failing metric doesn't break the entire dashboard. Add per-metric loading and error states.",
       "acceptanceCriteria": [
-        "DISTRIBUTION_PUBLISH worker registered in registerWorkers()",
-        "Worker loads asset, account, and decrypts credentials",
-        "Worker resolves correct platform adapter",
-        "Successful publish updates job to 'published' with external IDs",
-        "Failed publish updates job to 'failed' with error message",
+        "Each metric section has independent loading state",
+        "One failing metric shows error without breaking others",
+        "Retry button per failed metric section",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 4
+      "priority": 2,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 1,
+      "passes": false
     },
     {
-      "id": "FW-009",
-      "title": "Fix queue UI null safety and date parsing",
-      "description": "In apps/content-os/src/app/queue/page.tsx: 1) Add optional chaining on slot.asset?.body and slot.asset?.title where status==='filled'. 2) Wrap new Date(slot.scheduledFor) in a safeFormatDate helper that catches invalid dates and returns 'Invalid date'. 3) Wrap the Promise.all fetch in try/catch and add an error state with retry button. 4) Add loading skeleton while fetching.",
+      "id": "PUB-001",
+      "title": "Implement Substack publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/substack.adapter.ts implementing PlatformAdapter. Substack uses email-based publishing via their API. createPost: POST to Substack API with title, body (HTML), subtitle. Support draft vs published state. getMetrics: GET post stats (views, opens, clicks). validateCredentials: verify API token validity. Register in platforms/index.ts.",
       "acceptanceCriteria": [
-        "SlotCard safely handles null/undefined asset when status is 'filled'",
-        "Malformed scheduledFor dates render fallback text instead of crashing",
-        "Failed API fetches show error state with retry button",
+        "SubstackAdapter implements PlatformAdapter with platform='substack'",
+        "createPost publishes or drafts a newsletter post via Substack API",
+        "getMetrics returns post stats (views, opens, clicks)",
+        "validateCredentials verifies API token",
+        "Registered in platforms/index.ts",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 5
+      "priority": 3,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 2,
+      "passes": false
     },
     {
-      "id": "FW-010",
+      "id": "PUB-002",
+      "title": "Implement Beehiiv publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/beehiiv.adapter.ts implementing PlatformAdapter. Beehiiv has a REST API (api.beehiiv.com/v2). createPost: POST /publications/{pubId}/posts with title, content (HTML), status (draft/confirmed/archived). getMetrics: GET /publications/{pubId}/posts/{id} for stats. validateCredentials: GET /publications to verify API key. Register in platforms/index.ts.",
+      "acceptanceCriteria": [
+        "BeehiivAdapter implements PlatformAdapter with platform='beehiiv'",
+        "createPost creates a newsletter post via Beehiiv REST API",
+        "getMetrics returns post engagement stats",
+        "validateCredentials verifies API key by listing publications",
+        "Registered in platforms/index.ts",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 3,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 2,
+      "passes": false
+    },
+    {
+      "id": "PUB-003",
+      "title": "Implement Medium publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/medium.adapter.ts implementing PlatformAdapter. Medium API uses OAuth2 + REST. getAuthUrl: build Medium OAuth URL. exchangeCode: POST to medium.com/v1/tokens. createPost: POST /v1/users/{userId}/posts with title, content (HTML/markdown), contentFormat, publishStatus, tags. getMetrics: Medium API doesn't expose metrics — return zeroed metrics with note. deletePost: not supported by API — throw descriptive error. Register in platforms/index.ts.",
+      "acceptanceCriteria": [
+        "MediumAdapter implements PlatformAdapter with platform='medium'",
+        "OAuth flow generates correct Medium authorization URL",
+        "createPost publishes article with title, content, tags",
+        "getMetrics returns zeroed metrics with explanation (API limitation)",
+        "Registered in platforms/index.ts",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 3,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 2,
+      "passes": false
+    },
+    {
+      "id": "PUB-004",
+      "title": "Implement Ghost publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/ghost.adapter.ts implementing PlatformAdapter. Ghost Admin API uses JWT auth (Admin API key → JWT token). createPost: POST /ghost/api/admin/posts with title, html, status (draft/published), tags. deletePost: DELETE /ghost/api/admin/posts/{id}. getMetrics: not available via Admin API — return zeroed metrics. validateCredentials: GET /ghost/api/admin/site to verify. Support self-hosted Ghost URLs via credentials.metadata.apiUrl. Register in platforms/index.ts.",
+      "acceptanceCriteria": [
+        "GhostAdapter implements PlatformAdapter with platform='ghost'",
+        "JWT auth generated from Admin API key",
+        "createPost publishes/drafts to Ghost instance",
+        "Supports self-hosted Ghost via configurable API URL",
+        "validateCredentials verifies against /site endpoint",
+        "Registered in platforms/index.ts",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 3,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 2,
+      "passes": false
+    },
+    {
+      "id": "IMG-001",
+      "title": "Add Fabric.js canvas editor foundation",
+      "description": "Create apps/content-os/src/app/editor/page.tsx with a Fabric.js-powered canvas editor. Implement the 3-pane layout inspired by Canva clone: left sidebar (tool panels), center canvas (Fabric.js), right panel (layer properties). Include: canvas initialization with configurable dimensions, zoom/pan controls, undo/redo via Fabric.js state snapshots, JSON serialization for save/load. This is the foundation — individual tools added in subsequent stories.",
+      "acceptanceCriteria": [
+        "Editor page renders 3-pane layout at /editor route",
+        "Fabric.js canvas initializes with configurable dimensions",
+        "Zoom and pan controls work",
+        "Undo/redo stores canvas state snapshots",
+        "Canvas state serializable to/from JSON",
+        "Sidebar has tabbed panel structure ready for tools",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 4,
+      "difficulty": "hard",
+      "model": "opus",
+      "estimatedFiles": 8,
+      "passes": false
+    },
+    {
+      "id": "IMG-002",
+      "title": "Add text tool to image editor",
+      "description": "Add text tool to the Fabric.js editor. Implement: text layer creation with configurable font family, size, color, weight, style, alignment. Text editing via double-click on canvas. Font selector with Google Fonts integration (load via API). Text presets (heading, subheading, body) in sidebar panel. Config-driven approach: text presets defined in a config file, not hardcoded in components.",
+      "acceptanceCriteria": [
+        "Text tool adds editable text objects to canvas",
+        "Double-click enables inline text editing",
+        "Property panel shows font controls when text selected",
+        "Font family selector loads Google Fonts",
+        "Text presets (heading/subheading/body) available in sidebar",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 4,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 4,
+      "passes": false
+    },
+    {
+      "id": "IMG-003",
+      "title": "Add image upload and manipulation to editor",
+      "description": "Add image handling to the Fabric.js editor. Implement: image upload from local files, image placement on canvas with aspect ratio preservation, image manipulation (crop via clipPath, filters via Fabric.js built-in filters — brightness, contrast, saturation, blur), resize with corner handles. Image library panel in sidebar for uploaded images.",
+      "acceptanceCriteria": [
+        "Images uploadable via file picker and drag-drop",
+        "Images placed on canvas preserving aspect ratio",
+        "Crop tool using Fabric.js clipPath",
+        "Filter controls (brightness, contrast, saturation) in property panel",
+        "Resize via corner handles maintains aspect ratio when shift held",
+        "Uploaded images shown in sidebar library panel",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 4,
+      "difficulty": "hard",
+      "model": "opus",
+      "estimatedFiles": 5,
+      "passes": false
+    },
+    {
+      "id": "IMG-004",
+      "title": "Add shapes and layers to image editor",
+      "description": "Add shape tool and layer management to the Fabric.js editor. Shapes: config-driven definitions (rectangle, circle, triangle, star, arrow, etc.) following the Canva clone pattern. Layer panel: list all canvas objects with drag-to-reorder, visibility toggle, lock toggle, delete. Selection: multi-select with shift-click, group/ungroup operations.",
+      "acceptanceCriteria": [
+        "Shape tool adds configurable shapes from config-driven definitions",
+        "At least 10 shape types available",
+        "Layer panel lists all objects with thumbnails",
+        "Drag-to-reorder changes z-index",
+        "Visibility and lock toggles per layer",
+        "Multi-select with shift-click",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 4,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 4,
+      "passes": false
+    },
+    {
+      "id": "IMG-005",
+      "title": "Add template system and export to image editor",
+      "description": "Add template save/load and export to the image editor. Templates: save current canvas state as JSON template, load templates from library, default starter templates for common formats (Instagram post 1080x1080, Story 1080x1920, LinkedIn 1200x627, Twitter 1600x900, Blog header 1200x630). Export: PNG, JPG (via canvas.toDataURL), PDF (via jsPDF with canvas render). Multi-page support for carousel/multi-image exports.",
+      "acceptanceCriteria": [
+        "Save current design as reusable template",
+        "Template library with default format presets",
+        "Export to PNG and JPG with quality control",
+        "Export to PDF via jsPDF",
+        "Format presets for major platforms (IG, LinkedIn, Twitter, Blog)",
+        "Exported images saved as derived_assets in ContentOS",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 4,
+      "difficulty": "hard",
+      "model": "opus",
+      "estimatedFiles": 6,
+      "passes": false
+    },
+    {
+      "id": "PLAN-001",
+      "title": "Add content calendar view",
+      "description": "Create apps/content-os/src/app/calendar/page.tsx with a monthly/weekly content calendar. Display scheduled queue slots, published content, and draft content as cards on the calendar. Use date-fns for date math. Calendar cells show: content node title, target platform icons, status badge (draft/scheduled/published). Click to open content detail. Drag-drop to reschedule (updates scheduledFor on queue slot).",
+      "acceptanceCriteria": [
+        "Calendar page renders monthly and weekly views",
+        "Queue slots displayed as cards on scheduled dates",
+        "Published content shown with platform icons",
+        "Click card opens content detail",
+        "Drag-drop reschedules queue slots",
+        "Month/week toggle and date navigation",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 5,
+      "difficulty": "hard",
+      "model": "opus",
+      "estimatedFiles": 6,
+      "passes": false
+    },
+    {
+      "id": "PLAN-002",
+      "title": "Add content pipeline kanban view",
+      "description": "Create apps/content-os/src/app/pipeline/page.tsx with a kanban board showing content lifecycle. Columns: Idea → Draft → Review → Scheduled → Published. Cards show content node summary, asset count, target platforms. Drag between columns updates content status. Filter by platform, content type, date range.",
+      "acceptanceCriteria": [
+        "Kanban board with 5 lifecycle columns",
+        "Content cards show title, asset count, platform badges",
+        "Drag between columns updates content_node status",
+        "Filter controls for platform and content type",
+        "Card click opens content detail",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 5,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 4,
+      "passes": false
+    },
+    {
+      "id": "PLAN-003",
+      "title": "Add multi-platform preview grid",
+      "description": "Create a preview component that shows how content will look on each target platform — inspired by the Planner grid pattern. Show platform-specific formatting: character limits, image dimensions, link preview behavior. Render side-by-side: Instagram post mockup, LinkedIn post mockup, Twitter/X mockup, Blog preview. Each mockup uses platform-appropriate styling and truncation rules.",
+      "acceptanceCriteria": [
+        "Preview grid shows content rendered per platform",
+        "Instagram mockup with correct aspect ratio and caption truncation",
+        "LinkedIn mockup with headline and body formatting",
+        "Twitter/X mockup with character count and thread detection",
+        "Blog mockup with title, featured image, excerpt",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 5,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 5,
+      "passes": false
+    },
+    {
+      "id": "STUDIO-001",
+      "title": "Add video timeline editor to Studio",
+      "description": "Replace the stub in apps/studio/src/app/console/page.tsx with a basic video timeline editor. Use FFmpeg.wasm for client-side video processing. Implement: video preview player, timeline scrubber with frame markers, trim controls (set in/out points), cut at playhead. Store edit decisions as EDL (edit decision list) — non-destructive. Render final video via FFmpeg.wasm when user exports.",
+      "acceptanceCriteria": [
+        "Video player with playback controls at /console",
+        "Timeline scrubber with visual waveform or frame thumbnails",
+        "In/out point trim controls",
+        "Cut at playhead splits segment",
+        "Edit decisions stored as non-destructive EDL",
+        "Export renders final video via FFmpeg.wasm",
+        "TypeScript compiles with no errors"
+      ],
+      "priority": 6,
+      "difficulty": "very-hard",
+      "model": "opus",
+      "estimatedFiles": 10,
+      "passes": false
+    },
+    {
+      "id": "STUDIO-002",
       "title": "Add Studio compilation export to Content OS",
-      "description": "Create apps/studio/src/app/api/compilations/[id]/export/route.ts. The endpoint: 1) Loads the compilation and its clips from Studio DB. 2) Creates a content_node in Content OS (type='video', title=compilation.title, sourceUrl=compilation.outputUrl). This can be a direct Supabase insert since both apps share the same instance. 3) For each clip, creates a derived_asset (type='clip', mediaUrl=clip.outputUrl, sourceSegmentIds=[]). 4) Returns { contentNodeId, assetCount }. Also add an 'Export to Content OS' button in the compilation detail UI that calls this endpoint.",
+      "description": "Create apps/studio/src/app/api/compilations/[id]/export/route.ts. Load compilation and clips from Studio DB. Create content_node in Content OS (type='video'). Create derived_assets for each clip. Add 'Export to Content OS' button in compilation detail UI.",
       "acceptanceCriteria": [
-        "POST /api/compilations/[id]/export endpoint exists in Studio",
-        "Endpoint creates content_node record in shared Supabase",
-        "Each clip becomes a derived_asset linked to the content_node",
-        "Response includes contentNodeId and asset count",
+        "POST /api/compilations/[id]/export endpoint in Studio",
+        "Creates content_node record in shared Supabase",
+        "Each clip becomes derived_asset linked to content_node",
+        "Export button in compilation detail UI",
         "TypeScript compiles with no errors"
       ],
-      "passes": true,
-      "priority": 5
+      "priority": 6,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 3,
+      "passes": false
+    },
+    {
+      "id": "INFRA-001",
+      "title": "Disable Vercel deployment protection for production",
+      "description": "Update Vercel project settings to disable deployment protection on production deployments so the app is publicly accessible. Or configure a custom domain. Currently both apps return Vercel SSO auth page.",
+      "acceptanceCriteria": [
+        "Production deployment accessible without Vercel SSO",
+        "App loads correctly in browser",
+        "API routes accessible for client requests"
+      ],
+      "priority": 2,
+      "difficulty": "easy",
+      "model": "haiku",
+      "estimatedFiles": 0,
+      "passes": false
+    },
+    {
+      "id": "INFRA-002",
+      "title": "Fix Coolify Supabase health to running state",
+      "description": "The Supabase stack on Coolify shows 'Degraded (unhealthy)'. Investigate which services are failing (Kong, GoTrue, PostgREST, etc.) and fix. The database itself is working but the API gateway may not be routing correctly.",
+      "acceptanceCriteria": [
+        "Coolify shows Supabase service as Healthy",
+        "Kong API gateway responds on port 8000",
+        "GoTrue auth service responds",
+        "PostgREST API service responds"
+      ],
+      "priority": 2,
+      "difficulty": "medium",
+      "model": "sonnet",
+      "estimatedFiles": 0,
+      "passes": false
     }
   ]
 }
