@@ -1,9 +1,13 @@
 {
-  "name": "shared-ai-layer",
+  "name": "contentos",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared AI utility layer for LLM provider access, usage tracking, and billing",
+  "description": "ContentOS — creation optimizer platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
   "scripts": {
     "test": "npm run test --workspace=packages/ai-core",
     "typecheck": "npm run typecheck --workspace=packages/ai-core",
