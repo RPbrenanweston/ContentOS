@@ -35,7 +35,7 @@ export const GET = withApiHandler(async (ctx) => {
 
   // Direct job metrics
   if (jobId) {
-    const metrics = await metricRepo.findByJobId(jobId, { limit, offset });
+    const metrics = await metricRepo.findByJobId(jobId);
     const total = Array.isArray(metrics) ? metrics.length : 0;
     const headers = new Headers();
     headers.set('x-total-count', String(total));
