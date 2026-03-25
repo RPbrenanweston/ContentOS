@@ -34,7 +34,8 @@ export function withApiHandler<T = unknown>(
   handler: (ctx: ApiContext<T>) => Promise<NextResponse>,
   options?: ApiHandlerOptions<T>,
 ) {
-  return async (request: NextRequest, routeContext?: { params?: Promise<Record<string, string>> }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return async (request: NextRequest, routeContext?: any) => {
     const requestId = crypto.randomUUID()
 
     try {
