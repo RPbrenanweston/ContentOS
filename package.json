@@ -15,7 +15,7 @@
     "lint:fix": "eslint --fix --no-warn-ignored packages/*/src/**/*.ts",
     "format": "prettier --write 'packages/*/src/**/*.ts'",
     "format:check": "prettier --check 'packages/*/src/**/*.ts'",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "lint-staged": {
     "packages/*/src/**/*.ts": [
