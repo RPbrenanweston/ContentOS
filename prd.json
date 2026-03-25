@@ -1,299 +1,154 @@
 {
-  "branchName": "ralph/architectural-fixes",
+  "projectName": "Content Platform Feature Work",
+  "branchName": "claude/suspicious-mendel",
+  "description": "Flesh out stubbed/incomplete features in the content platform. Security stories (WS1-WS5) are done. This PRD covers the feature layer: AI client wiring, platform adapters, queue workers, analytics sync, asset regeneration, and Studio integration.",
   "userStories": [
     {
-      "id": "WS4-019",
-      "title": "Fix 11 orphaned breadcrumb edges",
-      "description": "Update broken file references in @crumb edge declarations. Specific fixes: publish/route.ts edges to derived-asset.repo.ts and distribution-account.repo.ts (not asset.repo.ts/account.repo.ts), jobs/route.ts edge to distribution-job.repo.ts (not job.repo.ts), process/route.ts edge to decomposition.service.ts (not content-decompose.ts), queue/page.tsx remove edges to nonexistent /api/queue and /api/queue/slots, theme-toggle.tsx remove edge to nonexistent domain/theme.ts, supabase/client.ts fix directory edge to specific file, frameworks.ts fix speculative edge, segments/route.ts fix self-referential path, interfaces/decomposition.service.ts fix circular edge. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-001",
+      "title": "Wire AI client to @org/ai-core package",
+      "description": "Replace the stub in apps/content-os/src/lib/ai.ts with a real implementation that delegates to @org/ai-core's createAIClient().",
       "acceptanceCriteria": [
-        "Zero orphaned edges pointing to nonexistent files",
-        "All edge targets verified to exist on disk",
-        "grep confirms no references to asset.repo.ts or job.repo.ts or content-decompose.ts"
+        "createContentOSAIClient() returns a working AIClient that delegates to @org/ai-core createAIClient()",
+        "AIChatParams maps correctly to ai-core ChatParams (userId, messages, model, maxTokens, temperature)",
+        "AIChatResult maps correctly from ai-core ChatResult (content, usage with tokensIn/tokensOut/costUsd, model, latencyMs)",
+        "aiClient singleton is initialized with appId 'content-os' and connects to Supabase for billing",
+        "TypeScript compiles with no errors (npm run typecheck passes)"
       ],
-      "passes": false
+      "passes": true,
+      "priority": 1
     },
     {
-      "id": "WS4-020",
-      "title": "Remove 3 duplicate breadcrumb blocks",
-      "description": "Remove the duplicated @crumb blocks from: apps/studio/src/app/logbook/demo/page.tsx, apps/studio/src/app/assembly/demo/page.tsx, apps/studio/src/app/archive/page.tsx. Each has the crumb block copy-pasted twice. Remove the second copy, keep the first. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-002",
+      "passes": true,
+      "title": "Implement Bluesky platform adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/bluesky.adapter.ts implementing PlatformAdapter interface. Use AT Protocol for posting. Bluesky uses app passwords stored in PlatformCredentials.accessToken (identifier in metadata.handle). getAuthUrl and exchangeCode should throw 'Bluesky uses app passwords, not OAuth' error. createPost: create session with com.atproto.server.createSession, then com.atproto.repo.createRecord for app.bsky.feed.post. deletePost: com.atproto.repo.deleteRecord. getMetrics: return zeroed PlatformMetrics (Bluesky has no public metrics API). validateCredentials: attempt createSession and check success. Register in platforms/index.ts. Follow the same class structure as linkedin.adapter.ts.",
       "acceptanceCriteria": [
-        "Each file has exactly one @crumb block",
-        "grep -c @crumb returns 1 for each file",
-        "No duplicate metadata lines in any file"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS4-021",
-      "title": "Fix 3 semantic edge errors in Studio",
-      "description": "Fix incorrect edge relationship types: CaptureButton.tsx edge to MasterTimecode.tsx should be RELATES not CALLS (sibling components), ConsoleLayout.tsx edge to YouTubePlayer.tsx should be RELATES not SERVES (slot prop pattern), MasterTimecode.tsx edge to WaveformTimeline.tsx should be removed entirely (no actual relationship). If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "CaptureButton edge uses RELATES not CALLS",
-        "ConsoleLayout edge uses RELATES not SERVES",
-        "MasterTimecode has no edge to WaveformTimeline"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS4-022",
-      "title": "Standardize breadcrumb format to line-comment style",
-      "description": "Convert JSDoc-style @crumb blocks (/** @crumb with id: on next line, uses AREA: field) found in domain/, services/, lib/ files to line-comment style (// @crumb id-here on first line, [AREA] | tags on second line) to match the majority pattern used in infrastructure/, API routes, UI files. Preserve all content, just reformat. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "Zero files use JSDoc block style for crumbs",
-        "All crumbs start with // @crumb kebab-id",
-        "All area codes use [AREA] | tag format"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS4-023",
-      "title": "Fix 4 area code mismatches on service interfaces",
-      "description": "Change area codes on 4 service interface files from DAT to DOM to match their concrete service implementations: interfaces/asset-generator.service.ts, interfaces/decomposition.service.ts, interfaces/distribution.service.ts, interfaces/media.service.ts. Keep transcript.service.ts as-is (defines result data shapes). If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "Four interface files use DOM area code",
-        "Concrete services and interfaces share same area code",
-        "transcript interface remains DAT"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS4-024",
-      "title": "Add cross-app edges between Studio and Content OS",
-      "description": "Add edge declarations linking Studio to Content OS where integration points exist: Studio supabase/client.ts edge to infra/supabase/docker-compose.yml (READS), Content OS transcript.service.ts edge to infra/freeflow/docker-compose.yml (READS), Studio video upload edge to Content OS media.service.ts (RELATES). Add edges from both apps to shared packages/ai-core where applicable. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "At least 3 cross-app edges exist",
-        "Studio references Content OS or shared infra",
-        "Content OS references FreeFlow infra"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS1-001",
-      "title": "Create auth middleware for Content OS and Studio",
-      "description": "Create Next.js middleware.ts for both apps/content-os/ and apps/studio/ that validates Supabase JWT on all /api/* routes. Middleware should: extract Bearer token from Authorization header, verify JWT using Supabase auth.getUser(), inject userId into request headers (x-user-id), return 401 for missing/invalid tokens, allow /api/health without auth. Use @supabase/ssr for cookie-based auth. Create the middleware.ts files and a shared auth utility. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "middleware.ts exists in both app roots",
-        "Unauthenticated /api/* requests return 401 JSON",
-        "Valid JWT requests pass with x-user-id header set",
-        "/api/health accessible without auth"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS1-002",
-      "title": "Create API route wrapper with error sanitization",
-      "description": "Create withApiHandler() wrapper function for both apps at src/lib/api-handler.ts. The wrapper should: catch all errors and return sanitized JSON (no internal details), validate request body with optional Zod schema, add request correlation ID (x-request-id), log requests with structured format, extract userId from x-user-id header (set by middleware). Export typed helper. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "api-handler.ts exists in both apps",
-        "Error responses contain only message and status code",
-        "No stack traces or internal class names in error responses",
-        "Request correlation ID present in all responses"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS1-003",
-      "title": "Add rate limiting middleware",
-      "description": "Create rate limiting for both apps. Use a simple in-memory token bucket (no Redis dependency for now). Configure per-route limits: default 100 req/min, AI processing routes (process, assets) 10 req/min, media upload 20 req/min. Return 429 with Retry-After header when exceeded. Config via env vars RATE_LIMIT_DEFAULT, RATE_LIMIT_AI, RATE_LIMIT_UPLOAD. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "Rate limit helper exists in both apps",
-        "Exceeding limit returns 429 with Retry-After",
-        "AI routes have stricter limits than default",
-        "Limits configurable via environment variables"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS1-004",
-      "title": "SSRF prevention and secure file paths",
-      "description": "Fix media clip route: validate source_url against allowlist, reject private IP ranges (10.x, 172.16-31.x, 192.168.x, 169.254.x, localhost, 127.x), enforce HTTPS scheme. Fix media upload route: replace Math.random() with crypto.randomUUID() for upload path generation. Add URL validation utility at src/lib/url-validation.ts. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "URL validation utility rejects private IPs",
-        "Clip route rejects non-HTTPS URLs",
-        "Upload route uses crypto.randomUUID not Math.random",
-        "No SSRF possible via media endpoints"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS1-005",
-      "title": "Encrypt OAuth tokens and secure service key",
-      "description": "Encrypt OAuth access/refresh tokens before storing in distribution_accounts table. Use AES-256-GCM matching the pattern in packages/ai-core/src/keys.ts. Add server-only enforcement on createServiceClient() using next server-only package. Fix Kong hide_credentials to true in kong.yml. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "OAuth tokens encrypted before database write",
-        "Decryption works on read from database",
-        "createServiceClient imports server-only package",
-        "Kong hide_credentials set to true"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS1-006",
-      "title": "Migrate all 24 API routes to use middleware and wrapper",
-      "description": "Apply withApiHandler() to all 13 Content OS API routes and all 11 Studio API routes. Remove hardcoded userId (use ctx.userId from wrapper). Remove inline try/catch (wrapper handles errors). Ensure all routes use the Zod validation parameter where schemas exist. This is a bulk migration — work through routes methodically. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "All 24 routes wrapped with withApiHandler",
-        "Zero hardcoded userId strings in any route",
-        "All routes return sanitized error responses",
+        "BlueskyAdapter class implements PlatformAdapter interface with platform='bluesky'",
+        "createPost creates an AT Protocol record with text content via fetch to bsky.social PDS",
+        "deletePost removes the record via AT Protocol deleteRecord",
+        "getMetrics returns zeroed PlatformMetrics with a comment about no public API",
+        "validateCredentials verifies app password by calling createSession",
+        "Adapter exported from platforms/index.ts and registered via registerAdapter()",
         "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "priority": 2
     },
     {
-      "id": "WS2-007",
-      "title": "Create Supabase transaction helper",
-      "description": "Create transaction.ts utility for wrapping multi-table Supabase operations in Postgres transactions. Use supabase.rpc() with a custom Postgres function, or use the Supabase JS client's ability to chain operations. Apply to: workers.ts (delete segments + create new), content-segment.repo.ts (bulk insert), distribution publish (multi-account). If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-003",
+      "title": "Implement Threads platform adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/threads.adapter.ts implementing PlatformAdapter. Threads uses Meta's Threads API (graph.threads.net). OAuth via Meta. getAuthUrl: build URL to threads.net/oauth/authorize with threads_basic and threads_content_publish scopes. exchangeCode: POST to graph.threads.net/oauth/access_token. createPost: two-step \u2014 POST media container to {userId}/threads, then POST to {userId}/threads_publish. deletePost: DELETE to graph.threads.net/{postId}. getMetrics: GET {postId}/insights for views,likes,replies. validateCredentials: GET /me to check token validity. Register in platforms/index.ts.",
       "acceptanceCriteria": [
-        "Transaction helper exists and is importable",
-        "workers.ts uses transaction for delete+create",
-        "Partial failure rolls back all changes",
+        "ThreadsAdapter class implements PlatformAdapter with platform='threads'",
+        "OAuth flow generates correct Threads authorization URL with proper scopes",
+        "createPost uses two-step container+publish flow",
+        "getMetrics fetches insights (views, likes, replies, quotes)",
+        "Adapter exported from platforms/index.ts and registered",
         "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": true,
+      "priority": 2
     },
     {
-      "id": "WS2-008",
-      "title": "Configure bounded retry with dead letter queue",
-      "description": "Configure pg-boss with: maxRetries 5, exponential backoff (retryDelay with backoff factor), dead letter queue table for permanently failed jobs. Update pg-boss.ts singleton configuration. Add monitoring query for dead letter items. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-004",
+      "title": "Implement Reddit platform adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/reddit.adapter.ts implementing PlatformAdapter. Reddit OAuth2 via reddit.com. getAuthUrl: build URL to reddit.com/api/v1/authorize with identity,submit,read scopes, duration=permanent. exchangeCode: POST to reddit.com/api/v1/access_token with basic auth (clientId:clientSecret). createPost: POST to oauth.reddit.com/api/submit (kind=self, sr from metadata.subreddit, title from first line of text, text from rest). deletePost: POST to oauth.reddit.com/api/del. getMetrics: GET oauth.reddit.com/api/info?id=t3_{id} for score,ups,num_comments. validateCredentials: GET /api/v1/me. Register in platforms/index.ts.",
       "acceptanceCriteria": [
-        "pg-boss configured with max 5 retries",
-        "Failed jobs move to dead letter after max retries",
-        "Backoff increases between retries",
-        "Dead letter queue queryable"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS2-009",
-      "title": "Add pagination to all list endpoints",
-      "description": "Add limit/offset query params with max page size 100 to: GET /api/content, GET /api/content/[id]/segments, GET /api/distribution/jobs, GET /api/analytics, GET /api/videos, GET /api/outputs. Return total count in response headers (x-total-count). Default limit 20. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "All list endpoints accept limit and offset params",
-        "Maximum page size enforced at 100",
-        "Response includes x-total-count header",
-        "Default limit is 20 when not specified"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS2-010",
-      "title": "Add clip validation and media cleanup",
-      "description": "Add Zod refinement to clipExtractionSchema: endMs must be greater than startMs, maxLength must be positive integer, duration must be under 30 minutes. Create media cleanup background job that identifies orphaned storage URLs (files without a live content_node or derived_asset reference) and logs them for review. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "clipExtractionSchema rejects endMs <= startMs",
-        "maxLength validated as positive integer",
-        "Media cleanup job exists and identifies orphans",
+        "RedditAdapter class implements PlatformAdapter with platform='reddit'",
+        "OAuth flow generates correct Reddit authorization URL with submit and read scopes",
+        "createPost submits a self-post to subreddit specified in metadata",
+        "getMetrics fetches post score, upvotes, num_comments",
+        "Adapter exported from platforms/index.ts and registered",
         "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": true,
+      "priority": 2
     },
     {
-      "id": "WS2-011",
-      "title": "DST-safe scheduling for publishing queues",
-      "description": "Replace raw timeOfDay string handling with proper timezone-aware scheduling. Validate timezone field against IANA timezone database. Handle DST transitions by computing next occurrence in the target timezone, not UTC offset. Use Temporal API or date-fns-tz. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-005",
+      "title": "Implement analytics batch sync loop",
+      "description": "Replace the TODO in apps/content-os/src/app/api/analytics/sync/route.ts. When no jobId provided: 1) Query distribution_jobs where status='published' AND (last_synced_at IS NULL OR last_synced_at < NOW() - INTERVAL '24 hours'). 2) For each job, call distributionService.fetchMetrics(job.id) wrapped in try/catch so one failure doesn't abort batch. 3) After fetching, update last_synced_at on the job. 4) Return { synced: N, errors: M, total: T }. Also register METRICS_SYNC queue worker in workers.ts that handles MetricsSyncJob by calling the same fetchMetrics logic for a single job. Add pg-boss cron schedule: boss.schedule('metrics-sync-cron', '0 */6 * * *', {}) to run every 6 hours.",
       "acceptanceCriteria": [
-        "Timezone field validated against IANA database",
-        "Queue slots compute correctly across DST boundaries",
-        "Invalid timezone rejected with clear error",
+        "POST /api/analytics/sync without jobId iterates all published jobs needing sync",
+        "Jobs synced within last 24 hours are skipped",
+        "Response includes { synced, errors, total } counts",
+        "Error in one job does not abort the batch",
+        "METRICS_SYNC worker registered in registerWorkers()",
         "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3
     },
     {
-      "id": "WS3-012",
-      "title": "Add structured logging with pino",
-      "description": "Create shared logger at packages/logging/ or apps/content-os/src/lib/logger.ts and apps/studio/src/lib/logger.ts using pino. JSON output format with: timestamp, level, message, requestId correlation, service name. Replace all console.warn/console.error in services with logger calls. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-006",
+      "title": "Fix asset regeneration with context loading",
+      "description": "Fix the stub in apps/content-os/src/services/asset-generator.service.ts regenerate() method. The service needs a reference to the derived-asset repo. Add it as a constructor dependency (alongside the AI client). In regenerate(): 1) Load existing asset by assetId from derivedAssetRepo.findById(). 2) Build a prompt that includes original body, assetType, platformHint, and the user's feedback. 3) Call this.ai.chat() with the enriched prompt. 4) Return the new asset preserving contentNodeId, assetType, platformHint, sourceSegmentIds from original, incrementing version. Update the service container (services/container.ts) to pass the repo when constructing AssetGeneratorService.",
       "acceptanceCriteria": [
-        "Logger utility exists in both apps",
-        "Output is structured JSON with timestamp",
-        "Zero console.warn calls remain in services",
-        "Request correlation ID propagated to logs"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS3-013",
-      "title": "Add health check endpoints",
-      "description": "Create /api/health route in both apps. Check: database connectivity (simple SELECT 1), queue status (pg-boss connection for Content OS), storage accessibility. Return 200 with component status JSON on success, 503 with failed component details on failure. No auth required on health endpoint. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "/api/health exists in both apps",
-        "Returns 200 when all components healthy",
-        "Returns 503 when any component fails",
-        "No authentication required"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WS3-014",
-      "title": "Add environment variable validation",
-      "description": "Create src/lib/env.ts in both apps using Zod to validate all required env vars at app startup. Fail fast with clear error message listing all missing vars. Validate: SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_KEY (Content OS), ANTHROPIC_API_KEY (Content OS), NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY. Export typed env object. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "env.ts exists in both apps with Zod schema",
-        "Missing env var causes clear error at startup",
-        "Validated env exported as typed object",
+        "regenerate() loads existing asset by assetId from derived-asset repo",
+        "Prompt includes original body, asset type, platform hint, and user feedback",
+        "Returned asset preserves contentNodeId, assetType, sourceSegmentIds from original",
+        "Version number incremented from original asset version",
+        "Service container updated to pass derivedAssetRepo dependency",
         "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 3
     },
     {
-      "id": "WS3-015",
-      "title": "Add React error boundaries to layouts",
-      "description": "Create ErrorBoundary component for both apps. Wrap major layouts: Content OS root layout, Studio console layout, Studio logbook layout, Studio assembly layout. Error boundary should: catch render errors, show recovery UI with retry button, log error to console (will be upgraded to Sentry later). If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-007",
+      "title": "Register clip-extract queue worker",
+      "description": "Add CLIP_EXTRACT worker in apps/content-os/src/infrastructure/queue/workers.ts. Handler receives ClipExtractJob {nodeId, segmentId, sourceUrl, startMs, endMs}. Steps: 1) Download source video to temp file. 2) Use fluent-ffmpeg to extract clip from startMs to endMs (output to temp). 3) Upload extracted clip to Supabase storage bucket 'clips' with path clips/{nodeId}/{segmentId}.mp4. 4) Create or update derived_asset record with mediaUrl = storage URL, assetType='clip', status='draft'. 5) Clean up temp files. Handle errors by logging and rethrowing for pg-boss retry.",
       "acceptanceCriteria": [
-        "ErrorBoundary component exists in both apps",
-        "All major layouts wrapped with error boundary",
-        "Crashed component shows recovery UI not white screen",
+        "CLIP_EXTRACT worker registered in registerWorkers()",
+        "Worker extracts video clip using ffmpeg with startMs/endMs",
+        "Extracted clip uploaded to Supabase storage",
+        "Derived asset record created with mediaUrl",
+        "Temp files cleaned up in finally block",
         "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 4
     },
     {
-      "id": "WS3-016",
-      "title": "Add IndexedDB state persistence for Studio",
-      "description": "Add auto-save to IndexedDB for in-progress Studio work. Save: current breadcrumb annotations (logbook), clip selections (assembly), export settings (assembly). Use idb-keyval or raw IndexedDB API. Restore state on page reload. Debounce saves to avoid performance impact. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-008",
+      "title": "Register distribution-publish queue worker",
+      "description": "Add DISTRIBUTION_PUBLISH worker in workers.ts. Handler receives DistributionPublishJob {jobId, assetId, accountId}. Steps: 1) Load distribution_job by jobId, update status to 'publishing'. 2) Load derived_asset by assetId for body text and mediaUrls. 3) Load distribution_account by accountId for credentials and platform. 4) Decrypt credentials using token-encryption. 5) Get platform adapter via getAdapter(account.platform). 6) Call adapter.createPost() with credentials and asset content. 7) On success: update job status='published', set externalPostId and externalUrl. 8) On failure: update job status='failed', set errorMessage.",
       "acceptanceCriteria": [
-        "Studio annotations persist across page reload",
-        "Assembly clip selections persist across reload",
-        "Auto-save debounced to max 1 save per second",
-        "Works in all modern browsers"
+        "DISTRIBUTION_PUBLISH worker registered in registerWorkers()",
+        "Worker loads asset, account, and decrypts credentials",
+        "Worker resolves correct platform adapter",
+        "Successful publish updates job to 'published' with external IDs",
+        "Failed publish updates job to 'failed' with error message",
+        "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 4
     },
     {
-      "id": "WS5-017",
-      "title": "Create queue API routes",
-      "description": "Create /api/queue (GET list queues, POST create queue) and /api/queue/slots (GET list slots, POST fill slot, PATCH update slot) endpoints referenced by apps/content-os/src/app/queue/page.tsx. Use publishing_queues and queue_slots tables from migration 011. Apply withApiHandler wrapper and auth middleware. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-009",
+      "title": "Fix queue UI null safety and date parsing",
+      "description": "In apps/content-os/src/app/queue/page.tsx: 1) Add optional chaining on slot.asset?.body and slot.asset?.title where status==='filled'. 2) Wrap new Date(slot.scheduledFor) in a safeFormatDate helper that catches invalid dates and returns 'Invalid date'. 3) Wrap the Promise.all fetch in try/catch and add an error state with retry button. 4) Add loading skeleton while fetching.",
       "acceptanceCriteria": [
-        "/api/queue route exists with GET and POST",
-        "/api/queue/slots route exists with GET POST PATCH",
-        "Queue page can load data from API",
-        "Routes use withApiHandler and require auth"
+        "SlotCard safely handles null/undefined asset when status is 'filled'",
+        "Malformed scheduledFor dates render fallback text instead of crashing",
+        "Failed API fetches show error state with retry button",
+        "TypeScript compiles with no errors"
       ],
-      "passes": false
+      "passes": false,
+      "priority": 5
     },
     {
-      "id": "WS5-018",
-      "title": "Create OAuth callback routes",
-      "description": "Create OAuth callback handlers for LinkedIn and X/Twitter at /api/webhooks/linkedin/callback and /api/webhooks/x/callback. Handle OAuth code exchange, store encrypted tokens in distribution_accounts via repos, redirect back to /accounts page. Use the existing LinkedIn and X adapter classes. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
+      "id": "FW-010",
+      "title": "Add Studio compilation export to Content OS",
+      "description": "Create apps/studio/src/app/api/compilations/[id]/export/route.ts. The endpoint: 1) Loads the compilation and its clips from Studio DB. 2) Creates a content_node in Content OS (type='video', title=compilation.title, sourceUrl=compilation.outputUrl). This can be a direct Supabase insert since both apps share the same instance. 3) For each clip, creates a derived_asset (type='clip', mediaUrl=clip.outputUrl, sourceSegmentIds=[]). 4) Returns { contentNodeId, assetCount }. Also add an 'Export to Content OS' button in the compilation detail UI that calls this endpoint.",
       "acceptanceCriteria": [
-        "LinkedIn callback route handles code exchange",
-        "X/Twitter callback route handles PKCE exchange",
-        "Tokens stored encrypted in distribution_accounts",
-        "Redirect to /accounts after successful connection"
+        "POST /api/compilations/[id]/export endpoint exists in Studio",
+        "Endpoint creates content_node record in shared Supabase",
+        "Each clip becomes a derived_asset linked to the content_node",
+        "Response includes contentNodeId and asset count",
+        "TypeScript compiles with no errors"
       ],
-      "passes": false
-    },
-    {
-      "id": "WS5-019B",
-      "title": "Tighten RLS policies to per-user scoping",
-      "description": "Audit and update Supabase RLS policies on content_nodes, content_segments, derived_assets, distribution_accounts, distribution_jobs, performance_metrics, publishing_queues, queue_slots tables. Change from generic 'all authenticated users' to auth.uid() = user_id per-row. Create migration 014_tighten_rls.sql. If blocked for 2+ iterations, document blockers in progress.txt and output <promise>BLOCKED</promise>",
-      "acceptanceCriteria": [
-        "Migration 014 exists with updated RLS policies",
-        "All content tables use auth.uid() = user_id",
-        "Users cannot access other users data via RLS",
-        "Service role still bypasses RLS"
-      ],
-      "passes": false
+      "passes": false,
+      "priority": 5
     }
   ]
 }

@@ -2,15 +2,13 @@
  * @crumb
  * id: ai-client-integration
  * AREA: INF
- * why: Define AI client contract and stub implementation—route decomposition and asset generation through shared ai-core layer for billing and retry
+ * why: Route decomposition and asset generation through shared ai-core layer for billing, retry, and key management
  * in: AIClientConfig {appId, defaultModel?}; AIChatParams {userId, featureId, messages[], model?, maxTokens?, temperature?}
  * out: AIChatResult {content, usage: {tokensIn, tokensOut, costUsd}, model, latencyMs}
- * err: No errors typed—stub throws immediately; @org/ai-core integration incomplete
- * hazard: createContentOSAIClient() always throws—decomposition.service depends on this but has no fallback for ai-core missing
+ * err: Propagates ai-core errors (InsufficientCreditsError, RateLimitError, ProviderError) to callers
  * hazard: defaultModel 'claude-sonnet-4-20250514' hardcoded—model EOL not detected, cutoff date drift not handled
  * edge: CALLED_BY decomposition.service.ts (content analysis); asset-generator.service.ts (asset generation)
- * edge: DELEGATES_TO @org/ai-core (when linked) for key management, billing, usage tracking, retry logic
- * edge: REQUIRES deployment of ai-core workspace linking for Phase 3 enablement
+ * edge: DELEGATES_TO @org/ai-core for key management, billing, usage tracking, retry logic
  * prompt: Test error handling when ai-core unavailable; verify usage cost calculation accuracy; test model fallback on deprecated model version; validate token counting edge cases (special tokens, multimodal content)
  */
 
@@ -22,8 +20,12 @@
  * key management from the shared AI layer.
  */
 
-// NOTE: Uncomment when @org/ai-core is properly linked in the workspace.
-// For now, we define a lightweight interface that matches ai-core's contract.
+import { createAIClient } from '@org/ai-core';
+import type { ChatParams, ChatResult } from '@org/ai-core';
+import { createServiceClient } from '@/infrastructure/supabase/client';
+
+// Local interfaces kept for backward compatibility with Content OS consumers.
+// These are field-for-field identical to ai-core's types.
 
 export interface AIClientConfig {
   appId: string;
@@ -62,17 +64,35 @@ export interface AIClient {
 /**
  * Create AI client for Content OS.
  *
- * When @org/ai-core is linked, this will delegate to createAIClient().
- * For now, returns a stub that throws — swap for real implementation
- * in Phase 3 when decomposition service is built.
+ * Delegates to @org/ai-core's createAIClient, which provides
+ * automatic billing, usage tracking, retry, and key management.
  */
 export function createContentOSAIClient(config: AIClientConfig): AIClient {
+  const coreClient = createAIClient({
+    appId: config.appId,
+    supabaseClient: createServiceClient(),
+    defaultModel: config.defaultModel,
+  });
+
   return {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async chat(_params: AIChatParams): Promise<AIChatResult> {
-      throw new Error(
-        `AI client not yet connected. Configure @org/ai-core for app: ${config.appId}`,
-      );
+    async chat(params: AIChatParams): Promise<AIChatResult> {
+      const coreParams: ChatParams = {
+        userId: params.userId,
+        featureId: params.featureId,
+        messages: params.messages,
+        model: params.model,
+        maxTokens: params.maxTokens,
+        temperature: params.temperature,
+      };
+
+      const result: ChatResult = await coreClient.chat(coreParams);
+
+      return {
+        content: result.content,
+        usage: result.usage,
+        model: result.model,
+        latencyMs: result.latencyMs,
+      };
     },
   };
 }

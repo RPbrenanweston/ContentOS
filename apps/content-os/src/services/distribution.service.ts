@@ -8,7 +8,7 @@
  * err: ProcessingError on adapter unavailability; DistributionError on platform-specific failures
  * hazard: Missing or dead adapters cause partial failures—no rollback mechanism for partial publishes
  * hazard: Scheduled jobs lack retry strategy—failures stuck in 'failed' state indefinitely
- * edge: CALLS LinkedIn and X adapters via platform-adapter registry
+ * edge: CALLS LinkedIn, X, Bluesky, Threads, and Reddit adapters via platform-adapter registry
  * edge: WRITES distribution_jobs table
  * edge: READS distribution_accounts for platform metadata
  * prompt: Test missing adapters; verify job status transitions; test cancellation side effects
@@ -37,6 +37,9 @@ import {
 } from '@/infrastructure/distribution/platform-adapter';
 import { LinkedInAdapter } from '@/infrastructure/distribution/platforms/linkedin.adapter';
 import { XAdapter } from '@/infrastructure/distribution/platforms/x.adapter';
+import { BlueskyAdapter } from '@/infrastructure/distribution/platforms/bluesky.adapter';
+import { ThreadsAdapter } from '@/infrastructure/distribution/platforms/threads.adapter';
+import { RedditAdapter } from '@/infrastructure/distribution/platforms/reddit.adapter';
 import type { DistributionJobRepo } from '@/infrastructure/supabase/repositories/distribution-job.repo';
 import type { DistributionAccountRepo } from '@/infrastructure/supabase/repositories/distribution-account.repo';
 import type { PerformanceMetricRepo } from '@/infrastructure/supabase/repositories/performance-metric.repo';
@@ -44,6 +47,9 @@ import type { PerformanceMetricRepo } from '@/infrastructure/supabase/repositori
 // Register available adapters on module load
 registerAdapter(new LinkedInAdapter());
 registerAdapter(new XAdapter());
+registerAdapter(new BlueskyAdapter());
+registerAdapter(new ThreadsAdapter());
+registerAdapter(new RedditAdapter());
 
 export class DistributionServiceImpl implements IDistributionService {
   constructor(

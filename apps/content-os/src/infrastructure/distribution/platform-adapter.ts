@@ -6,6 +6,7 @@
 // hazard: Registry mutability allows runtime adapter replacement, risking wrong implementation binding
 // edge:./platforms/linkedin.adapter.ts -> IMPLEMENTS
 // edge:./platforms/x.adapter.ts -> IMPLEMENTS
+// edge:./platforms/threads.adapter.ts -> IMPLEMENTS
 // edge:../../app/api/distribution/accounts/route.ts -> READS
 // edge:../../app/api/distribution/publish/route.ts -> CALLS
 // prompt: Add token expiry validation in validateCredentials; make registry immutable post-init
