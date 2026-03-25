@@ -237,7 +237,7 @@ export default function QueuePage() {
               <div key={date} className="mb-6">
                 <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--theme-foreground)' }}>{date}</h3>
                 <div className="space-y-2">
-                  {dateSlots.map((slot) => (
+                  {(dateSlots as QueueSlot[]).map((slot) => (
                     <SlotCard key={slot.id} slot={slot} />
                   ))}
                 </div>
