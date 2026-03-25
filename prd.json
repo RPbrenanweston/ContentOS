@@ -1,410 +1,434 @@
 {
-  "projectName": "ContentOS Full Product Build",
+  "project": "ContentOS Full Product Build",
   "branchName": "claude/suspicious-mendel",
-  "description": "Comprehensive product buildout: security hardening, image editor (inspired by Canva clone patterns using Fabric.js), content planner/calendar, blog/newsletter publishing adapters (Substack, Beehiiv, Medium, Ghost), and platform polish. Tiered model assignment: haiku for boilerplate, sonnet for moderate features, opus for complex architecture.",
+  "description": "Phase 3: Security hardening, blog/newsletter adapters, image editor (Fabric.js), content planner, and Studio enhancements. Model-tiered execution: haiku for simple, sonnet for moderate, opus for complex.",
   "userStories": [
+    {
+      "id": "BUG-001",
+      "title": "Fix voice recording not delivering text to TipTap editor",
+      "description": "Voice recording captures speech (visible in header as interim text) but transcribed text never appears in the TipTap editor canvas. Root cause: (1) TipTapEditor component doesn't support forwardRef/useImperativeHandle so editorRef.current?.insertText() silently fails. (2) setBodyText() updates React state but TipTap is uncontrolled after init — content prop only used at mount. Fix: Add forwardRef to TipTapEditor exposing insertText method that calls editor.chain().focus().insertContent(text).run(). In content/new/page.tsx, pass ref={editorRef} to TipTapEditor. Remove the setBodyText fallback since TipTap onChange already syncs to bodyText.",
+      "acceptanceCriteria": [
+        "TipTapEditor wrapped in forwardRef with useImperativeHandle exposing insertText(text)",
+        "insertText uses editor.chain().focus().insertContent(text).run()",
+        "content/new/page.tsx passes ref={editorRef} to TipTapEditor",
+        "Voice transcription text appears in editor canvas when recording stops",
+        "Existing onChange callback still fires when voice text inserted",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug — voice recording UI works but text never reaches editor."
+    },
     {
       "id": "SEC-001",
       "title": "Add account ownership check to publish API",
-      "description": "In apps/content-os/src/app/api/distribution/publish/route.ts, after loading accounts by accountIds, verify each account's userId matches the requesting user. Return 403 for unauthorized accounts. This prevents users from posting to accounts they don't own.",
+      "description": "In apps/content-os/src/app/api/distribution/publish/route.ts, after loading accounts by accountIds, verify each account's userId matches ctx.userId. Return 403 for unauthorized accounts.",
       "acceptanceCriteria": [
-        "Publish API validates account ownership before creating distribution jobs",
-        "Returns 403 with clear error message for unauthorized accounts",
-        "Legitimate publish requests still succeed",
-        "TypeScript compiles with no errors"
+        "After loading accounts, filter for accounts where userId !== ctx.userId",
+        "Return 403 JSON error if any unauthorized accounts found",
+        "Legitimate publish requests with owned accounts still succeed",
+        "Typecheck passes"
       ],
       "priority": 1,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 1,
-      "passes": false
+      "passes": false,
+      "notes": "Model: haiku. ~10 lines changed in 1 file."
     },
     {
       "id": "SEC-002",
       "title": "Replace window.prompt with modal in accounts page",
-      "description": "In apps/content-os/src/app/accounts/page.tsx, replace window.prompt() calls for credential input with a proper React modal form. Use a controlled form with input validation. Never expose credentials in browser prompt dialogs.",
+      "description": "In apps/content-os/src/app/accounts/page.tsx, replace all window.prompt() calls with a React modal form using useState for visibility and form state. Modal should have labeled inputs and submit/cancel buttons.",
       "acceptanceCriteria": [
-        "No window.prompt() calls remain in accounts page",
-        "Modal form captures credentials with proper input types",
-        "Form validates required fields before submission",
-        "TypeScript compiles with no errors"
+        "No window.prompt() calls remain in accounts/page.tsx",
+        "Modal component with controlled form inputs replaces each prompt",
+        "Modal has cancel and submit buttons",
+        "Form validates required fields",
+        "Typecheck passes"
       ],
-      "priority": 1,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 1,
-      "passes": false
+      "priority": 2,
+      "passes": false,
+      "notes": "Model: haiku. Add modal state + JSX to existing page."
     },
     {
       "id": "SEC-003",
-      "title": "Validate scheduledAt rejects past dates in publish route",
-      "description": "In the publish API route, validate that scheduledAt is in the future. Return 400 if the date is in the past. Allow null scheduledAt for immediate publishing.",
+      "title": "Validate scheduledAt rejects past dates",
+      "description": "In apps/content-os/src/app/api/distribution/publish/route.ts, add validation that scheduledAt (if provided) is in the future. Return 400 if past. Allow null for immediate publishing.",
       "acceptanceCriteria": [
-        "Past dates rejected with 400 error and descriptive message",
+        "If scheduledAt is provided and is before Date.now(), return 400",
+        "Error message says 'scheduledAt must be in the future'",
         "Null scheduledAt still works for immediate publishing",
-        "Timezone-aware comparison using UTC",
-        "TypeScript compiles with no errors"
+        "Typecheck passes"
       ],
-      "priority": 1,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 1,
-      "passes": false
+      "priority": 3,
+      "passes": false,
+      "notes": "Model: haiku. ~5 lines in 1 file."
     },
     {
       "id": "SEC-004",
-      "title": "Fix window.location.href to router.push in content list",
-      "description": "In apps/content-os/src/app/content/page.tsx, replace window.location.href navigation with Next.js router.push() to preserve client-side routing and avoid full page reloads.",
+      "title": "Fix navigation and timer cleanup bugs",
+      "description": "Two quick fixes: (1) In apps/content-os/src/app/content/page.tsx, replace window.location.href with Next.js useRouter().push(). (2) In apps/content-os/src/app/content/new/page.tsx, add useEffect cleanup to clear the auto-save setInterval on unmount.",
       "acceptanceCriteria": [
-        "No window.location.href calls in content page",
-        "Navigation uses Next.js router.push()",
-        "Back button behavior preserved",
-        "TypeScript compiles with no errors"
+        "content/page.tsx uses router.push() instead of window.location.href",
+        "content/new/page.tsx clears setInterval in useEffect return",
+        "Import useRouter from next/navigation added where needed",
+        "Typecheck passes"
       ],
-      "priority": 1,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 1,
-      "passes": false
-    },
-    {
-      "id": "SEC-005",
-      "title": "Fix timer memory leak in content/new page",
-      "description": "In apps/content-os/src/app/content/new/page.tsx, the setInterval for auto-save is not cleaned up on component unmount. Add a useEffect cleanup function that clears the interval.",
-      "acceptanceCriteria": [
-        "setInterval cleaned up in useEffect return function",
-        "No memory leak on page navigation",
-        "Auto-save still works while on page",
-        "TypeScript compiles with no errors"
-      ],
-      "priority": 1,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 1,
-      "passes": false
+      "priority": 4,
+      "passes": false,
+      "notes": "Model: haiku. 2 files, ~10 lines each."
     },
     {
       "id": "QUEUE-001",
-      "title": "Add queue creation UI with schedule builder",
-      "description": "Create a modal or dedicated page for creating publishing queues. Include: distribution account selector (multi-select from connected accounts), schedule builder (pick days of week + time slots), timezone picker, queue name input. Submit to POST /api/queue. The 'Create your first queue' button currently has no handler.",
+      "title": "Add queue creation modal with account selector",
+      "description": "In apps/content-os/src/app/queue/page.tsx, add a 'Create Queue' modal triggered by the existing button. Modal includes: queue name input, multi-select for distribution accounts (fetched from /api/distribution/accounts), timezone dropdown (Intl.supportedValuesOf('timeZone')), and submit to POST /api/queue.",
       "acceptanceCriteria": [
-        "Queue creation form accessible from queue page",
-        "Account selector shows only user's connected accounts",
-        "Schedule builder allows selecting days and times",
-        "Timezone picker included with user's default pre-selected",
-        "Successful creation navigates to new queue view",
-        "TypeScript compiles with no errors"
+        "Create Queue button opens a modal form",
+        "Modal has name input, account multi-select, timezone dropdown",
+        "Account list fetched from /api/distribution/accounts",
+        "Submit POSTs to /api/queue and closes modal on success",
+        "Typecheck passes"
       ],
-      "priority": 2,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 3,
-      "passes": false
+      "priority": 5,
+      "passes": false,
+      "notes": "Model: sonnet. Add modal + fetch logic to existing page."
     },
     {
       "id": "QUEUE-002",
-      "title": "Add analytics error isolation per metric",
-      "description": "In apps/content-os/src/app/analytics/page.tsx, wrap each metric fetch in independent try/catch so one failing metric doesn't break the entire dashboard. Add per-metric loading and error states.",
+      "title": "Add schedule builder to queue creation modal",
+      "description": "Extend the queue creation modal from QUEUE-001 with a schedule builder. Add day-of-week checkboxes (Mon-Sun) and time slot inputs (add/remove time slots per day). Each slot has hour:minute. Submit schedule as part of POST /api/queue body as scheduleSlots array.",
       "acceptanceCriteria": [
-        "Each metric section has independent loading state",
-        "One failing metric shows error without breaking others",
-        "Retry button per failed metric section",
-        "TypeScript compiles with no errors"
+        "Day-of-week checkboxes for Mon through Sun",
+        "Time slot inputs with add/remove per selected day",
+        "Schedule data included in POST /api/queue request body",
+        "At least one day+time required before submit enabled",
+        "Typecheck passes"
       ],
-      "priority": 2,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 1,
-      "passes": false
+      "priority": 6,
+      "passes": false,
+      "notes": "Model: sonnet. Extends modal from QUEUE-001."
+    },
+    {
+      "id": "QUEUE-003",
+      "title": "Add analytics error isolation per metric",
+      "description": "In apps/content-os/src/app/analytics/page.tsx, wrap each metric fetch in independent try/catch. Add per-metric loading and error states using separate useState variables. Show retry button per failed section.",
+      "acceptanceCriteria": [
+        "Each metric section has its own loading boolean state",
+        "Each metric section has its own error state",
+        "Failed metric shows error message + retry button",
+        "Other metrics still render when one fails",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Model: haiku. Refactor fetch logic in 1 file."
     },
     {
       "id": "PUB-001",
       "title": "Implement Substack publishing adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/substack.adapter.ts implementing PlatformAdapter. Substack uses email-based publishing via their API. createPost: POST to Substack API with title, body (HTML), subtitle. Support draft vs published state. getMetrics: GET post stats (views, opens, clicks). validateCredentials: verify API token validity. Register in platforms/index.ts.",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/substack.adapter.ts implementing PlatformAdapter. Substack API: POST https://substack.com/api/v1/drafts for creating posts (title, body as HTML, subtitle). Auth via API token in Authorization header. getAuthUrl/exchangeCode throw 'Substack uses API tokens'. getMetrics returns zeroed metrics. Register in platforms/index.ts via registerAdapter().",
       "acceptanceCriteria": [
-        "SubstackAdapter implements PlatformAdapter with platform='substack'",
-        "createPost publishes or drafts a newsletter post via Substack API",
-        "getMetrics returns post stats (views, opens, clicks)",
-        "validateCredentials verifies API token",
-        "Registered in platforms/index.ts",
-        "TypeScript compiles with no errors"
+        "SubstackAdapter class implements PlatformAdapter with platform='substack'",
+        "createPost sends POST to Substack drafts API with title and HTML body",
+        "validateCredentials checks token by GET /api/v1/publications",
+        "getAuthUrl throws 'Substack uses API tokens, not OAuth'",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
       ],
-      "priority": 3,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 2,
-      "passes": false
+      "priority": 8,
+      "passes": false,
+      "notes": "Model: sonnet. Follow existing adapter pattern (see linkedin.adapter.ts)."
     },
     {
       "id": "PUB-002",
       "title": "Implement Beehiiv publishing adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/beehiiv.adapter.ts implementing PlatformAdapter. Beehiiv has a REST API (api.beehiiv.com/v2). createPost: POST /publications/{pubId}/posts with title, content (HTML), status (draft/confirmed/archived). getMetrics: GET /publications/{pubId}/posts/{id} for stats. validateCredentials: GET /publications to verify API key. Register in platforms/index.ts.",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/beehiiv.adapter.ts implementing PlatformAdapter. Beehiiv REST API at api.beehiiv.com/v2. Auth: Bearer token. createPost: POST /publications/{pubId}/posts with title, content (HTML), status. getMetrics: GET post stats. validateCredentials: GET /publications. pubId stored in credentials.metadata.publicationId. Register in platforms/index.ts.",
       "acceptanceCriteria": [
-        "BeehiivAdapter implements PlatformAdapter with platform='beehiiv'",
-        "createPost creates a newsletter post via Beehiiv REST API",
-        "getMetrics returns post engagement stats",
-        "validateCredentials verifies API key by listing publications",
-        "Registered in platforms/index.ts",
-        "TypeScript compiles with no errors"
+        "BeehiivAdapter class implements PlatformAdapter with platform='beehiiv'",
+        "createPost POSTs to /publications/{pubId}/posts with title and HTML",
+        "Publication ID read from credentials.metadata.publicationId",
+        "validateCredentials GETs /publications to verify API key",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
       ],
-      "priority": 3,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 2,
-      "passes": false
+      "priority": 9,
+      "passes": false,
+      "notes": "Model: sonnet. Follow existing adapter pattern."
     },
     {
       "id": "PUB-003",
       "title": "Implement Medium publishing adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/medium.adapter.ts implementing PlatformAdapter. Medium API uses OAuth2 + REST. getAuthUrl: build Medium OAuth URL. exchangeCode: POST to medium.com/v1/tokens. createPost: POST /v1/users/{userId}/posts with title, content (HTML/markdown), contentFormat, publishStatus, tags. getMetrics: Medium API doesn't expose metrics — return zeroed metrics with note. deletePost: not supported by API — throw descriptive error. Register in platforms/index.ts.",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/medium.adapter.ts implementing PlatformAdapter. Medium API: OAuth2 flow. getAuthUrl: build medium.com OAuth URL with basicProfile,publishPost scopes. exchangeCode: POST /v1/tokens. createPost: POST /v1/users/{authorId}/posts with title, content, contentFormat='html', publishStatus. getMetrics: return zeroed (no public API). validateCredentials: GET /v1/me. Register in platforms/index.ts.",
       "acceptanceCriteria": [
-        "MediumAdapter implements PlatformAdapter with platform='medium'",
-        "OAuth flow generates correct Medium authorization URL",
-        "createPost publishes article with title, content, tags",
-        "getMetrics returns zeroed metrics with explanation (API limitation)",
-        "Registered in platforms/index.ts",
-        "TypeScript compiles with no errors"
+        "MediumAdapter class implements PlatformAdapter with platform='medium'",
+        "getAuthUrl builds correct Medium OAuth URL",
+        "exchangeCode exchanges auth code for token",
+        "createPost publishes via /v1/users/{authorId}/posts",
+        "getMetrics returns zeroed metrics with API limitation note",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
       ],
-      "priority": 3,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 2,
-      "passes": false
+      "priority": 10,
+      "passes": false,
+      "notes": "Model: sonnet. Follow existing adapter pattern (see threads.adapter.ts for OAuth)."
     },
     {
       "id": "PUB-004",
       "title": "Implement Ghost publishing adapter",
-      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/ghost.adapter.ts implementing PlatformAdapter. Ghost Admin API uses JWT auth (Admin API key → JWT token). createPost: POST /ghost/api/admin/posts with title, html, status (draft/published), tags. deletePost: DELETE /ghost/api/admin/posts/{id}. getMetrics: not available via Admin API — return zeroed metrics. validateCredentials: GET /ghost/api/admin/site to verify. Support self-hosted Ghost URLs via credentials.metadata.apiUrl. Register in platforms/index.ts.",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/ghost.adapter.ts implementing PlatformAdapter. Ghost Admin API: JWT auth from Admin API key (split key at ':', use id as kid, secret for HMAC-SHA256, 5min expiry). createPost: POST {apiUrl}/ghost/api/admin/posts with title, html, status. deletePost: DELETE same. validateCredentials: GET {apiUrl}/ghost/api/admin/site. apiUrl from credentials.metadata.apiUrl. Register in platforms/index.ts.",
       "acceptanceCriteria": [
-        "GhostAdapter implements PlatformAdapter with platform='ghost'",
-        "JWT auth generated from Admin API key",
-        "createPost publishes/drafts to Ghost instance",
-        "Supports self-hosted Ghost via configurable API URL",
-        "validateCredentials verifies against /site endpoint",
-        "Registered in platforms/index.ts",
-        "TypeScript compiles with no errors"
+        "GhostAdapter class implements PlatformAdapter with platform='ghost'",
+        "JWT generated from Admin API key (id:secret split, HMAC-SHA256)",
+        "createPost POSTs to Ghost Admin API",
+        "API URL configurable via credentials.metadata.apiUrl",
+        "validateCredentials checks /ghost/api/admin/site",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
       ],
-      "priority": 3,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 2,
-      "passes": false
+      "priority": 11,
+      "passes": false,
+      "notes": "Model: sonnet. JWT auth is the tricky part — use jsonwebtoken or jose."
     },
     {
       "id": "IMG-001",
-      "title": "Add Fabric.js canvas editor foundation",
-      "description": "Create apps/content-os/src/app/editor/page.tsx with a Fabric.js-powered canvas editor. Implement the 3-pane layout inspired by Canva clone: left sidebar (tool panels), center canvas (Fabric.js), right panel (layer properties). Include: canvas initialization with configurable dimensions, zoom/pan controls, undo/redo via Fabric.js state snapshots, JSON serialization for save/load. This is the foundation — individual tools added in subsequent stories.",
+      "title": "Create image editor page with Fabric.js canvas",
+      "description": "Create apps/content-os/src/app/editor/page.tsx and apps/content-os/src/app/editor/components/Canvas.tsx. Install fabric (npm). Initialize Fabric.js canvas with white background, 1080x1080 default size. Add zoom controls (buttons + mouse wheel). Add basic toolbar: select, pan. Wrap in 3-pane layout shell: left sidebar placeholder, center canvas, right properties placeholder.",
       "acceptanceCriteria": [
-        "Editor page renders 3-pane layout at /editor route",
-        "Fabric.js canvas initializes with configurable dimensions",
-        "Zoom and pan controls work",
-        "Undo/redo stores canvas state snapshots",
-        "Canvas state serializable to/from JSON",
-        "Sidebar has tabbed panel structure ready for tools",
-        "TypeScript compiles with no errors"
+        "Page renders at /editor route",
+        "Fabric.js canvas initializes with 1080x1080 white background",
+        "Zoom in/out buttons work, mouse wheel zooms",
+        "Select and pan mode toggle in toolbar",
+        "3-pane layout: left sidebar (empty), canvas (center), properties (empty right)",
+        "Typecheck passes"
       ],
-      "priority": 4,
-      "difficulty": "hard",
-      "model": "opus",
-      "estimatedFiles": 8,
-      "passes": false
+      "priority": 12,
+      "passes": false,
+      "notes": "Model: opus. Foundation — everything else builds on this."
     },
     {
       "id": "IMG-002",
-      "title": "Add text tool to image editor",
-      "description": "Add text tool to the Fabric.js editor. Implement: text layer creation with configurable font family, size, color, weight, style, alignment. Text editing via double-click on canvas. Font selector with Google Fonts integration (load via API). Text presets (heading, subheading, body) in sidebar panel. Config-driven approach: text presets defined in a config file, not hardcoded in components.",
+      "title": "Add undo/redo and JSON save/load to editor",
+      "description": "In the editor, implement undo/redo using Fabric.js canvas.toJSON() snapshots stored in an array. Max 50 history states. Add save button that serializes canvas to JSON and stores in localStorage. Add load button that restores from localStorage. Add keyboard shortcuts: Ctrl+Z undo, Ctrl+Shift+Z redo, Ctrl+S save.",
       "acceptanceCriteria": [
-        "Text tool adds editable text objects to canvas",
-        "Double-click enables inline text editing",
-        "Property panel shows font controls when text selected",
-        "Font family selector loads Google Fonts",
-        "Text presets (heading/subheading/body) available in sidebar",
-        "TypeScript compiles with no errors"
+        "Undo reverts last canvas change (Ctrl+Z)",
+        "Redo re-applies undone change (Ctrl+Shift+Z)",
+        "History limited to 50 states",
+        "Save serializes canvas JSON to localStorage",
+        "Load restores canvas from localStorage",
+        "Typecheck passes"
       ],
-      "priority": 4,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 4,
-      "passes": false
+      "priority": 13,
+      "passes": false,
+      "notes": "Model: sonnet. State management for canvas history."
     },
     {
       "id": "IMG-003",
-      "title": "Add image upload and manipulation to editor",
-      "description": "Add image handling to the Fabric.js editor. Implement: image upload from local files, image placement on canvas with aspect ratio preservation, image manipulation (crop via clipPath, filters via Fabric.js built-in filters — brightness, contrast, saturation, blur), resize with corner handles. Image library panel in sidebar for uploaded images.",
+      "title": "Add text tool to image editor",
+      "description": "Add text tool to editor sidebar. Click 'Add Text' creates a Fabric.js IText object on canvas. When text selected, right panel shows: font family dropdown (load 20 popular Google Fonts), font size slider, color picker, bold/italic/underline toggles, text alignment. Double-click text on canvas to edit inline. Add text presets in sidebar: Heading (48px bold), Subheading (32px), Body (18px).",
       "acceptanceCriteria": [
-        "Images uploadable via file picker and drag-drop",
-        "Images placed on canvas preserving aspect ratio",
-        "Crop tool using Fabric.js clipPath",
-        "Filter controls (brightness, contrast, saturation) in property panel",
-        "Resize via corner handles maintains aspect ratio when shift held",
-        "Uploaded images shown in sidebar library panel",
-        "TypeScript compiles with no errors"
+        "Add Text button creates editable text on canvas",
+        "Double-click enables inline text editing",
+        "Right panel shows font controls when text selected",
+        "Font family dropdown with 20 Google Fonts",
+        "Text presets (Heading/Subheading/Body) in sidebar",
+        "Typecheck passes"
       ],
-      "priority": 4,
-      "difficulty": "hard",
-      "model": "opus",
-      "estimatedFiles": 5,
-      "passes": false
+      "priority": 14,
+      "passes": false,
+      "notes": "Model: sonnet. Use Fabric.js IText class."
     },
     {
       "id": "IMG-004",
-      "title": "Add shapes and layers to image editor",
-      "description": "Add shape tool and layer management to the Fabric.js editor. Shapes: config-driven definitions (rectangle, circle, triangle, star, arrow, etc.) following the Canva clone pattern. Layer panel: list all canvas objects with drag-to-reorder, visibility toggle, lock toggle, delete. Selection: multi-select with shift-click, group/ungroup operations.",
+      "title": "Add image upload and placement to editor",
+      "description": "Add image tool to editor sidebar. Upload via file input (accept image/*) or drag-drop onto canvas. Place on canvas as Fabric.js Image object, preserving aspect ratio, centered, scaled to fit within canvas bounds. When image selected, right panel shows: opacity slider, flip horizontal/vertical buttons. Sidebar shows uploaded images gallery for re-use.",
       "acceptanceCriteria": [
-        "Shape tool adds configurable shapes from config-driven definitions",
-        "At least 10 shape types available",
-        "Layer panel lists all objects with thumbnails",
-        "Drag-to-reorder changes z-index",
-        "Visibility and lock toggles per layer",
-        "Multi-select with shift-click",
-        "TypeScript compiles with no errors"
+        "Upload button opens file picker for images",
+        "Drag-drop onto canvas adds image",
+        "Images placed centered, aspect-ratio-preserved, fit within canvas",
+        "Right panel shows opacity and flip controls for selected image",
+        "Uploaded images appear in sidebar gallery",
+        "Typecheck passes"
       ],
-      "priority": 4,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 4,
-      "passes": false
+      "priority": 15,
+      "passes": false,
+      "notes": "Model: sonnet. Use fabric.Image.fromURL()."
     },
     {
       "id": "IMG-005",
-      "title": "Add template system and export to image editor",
-      "description": "Add template save/load and export to the image editor. Templates: save current canvas state as JSON template, load templates from library, default starter templates for common formats (Instagram post 1080x1080, Story 1080x1920, LinkedIn 1200x627, Twitter 1600x900, Blog header 1200x630). Export: PNG, JPG (via canvas.toDataURL), PDF (via jsPDF with canvas render). Multi-page support for carousel/multi-image exports.",
+      "title": "Add image filters and crop to editor",
+      "description": "When an image is selected on canvas, add filter controls to right panel: brightness, contrast, saturation sliders (using Fabric.js built-in filters). Add crop mode: enter crop mode draws a crop rectangle overlay, confirm crops using clipPath. All filters are non-destructive (stored as filter array on the Image object).",
       "acceptanceCriteria": [
-        "Save current design as reusable template",
-        "Template library with default format presets",
-        "Export to PNG and JPG with quality control",
-        "Export to PDF via jsPDF",
-        "Format presets for major platforms (IG, LinkedIn, Twitter, Blog)",
-        "Exported images saved as derived_assets in ContentOS",
-        "TypeScript compiles with no errors"
+        "Brightness slider applies Fabric.js Brightness filter",
+        "Contrast slider applies Contrast filter",
+        "Saturation slider applies Saturation filter",
+        "Crop mode shows draggable crop rectangle",
+        "Confirm crop applies clipPath to image",
+        "Filters are non-destructive (removable)",
+        "Typecheck passes"
       ],
-      "priority": 4,
-      "difficulty": "hard",
-      "model": "opus",
-      "estimatedFiles": 6,
-      "passes": false
+      "priority": 16,
+      "passes": false,
+      "notes": "Model: opus. Fabric.js filter pipeline + clipPath cropping."
+    },
+    {
+      "id": "IMG-006",
+      "title": "Add shapes tool to image editor",
+      "description": "Add shapes tool to editor sidebar with config-driven shape definitions. Shapes: rectangle, circle, triangle, star, arrow, line, hexagon, diamond, heart, speech bubble. Each shape defined in a config array with name, icon, and Fabric.js creation function. Click shape in sidebar to add centered on canvas. When selected, right panel shows: fill color, stroke color, stroke width, opacity.",
+      "acceptanceCriteria": [
+        "At least 10 shape types in sidebar panel",
+        "Shapes defined in config array (not hardcoded per component)",
+        "Click shape adds it centered on canvas",
+        "Right panel shows fill, stroke, opacity controls",
+        "Shapes resizable and rotatable via Fabric.js handles",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "Model: sonnet. Config-driven pattern from Canva clone analysis."
+    },
+    {
+      "id": "IMG-007",
+      "title": "Add layer panel to image editor",
+      "description": "Add layer management panel to editor (bottom of right panel or as a tab). List all canvas objects with small thumbnails/icons and names. Drag-to-reorder changes z-index (canvas.moveTo). Each layer row has: visibility toggle (eye icon), lock toggle (padlock icon), delete button. Multi-select with shift-click for group operations.",
+      "acceptanceCriteria": [
+        "Layer panel lists all canvas objects",
+        "Each row shows type icon and object name",
+        "Drag-to-reorder changes z-index on canvas",
+        "Visibility toggle hides/shows object",
+        "Lock toggle prevents selection/movement",
+        "Delete removes object from canvas",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "Model: sonnet. Fabric.js canvas.getObjects() + moveTo()."
+    },
+    {
+      "id": "IMG-008",
+      "title": "Add template presets and export to image editor",
+      "description": "Add format/template presets to editor: Instagram Post (1080x1080), Instagram Story (1080x1920), LinkedIn Post (1200x627), Twitter Post (1600x900), Blog Header (1200x630). Preset selector resizes canvas. Add export: PNG button (canvas.toDataURL('png')), JPG button (canvas.toDataURL('jpeg', 0.9)). Download triggers browser save dialog. Also add 'Save as Asset' button that creates a derived_asset record in Supabase with the exported image URL.",
+      "acceptanceCriteria": [
+        "Format presets dropdown with 5 platform sizes",
+        "Selecting preset resizes canvas to new dimensions",
+        "Export PNG downloads image file",
+        "Export JPG downloads with quality setting",
+        "Save as Asset creates derived_asset in Supabase",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "Model: opus. Canvas export + Supabase integration."
     },
     {
       "id": "PLAN-001",
-      "title": "Add content calendar view",
-      "description": "Create apps/content-os/src/app/calendar/page.tsx with a monthly/weekly content calendar. Display scheduled queue slots, published content, and draft content as cards on the calendar. Use date-fns for date math. Calendar cells show: content node title, target platform icons, status badge (draft/scheduled/published). Click to open content detail. Drag-drop to reschedule (updates scheduledFor on queue slot).",
+      "title": "Add monthly content calendar page",
+      "description": "Create apps/content-os/src/app/calendar/page.tsx. Render a monthly calendar grid (7 columns, 4-6 rows). Fetch queue slots from /api/queue/slots and published content from /api/content for the visible month. Display as small cards in each day cell: title truncated, platform icon badge, status color (draft=gray, scheduled=blue, published=green). Navigation: prev/next month buttons, today button. Use date-fns for date math.",
       "acceptanceCriteria": [
-        "Calendar page renders monthly and weekly views",
-        "Queue slots displayed as cards on scheduled dates",
-        "Published content shown with platform icons",
-        "Click card opens content detail",
-        "Drag-drop reschedules queue slots",
-        "Month/week toggle and date navigation",
-        "TypeScript compiles with no errors"
+        "Calendar page renders at /calendar route",
+        "Monthly grid shows 7 columns (Sun-Sat) with correct day numbers",
+        "Queue slots appear as cards on their scheduled dates",
+        "Published content shown with green status badge",
+        "Prev/next month navigation works",
+        "Today button scrolls to current date",
+        "Typecheck passes"
       ],
-      "priority": 5,
-      "difficulty": "hard",
-      "model": "opus",
-      "estimatedFiles": 6,
-      "passes": false
+      "priority": 20,
+      "passes": false,
+      "notes": "Model: opus. Complex date math + multi-source data fetching."
     },
     {
       "id": "PLAN-002",
-      "title": "Add content pipeline kanban view",
-      "description": "Create apps/content-os/src/app/pipeline/page.tsx with a kanban board showing content lifecycle. Columns: Idea → Draft → Review → Scheduled → Published. Cards show content node summary, asset count, target platforms. Drag between columns updates content status. Filter by platform, content type, date range.",
+      "title": "Add drag-drop rescheduling to calendar",
+      "description": "Extend calendar from PLAN-001 with drag-drop. Content cards in calendar cells are draggable. Drop on a different day cell updates the queue slot's scheduledFor via PATCH /api/queue/slots/{id}. Visual feedback: dragging card shows ghost, drop target highlights. Optimistic UI update with rollback on API error.",
       "acceptanceCriteria": [
-        "Kanban board with 5 lifecycle columns",
-        "Content cards show title, asset count, platform badges",
-        "Drag between columns updates content_node status",
-        "Filter controls for platform and content type",
-        "Card click opens content detail",
-        "TypeScript compiles with no errors"
+        "Content cards are draggable in calendar",
+        "Dropping on different day updates scheduledFor",
+        "PATCH /api/queue/slots/{id} called with new date",
+        "Drop target cell highlights on dragover",
+        "Optimistic update with rollback on error",
+        "Typecheck passes"
       ],
-      "priority": 5,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 4,
-      "passes": false
+      "priority": 21,
+      "passes": false,
+      "notes": "Model: sonnet. HTML5 drag-drop API."
     },
     {
       "id": "PLAN-003",
-      "title": "Add multi-platform preview grid",
-      "description": "Create a preview component that shows how content will look on each target platform — inspired by the Planner grid pattern. Show platform-specific formatting: character limits, image dimensions, link preview behavior. Render side-by-side: Instagram post mockup, LinkedIn post mockup, Twitter/X mockup, Blog preview. Each mockup uses platform-appropriate styling and truncation rules.",
+      "title": "Add content pipeline kanban view",
+      "description": "Create apps/content-os/src/app/pipeline/page.tsx with a kanban board. 5 columns: Idea, Draft, Review, Scheduled, Published. Fetch content_nodes and display as cards with title, asset count badge, platform icons. Drag between columns updates content_node status via PATCH /api/content/{id}. Filter bar: platform dropdown, content type dropdown, date range.",
       "acceptanceCriteria": [
-        "Preview grid shows content rendered per platform",
-        "Instagram mockup with correct aspect ratio and caption truncation",
-        "LinkedIn mockup with headline and body formatting",
-        "Twitter/X mockup with character count and thread detection",
-        "Blog mockup with title, featured image, excerpt",
-        "TypeScript compiles with no errors"
+        "Kanban board renders at /pipeline with 5 columns",
+        "Content cards show title, asset count, platform badges",
+        "Drag between columns updates status via API",
+        "Filter controls for platform and content type",
+        "Typecheck passes"
       ],
-      "priority": 5,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 5,
-      "passes": false
+      "priority": 22,
+      "passes": false,
+      "notes": "Model: sonnet. Similar pattern to calendar drag-drop."
+    },
+    {
+      "id": "PLAN-004",
+      "title": "Add multi-platform preview component",
+      "description": "Create apps/content-os/src/components/PlatformPreview.tsx. Given a content node's text and images, render side-by-side platform mockups: Instagram (square image + caption truncated at 2200 chars), LinkedIn (text + link preview), Twitter/X (280 char limit with thread indicator if longer), Blog (title + featured image + excerpt). Each mockup uses platform-appropriate fonts, colors, and layout.",
+      "acceptanceCriteria": [
+        "PlatformPreview component accepts content text and images",
+        "Instagram mockup with correct aspect ratio and caption limits",
+        "LinkedIn mockup with headline formatting",
+        "Twitter/X mockup with character count and thread detection",
+        "Blog mockup with title and excerpt",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": "Model: sonnet. Pure UI component, no backend."
     },
     {
       "id": "STUDIO-001",
-      "title": "Add video timeline editor to Studio",
-      "description": "Replace the stub in apps/studio/src/app/console/page.tsx with a basic video timeline editor. Use FFmpeg.wasm for client-side video processing. Implement: video preview player, timeline scrubber with frame markers, trim controls (set in/out points), cut at playhead. Store edit decisions as EDL (edit decision list) — non-destructive. Render final video via FFmpeg.wasm when user exports.",
+      "title": "Add video player with timeline scrubber to Studio",
+      "description": "In apps/studio/src/app/console/page.tsx, replace the stub with a video player. Use HTML5 video element with custom controls: play/pause, seek bar, current time / duration display. Add a timeline bar below the player showing the video duration as a horizontal track. Playhead moves with video playback. Click on timeline to seek. Install @ffmpeg/ffmpeg and @ffmpeg/util for later use.",
       "acceptanceCriteria": [
-        "Video player with playback controls at /console",
-        "Timeline scrubber with visual waveform or frame thumbnails",
-        "In/out point trim controls",
-        "Cut at playhead splits segment",
-        "Edit decisions stored as non-destructive EDL",
-        "Export renders final video via FFmpeg.wasm",
-        "TypeScript compiles with no errors"
+        "Video player renders uploaded video with custom controls",
+        "Play/pause toggle button works",
+        "Timeline scrubber shows full duration",
+        "Click on timeline seeks to that position",
+        "Playhead position updates during playback",
+        "ffmpeg packages installed in package.json",
+        "Typecheck passes"
       ],
-      "priority": 6,
-      "difficulty": "very-hard",
-      "model": "opus",
-      "estimatedFiles": 10,
-      "passes": false
+      "priority": 24,
+      "passes": false,
+      "notes": "Model: opus. Foundation for video editing."
     },
     {
       "id": "STUDIO-002",
+      "title": "Add trim controls and export to Studio",
+      "description": "Extend Studio player from STUDIO-001. Add in/out point markers on timeline (draggable handles). Set In button marks current playhead as trim start. Set Out marks trim end. Preview plays only the trimmed region. Export button uses FFmpeg.wasm to extract the trimmed segment and download as MP4. Show progress bar during export.",
+      "acceptanceCriteria": [
+        "Set In/Set Out buttons mark trim points on timeline",
+        "Trim markers are draggable on timeline",
+        "Preview plays only trimmed region",
+        "Export uses FFmpeg.wasm to extract segment",
+        "Progress bar shows during FFmpeg processing",
+        "Downloaded file is valid MP4",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": "Model: opus. FFmpeg.wasm integration is complex."
+    },
+    {
+      "id": "STUDIO-003",
       "title": "Add Studio compilation export to Content OS",
-      "description": "Create apps/studio/src/app/api/compilations/[id]/export/route.ts. Load compilation and clips from Studio DB. Create content_node in Content OS (type='video'). Create derived_assets for each clip. Add 'Export to Content OS' button in compilation detail UI.",
+      "description": "Create apps/studio/src/app/api/compilations/[id]/export/route.ts. Load compilation and clips from Studio DB. Create content_node in Content OS shared Supabase (type='video', title=compilation.title). Create derived_asset for each clip. Add 'Export to Content OS' button in compilation detail UI.",
       "acceptanceCriteria": [
         "POST /api/compilations/[id]/export endpoint in Studio",
         "Creates content_node record in shared Supabase",
         "Each clip becomes derived_asset linked to content_node",
         "Export button in compilation detail UI",
-        "TypeScript compiles with no errors"
+        "Typecheck passes"
       ],
-      "priority": 6,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 3,
-      "passes": false
-    },
-    {
-      "id": "INFRA-001",
-      "title": "Disable Vercel deployment protection for production",
-      "description": "Update Vercel project settings to disable deployment protection on production deployments so the app is publicly accessible. Or configure a custom domain. Currently both apps return Vercel SSO auth page.",
-      "acceptanceCriteria": [
-        "Production deployment accessible without Vercel SSO",
-        "App loads correctly in browser",
-        "API routes accessible for client requests"
-      ],
-      "priority": 2,
-      "difficulty": "easy",
-      "model": "haiku",
-      "estimatedFiles": 0,
-      "passes": false
-    },
-    {
-      "id": "INFRA-002",
-      "title": "Fix Coolify Supabase health to running state",
-      "description": "The Supabase stack on Coolify shows 'Degraded (unhealthy)'. Investigate which services are failing (Kong, GoTrue, PostgREST, etc.) and fix. The database itself is working but the API gateway may not be routing correctly.",
-      "acceptanceCriteria": [
-        "Coolify shows Supabase service as Healthy",
-        "Kong API gateway responds on port 8000",
-        "GoTrue auth service responds",
-        "PostgREST API service responds"
-      ],
-      "priority": 2,
-      "difficulty": "medium",
-      "model": "sonnet",
-      "estimatedFiles": 0,
-      "passes": false
+      "priority": 26,
+      "passes": false,
+      "notes": "Model: sonnet. Cross-app Supabase insert."
     }
   ]
 }
