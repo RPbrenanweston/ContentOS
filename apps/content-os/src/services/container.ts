@@ -68,18 +68,19 @@ export function getServices(supabase: SupabaseClient): ServiceContainer {
   const jobRepo = new DistributionJobRepo(supabase);
   const accountRepo = new DistributionAccountRepo(supabase);
   const metricRepo = new PerformanceMetricRepo(supabase);
+  const assetRepo = new DerivedAssetRepo(supabase);
 
   cachedContainer = {
     contentNodeRepo: new ContentNodeRepo(supabase),
     segmentRepo: new ContentSegmentRepo(supabase),
-    assetRepo: new DerivedAssetRepo(supabase),
+    assetRepo,
     accountRepo,
     jobRepo,
     metricRepo,
 
     transcriptService: new DeepgramTranscriptService(),
     decompositionService: new AIDecompositionService(aiClient),
-    assetGeneratorService: new AIAssetGeneratorService(aiClient),
+    assetGeneratorService: new AIAssetGeneratorService(aiClient, assetRepo),
     mediaService: new FFmpegMediaService(),
     distributionService: new DistributionServiceImpl(jobRepo, accountRepo, metricRepo),
   };

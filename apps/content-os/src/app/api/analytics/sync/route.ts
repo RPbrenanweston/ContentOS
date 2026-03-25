@@ -32,9 +32,29 @@ export const POST = withApiHandler(async (ctx) => {
     return NextResponse.json({ synced: 1, metrics });
   }
 
-  // TODO: In production, iterate all published jobs and sync metrics
-  return NextResponse.json({
-    message: 'Metrics sync placeholder — provide jobId to sync a specific job',
-    synced: 0,
-  });
+  // Batch sync: fetch metrics for all published jobs with an externalPostId
+  const { data: publishedRows, error: queryError } = await supabase
+    .from('distribution_jobs')
+    .select('id, external_post_id')
+    .eq('status', 'published')
+    .not('external_post_id', 'is', null);
+
+  if (queryError) {
+    return NextResponse.json({ error: 'Failed to query published jobs' }, { status: 500 });
+  }
+
+  let synced = 0;
+  let errors = 0;
+  const total = publishedRows?.length ?? 0;
+
+  for (const row of publishedRows ?? []) {
+    try {
+      await distributionService.fetchMetrics(row.id);
+      synced++;
+    } catch {
+      errors++;
+    }
+  }
+
+  return NextResponse.json({ synced, errors, total });
 });

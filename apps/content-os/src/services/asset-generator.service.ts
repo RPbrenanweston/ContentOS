@@ -7,7 +7,7 @@
  * out: DerivedAsset {id, title, body, platformHint, mediaUrl, status}
  * err: ValidationError on missing platform guidelines; ProcessingError on AI generation failure
  * hazard: Platform format mismatches (e.g., X character limits) cause post truncation or rejection after publishing
- * hazard: Regeneration with feedback loses lineage to original segments—traceability breaks
+ * hazard: Regeneration with feedback loses lineage to original segments—traceability breaks (RESOLVED: regenerate loads original via DerivedAssetRepo)
  * edge: CALLED_BY distribution.service.ts (asset generation triggers publishing)
  * edge: READS decomposition.service.ts (segments from decomposition)
  * edge: WRITES derived_assets table
@@ -31,6 +31,7 @@ import type {
   GenerateAssetParams,
 } from './interfaces/asset-generator.service';
 import type { AIClient } from '@/lib/ai';
+import type { DerivedAssetRepo } from '@/infrastructure/supabase/repositories/derived-asset.repo';
 
 const PLATFORM_GUIDELINES: Record<string, string> = {
   linkedin: `LinkedIn post guidelines:
@@ -84,7 +85,10 @@ const ASSET_TYPE_PROMPTS: Record<AssetType, string> = {
 };
 
 export class AIAssetGeneratorService implements IAssetGeneratorService {
-  constructor(private ai: AIClient) {}
+  constructor(
+    private ai: AIClient,
+    private assetRepo: DerivedAssetRepo,
+  ) {}
 
   async generate(
     params: GenerateAssetParams,
@@ -143,39 +147,54 @@ Respond with the generated content only. No explanations or metadata.`;
     feedback: string,
     userId: string,
   ): Promise<Omit<DerivedAsset, 'id' | 'createdAt' | 'updatedAt'>> {
-    // Caller should load the existing asset and pass context
-    // For now, this is a stub that requires the full asset to be passed via metadata
+    const original = await this.assetRepo.findById(assetId);
+
+    const platformGuide = original.platformHint
+      ? PLATFORM_GUIDELINES[original.platformHint] ?? ''
+      : '';
+
+    const typePrompt = ASSET_TYPE_PROMPTS[original.assetType]
+      ?? 'Generate content from the following segments.';
+
+    const prompt = `${typePrompt}
+
+${platformGuide ? `\n${platformGuide}\n` : ''}
+
+Original content:
+${original.body}
+
+User feedback for regeneration:
+${feedback}
+
+Regenerate the content incorporating the feedback. Respond with the improved content only. No explanations or metadata.`;
+
     const result = await this.ai.chat({
       userId,
       featureId: 'asset-regeneration',
-      messages: [
-        {
-          role: 'user',
-          content: `Regenerate this content asset based on the following feedback.
-
-Asset ID: ${assetId}
-Feedback: ${feedback}
-
-Generate improved content only. No explanations.`,
-        },
-      ],
+      messages: [{ role: 'user', content: prompt }],
       maxTokens: 2048,
       temperature: 0.7,
     });
 
     return {
-      contentNodeId: '',
-      assetType: 'social_post',
+      contentNodeId: original.contentNodeId,
+      assetType: original.assetType,
       status: 'draft',
-      title: null,
+      title: original.title,
       body: result.content.trim(),
-      platformHint: null,
+      platformHint: original.platformHint,
       mediaUrl: null,
-      sourceSegmentIds: [],
-      generationPrompt: `Regeneration feedback: ${feedback}`,
+      sourceSegmentIds: original.sourceSegmentIds,
+      generationPrompt: prompt,
       aiModel: result.model,
-      version: 1,
-      metadata: { regeneratedFrom: assetId },
+      version: (original.version ?? 1) + 1,
+      metadata: {
+        regeneratedFrom: assetId,
+        feedback,
+        tokensUsed: result.usage.tokensIn + result.usage.tokensOut,
+        costUsd: result.usage.costUsd,
+        latencyMs: result.latencyMs,
+      },
     };
   }
 
