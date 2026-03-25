@@ -30,6 +30,39 @@ Branch: ralph/architectural-fixes
 
 ## Phase 2: Feature Work (started 2026-03-25)
 
-(Entries will be appended below by Ralph iterations)
+## 2026-03-25 - Wave 1 - FW-001 to FW-004 (AI Client + Platform Adapters)
+- **Implemented:** Wired AI client stub to @org/ai-core (1:1 type delegation), created Bluesky adapter (AT Protocol), Threads adapter (Meta API two-step publish), Reddit adapter (OAuth2 + self-post submit)
+- **Files changed:** ai.ts, bluesky.adapter.ts (new), threads.adapter.ts (new), reddit.adapter.ts (new), platforms/index.ts, distribution.service.ts, platform-adapter.ts
+- **Quality:** tsc passed (only pre-existing missing node_modules errors)
+- **Learnings:**
+  - ai-core types match Content OS facade types 1:1 — no mapping needed, just delegation
+  - Bluesky uses app passwords, not OAuth — getAuthUrl/exchangeCode should throw
+  - Threads uses two-step publish (create container → publish container)
+  - Reddit requires Basic auth header for token exchange, User-Agent header for all API calls
+  - Platform adapter registry is in distribution.service.ts module init, not in a config file
+---
 
+## 2026-03-25 - Wave 2 - FW-005 to FW-008 (Queue Workers + Analytics + Regeneration)
+- **Implemented:** Analytics batch sync loop (iterates published jobs, 6hr cron), asset regeneration with original context loading, CLIP_EXTRACT worker (ffmpeg + storage), DISTRIBUTION_PUBLISH worker (adapter delegation)
+- **Files changed:** analytics/sync/route.ts, workers.ts, asset-generator.service.ts, container.ts
+- **Quality:** tsc passed
+- **Learnings:**
+  - DistributionJobRepo uses updateStatus(id, status, extra?) not generic update()
+  - Service container property name for derived assets is `assetRepo` not `derivedAssetRepo`
+  - pg-boss schedule() takes cron string as second arg: boss.schedule(name, '0 */6 * * *', {})
+  - Asset regeneration prompt should include platform-specific guidelines from the service's existing formatPrompt helpers
+---
+
+## 2026-03-25 - Wave 3 - FW-009 to FW-010 (Queue UI + Studio Export)
+- **Implemented:** Queue page null safety (safeFormatDate helper, error state with retry, loading skeleton, asset null guards), Studio-to-ContentOS export endpoint + ExportToContentOS button component
+- **Files changed:** queue/page.tsx, compilations/[id]/export/route.ts (new), ExportToContentOS.tsx (new), AssemblyLayout.tsx, assembly/[videoId]/page.tsx
+- **Quality:** tsc passed
+- **Learnings:**
+  - Studio uses MVP_USER_ID constant for hardcoded user, same pattern as Content OS pre-auth
+  - Both apps share Supabase instance — direct cross-app table inserts work
+  - Studio's AssemblyLayout accepts optional ReactNode props for extensibility
+  - Date grouping in queue page needed its own safe parser separate from display formatting
+---
+
+## PHASE 2 COMPLETE — All 10 feature stories passed
 ---
