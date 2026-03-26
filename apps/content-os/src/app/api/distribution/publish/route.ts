@@ -20,10 +20,11 @@ import { withApiHandler } from '@/lib/api-handler';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';
 import { publishAssetSchema } from '@/lib/validation';
+import { ForbiddenError } from '@/lib/errors';
 
 // POST /api/distribution/publish — Publish or schedule an asset
 export const POST = withApiHandler<z.infer<typeof publishAssetSchema>>(async (ctx) => {
-  const { body } = ctx;
+  const { body, userId } = ctx;
 
   const supabase = createServiceClient();
   const { assetRepo, accountRepo, distributionService } = getServices(supabase);
@@ -35,6 +36,12 @@ export const POST = withApiHandler<z.infer<typeof publishAssetSchema>>(async (ct
   const allAccounts = await Promise.all(
     body.accountIds.map((id: string) => accountRepo.findById(id)),
   );
+
+  // Verify the caller owns every requested distribution account
+  const unauthorizedAccounts = allAccounts.filter((account) => account.userId !== userId);
+  if (unauthorizedAccounts.length > 0) {
+    throw new ForbiddenError('You do not have permission to publish to one or more of the selected accounts');
+  }
 
   // Publish via distribution service
   const jobs = await distributionService.publish({

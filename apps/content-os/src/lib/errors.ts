@@ -48,3 +48,9 @@ export class DistributionError extends ContentOSError {
     super(message, 'DISTRIBUTION_ERROR', 502);
   }
 }
+
+export class ForbiddenError extends ContentOSError {
+  constructor(message: string) {
+    super(message, 'FORBIDDEN', 403);
+  }
+}

@@ -30,7 +30,7 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Model: haiku. ~10 lines changed in 1 file."
     },
     {
