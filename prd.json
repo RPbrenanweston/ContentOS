@@ -151,8 +151,8 @@
         "Typecheck passes"
       ],
       "priority": 9,
-      "passes": false,
-      "notes": "Model: sonnet. Follow existing adapter pattern."
+      "passes": true,
+      "notes": "COMPLETED: BeehiivAdapter implemented in platforms/beehiiv.adapter.ts. Registered in platforms/index.ts. beehiiv added to Platform union type in domain/enums.ts. getMetrics returns stub with TODO comment per acceptance criteria. Error handling uses DistributionError for Beehiiv-specific failures."
     },
     {
       "id": "PUB-003",
