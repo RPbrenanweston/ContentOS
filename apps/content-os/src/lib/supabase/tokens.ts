@@ -124,7 +124,7 @@ export async function retrieveAccountTokens(accountId: string): Promise<TokenSet
 
   const { data, error } = await supabase
     .from('distribution_accounts')
-    .select('access_token_encrypted, refresh_token_encrypted, token_expires_at, token_scopes')
+    .select('access_token_encrypted, refresh_token_encrypted, token_expires_at, token_scopes, platform_config')
     .eq('id', accountId)
     .single();
 
@@ -151,6 +151,9 @@ export async function retrieveAccountTokens(accountId: string): Promise<TokenSet
       tokenType: 'Bearer',
       scope: Array.isArray(data.token_scopes)
         ? data.token_scopes.join(' ')
+        : undefined,
+      extras: typeof data.platform_config === 'object' && data.platform_config !== null
+        ? (data.platform_config as Record<string, string>)
         : undefined,
     };
   } catch {
