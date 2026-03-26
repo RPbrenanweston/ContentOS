@@ -89,6 +89,18 @@ export interface TextProperties {
   textAlign: string;
 }
 
+export interface UploadedImage {
+  id: string;
+  dataUrl: string;
+  name: string;
+}
+
+export interface ImageProperties {
+  opacity: number;
+  flipX: boolean;
+  flipY: boolean;
+}
+
 export interface ShapeProperties {
   fill: string;
   stroke: string;
@@ -311,6 +323,12 @@ export interface UseImageEditorReturn {
   duplicateLayer: (obj: FabricObject) => void;
   reorderLayer: (obj: FabricObject, newIndex: number) => void;
   renameLayer: (obj: FabricObject, name: string) => void;
+  addImage: (file: File) => Promise<void>;
+  handleImageDrop: (e: DragEvent) => void;
+  setSelectedImageOpacity: (opacity: number) => void;
+  flipSelectedImageHorizontal: () => void;
+  flipSelectedImageVertical: () => void;
+  placeUploadedImage: (dataUrl: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -721,6 +739,7 @@ export function useImageEditor(): UseImageEditorReturn {
       if (obj instanceof FabricImage) {
         selectedImageRef.current = obj;
         setSelectedTextProps(null);
+        setSelectedImageProps(readImageProps(obj));
         setSelectedShapeProps(readShapeProps(obj));
         // Sync active filters from the image's current filter array
         const synced: ActiveFilter[] = obj.filters.map((f) => {
@@ -736,16 +755,19 @@ export function useImageEditor(): UseImageEditorReturn {
       } else if (obj instanceof Textbox) {
         selectedImageRef.current = null;
         setSelectedTextProps(readTextProps(obj));
+        setSelectedImageProps(null);
         setSelectedShapeProps(null);
         setActiveFilters([]);
       } else if (obj instanceof FabricObject) {
         selectedImageRef.current = null;
         setSelectedTextProps(null);
+        setSelectedImageProps(null);
         setSelectedShapeProps(readShapeProps(obj));
         setActiveFilters([]);
       } else {
         selectedImageRef.current = null;
         setSelectedTextProps(null);
+        setSelectedImageProps(null);
         setSelectedShapeProps(null);
         setActiveFilters([]);
       }
@@ -756,6 +778,7 @@ export function useImageEditor(): UseImageEditorReturn {
     fc.on('selection:cleared', () => {
       selectedImageRef.current = null;
       setSelectedTextProps(null);
+      setSelectedImageProps(null);
       setSelectedShapeProps(null);
       setActiveFilters([]);
     });

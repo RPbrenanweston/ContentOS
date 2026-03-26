@@ -46,9 +46,8 @@ export function ImageEditorCanvas({ editor }: ImageEditorCanvasProps) {
     };
 
     const onDrop = (e: DragEvent) => {
-      e.preventDefault();
       setIsDragOver(false);
-      // Image drop will be wired in IMG-004
+      editor.handleImageDrop(e);
     };
 
     container.addEventListener('dragover', onDragOver);

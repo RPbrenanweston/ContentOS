@@ -249,8 +249,8 @@
         "Typecheck passes"
       ],
       "priority": 15,
-      "passes": false,
-      "notes": "Model: sonnet. Use fabric.Image.fromURL()."
+      "passes": true,
+      "notes": "COMPLETED: addImage(file) reads file as DataURL via FileReader, creates FabricImage via FabricImage.fromURL(), scales to fit within 80% canvas bounds (aspect-ratio-preserved, never upscale), centers on canvas. handleImageDrop wired to canvas drag-over/drop events with visual overlay. Upload button in toolbar opens hidden file input (accept=\"image/*\"). ImagePropertiesPanel in sidebar: opacity slider, flip H/V buttons shown when FabricImage selected. UploadedImagesGallery shows thumbnails for re-placing previously uploaded images. canvasWidthRef/canvasHeightRef keep async FabricImage.fromURL callbacks in sync with current canvas size. Typecheck passes with zero new errors."
     },
     {
       "id": "IMG-005",

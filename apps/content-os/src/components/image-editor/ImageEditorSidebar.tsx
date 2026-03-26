@@ -1,7 +1,8 @@
 'use client';
 
-import { CANVAS_PRESETS, SHAPE_DEFS, type ShapeProperties, type UseImageEditorReturn } from './useImageEditor';
+import { CANVAS_PRESETS, SHAPE_DEFS, type ImageProperties, type ShapeProperties, type UploadedImage, type UseImageEditorReturn } from './useImageEditor';
 import { LayerPanel } from './LayerPanel';
+import { FiltersPanel } from './FiltersPanel';
 
 interface ImageEditorSidebarProps {
   editor: UseImageEditorReturn;
@@ -195,6 +196,112 @@ function ShapesPalette({ onAddShape }: { onAddShape: (id: UseImageEditorReturn['
 }
 
 // ---------------------------------------------------------------------------
+// Image Properties Panel
+// ---------------------------------------------------------------------------
+
+function ImagePropertiesPanel({ editor }: { editor: UseImageEditorReturn }) {
+  const props: ImageProperties | null = editor.selectedImageProps;
+  if (!props) return null;
+
+  return (
+    <div className="p-4 space-y-4" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+      <h3
+        className="text-xs font-semibold uppercase tracking-wider"
+        style={{ color: 'var(--theme-muted)' }}
+      >
+        Image Properties
+      </h3>
+
+      <SliderRow
+        label="Opacity"
+        value={props.opacity}
+        min={0}
+        max={100}
+        unit="%"
+        onChange={editor.setSelectedImageOpacity}
+      />
+
+      <div>
+        <SidebarLabel>Flip</SidebarLabel>
+        <div className="flex gap-2">
+          <button
+            onClick={editor.flipSelectedImageHorizontal}
+            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all"
+            style={{
+              backgroundColor: props.flipX ? 'var(--theme-pill-active-bg)' : 'var(--theme-background)',
+              color: props.flipX ? 'var(--theme-pill-active-text)' : 'var(--theme-foreground)',
+              border: '1px solid var(--theme-border)',
+            }}
+            title="Flip horizontal"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M8 3H5a2 2 0 0 0-2 2v14c0 1.1.9 2 2 2h3" />
+              <path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3" />
+              <line x1="12" y1="20" x2="12" y2="4" />
+            </svg>
+            Flip H
+          </button>
+          <button
+            onClick={editor.flipSelectedImageVertical}
+            className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all"
+            style={{
+              backgroundColor: props.flipY ? 'var(--theme-pill-active-bg)' : 'var(--theme-background)',
+              color: props.flipY ? 'var(--theme-pill-active-text)' : 'var(--theme-foreground)',
+              border: '1px solid var(--theme-border)',
+            }}
+            title="Flip vertical"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3" />
+              <path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3" />
+              <line x1="4" y1="12" x2="20" y2="12" />
+            </svg>
+            Flip V
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Uploaded Images Gallery
+// ---------------------------------------------------------------------------
+
+function UploadedImagesGallery({ images, onPlace }: { images: UploadedImage[]; onPlace: (dataUrl: string) => void }) {
+  if (images.length === 0) return null;
+
+  return (
+    <div className="p-4" style={{ borderBottom: '1px solid var(--theme-border)' }}>
+      <h3
+        className="text-xs font-semibold uppercase tracking-wider mb-3"
+        style={{ color: 'var(--theme-muted)' }}
+      >
+        Uploaded Images
+      </h3>
+      <div className="grid grid-cols-3 gap-1.5">
+        {images.map((img) => (
+          <button
+            key={img.id}
+            onClick={() => onPlace(img.dataUrl)}
+            className="relative aspect-square rounded overflow-hidden transition-all hover:opacity-80"
+            style={{ border: '1px solid var(--theme-border)' }}
+            title={`Re-add ${img.name}`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={img.dataUrl}
+              alt={img.name}
+              className="w-full h-full object-cover"
+            />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main sidebar
 // ---------------------------------------------------------------------------
 
@@ -209,6 +316,20 @@ export function ImageEditorSidebar({ editor }: ImageEditorSidebarProps) {
         backgroundColor: 'var(--theme-surface)',
       }}
     >
+      {/* Image properties and filters — shown when an image is selected */}
+      <ImagePropertiesPanel editor={editor} />
+
+      {/* Filters + crop panel — shown when an image is selected */}
+      {editor.selectedImageProps !== null && (
+        <FiltersPanel editor={editor} />
+      )}
+
+      {/* Uploaded images gallery */}
+      <UploadedImagesGallery
+        images={editor.uploadedImages}
+        onPlace={editor.placeUploadedImage}
+      />
+
       {/* Shape properties — shown when a non-text object is selected */}
       {editor.selectedShapeProps && (
         <ShapePropertiesPanel
@@ -363,7 +484,7 @@ export function ImageEditorSidebar({ editor }: ImageEditorSidebarProps) {
       </div>
 
       {/* No selection state */}
-      {!editor.selectedShapeProps && (
+      {!editor.selectedShapeProps && !editor.selectedImageProps && (
         <div className="p-4">
           <h3
             className="text-xs font-semibold uppercase tracking-wider mb-3"
