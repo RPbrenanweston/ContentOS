@@ -45,8 +45,8 @@
         "Typecheck passes"
       ],
       "priority": 2,
-      "passes": false,
-      "notes": "Model: haiku. Add modal state + JSX to existing page."
+      "passes": true,
+      "notes": "Model: sonnet. ConnectModal component with labeled input, non-empty + min-length validation, loading spinner on submit, cancel closes without side effects. No window.prompt remains."
     },
     {
       "id": "SEC-003",
