@@ -18,6 +18,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { TipTapEditor, type TipTapEditorHandle } from '@/components/editor/tiptap-editor';
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import type { ContentNodeType } from '@/domain';
@@ -38,6 +39,7 @@ interface ActivePlan {
 }
 
 export default function WritePage() {
+  const router = useRouter();
   const [title, setTitle] = useState('');
   const [contentType, setContentType] = useState<ContentNodeType>('blog');
   const [bodyHtml, setBodyHtml] = useState('');
@@ -157,7 +159,7 @@ export default function WritePage() {
       const res = await fetch('/api/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const data = await res.json(); if (!res.ok) throw new Error(data.error);
       if (sourceFile) { await fetch(`/api/content/${data.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceUrl: sourceFile.url }) }); }
-      setLastSaved(new Date()); window.location.href = `/content/${data.id}`;
+      setLastSaved(new Date()); router.push(`/content/${data.id}`);
     } catch (err) { console.error('Save failed:', err); } finally { setSaving(false); }
   };
 
@@ -423,7 +425,7 @@ export default function WritePage() {
                 style={{ color: 'var(--theme-foreground)', fontFamily: 'var(--font-sans)' }} />
             </div>
             <div className="flex-1">
-              <TipTapEditor content="" onChange={handleEditorChange} placeholder="Tell your story..." mode="write" />
+              <TipTapEditor ref={editorRef} content="" onChange={handleEditorChange} placeholder="Tell your story..." mode="write" />
             </div>
           </div>
         ) : (

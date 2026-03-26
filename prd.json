@@ -16,7 +16,7 @@
         "Typecheck passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug — voice recording UI works but text never reaches editor."
     },
     {
@@ -73,8 +73,8 @@
         "Typecheck passes"
       ],
       "priority": 4,
-      "passes": false,
-      "notes": "Model: haiku. 2 files, ~10 lines each."
+      "passes": true,
+      "notes": "Model: haiku. 2 files, ~10 lines each. COMPLETED: Replaced window.location.href with router.push in content/page.tsx (line 79) and content/new/page.tsx (line 160). Timer cleanup already present in useEffect return. All navigation now uses Next.js client-side routing."
     },
     {
       "id": "QUEUE-001",

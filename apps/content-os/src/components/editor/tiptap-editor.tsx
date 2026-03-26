@@ -78,7 +78,7 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(fu
       if (!editor) return;
       editor.chain().focus().insertContent(text).run();
     },
-  }), [editor, ref]);
+  }), [editor]);
 
   const addImage = useCallback(() => {
     if (!editor) return;
