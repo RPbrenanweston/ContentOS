@@ -2,11 +2,10 @@
 // UI | account-manager | platform-connector
 // why: Displays connected distribution channels and enables creators to add new accounts for multi-platform publishing
 // in:[/api/distribution/accounts] out:[JSX-account-grid] err:[fetch-failure, post-failure]
-// hazard: handleConnect uses window.prompt (blocks main thread) with no validation of accountName input; empty/whitespace-only names create ghost accounts
 // hazard: No error recovery UI for failed connect request; user gets no feedback if POST fails
 // hazard: platforms.find() can return undefined; accessing platform.logo without null check in connected accounts section crashes
 // edge:/api/distribution/accounts -> API-ENDPOINT
-// prompt: Add input validation for accountName; show toast/error UI on connect failures; validate platform exists before accessing logo
+// prompt: Show toast/error UI on connect failures; validate platform exists before accessing logo
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -64,9 +63,241 @@ const platforms: {
   },
 ];
 
+/* ─── Connect Modal ─── */
+
+interface ConnectModalProps {
+  platform: (typeof platforms)[number] | null;
+  onCancel: () => void;
+  onSubmit: (accountName: string) => Promise<void>;
+}
+
+function ConnectModal({ platform, onCancel, onSubmit }: ConnectModalProps) {
+  const [accountName, setAccountName] = useState('');
+  const [error, setError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  if (!platform) return null;
+
+  const Logo = platform.logo;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const trimmed = accountName.trim();
+    if (!trimmed) {
+      setError('Account name is required.');
+      return;
+    }
+    if (trimmed.length < 2) {
+      setError('Account name must be at least 2 characters.');
+      return;
+    }
+
+    setError('');
+    setSubmitting(true);
+    try {
+      await onSubmit(trimmed);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleCancel = () => {
+    if (!submitting) onCancel();
+  };
+
+  return (
+    /* Backdrop */
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="connect-modal-title"
+      onClick={handleCancel}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      }}
+    >
+      {/* Panel */}
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          backgroundColor: 'var(--theme-card-bg)',
+          border: '1px solid var(--theme-card-border)',
+          borderRadius: '12px',
+          padding: '24px',
+          width: '100%',
+          maxWidth: '400px',
+          margin: '0 16px',
+        }}
+      >
+        {/* Modal header */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
+          <div
+            style={{
+              width: '40px',
+              height: '40px',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: `${platform.brandColor}15`,
+              flexShrink: 0,
+            }}
+          >
+            <Logo className="w-5 h-5" />
+          </div>
+          <div>
+            <h2
+              id="connect-modal-title"
+              style={{
+                fontSize: '15px',
+                fontWeight: 600,
+                color: 'var(--theme-foreground)',
+                margin: 0,
+              }}
+            >
+              Connect {platform.name}
+            </h2>
+            <p style={{ fontSize: '13px', color: 'var(--theme-muted)', margin: 0 }}>
+              {platform.description}
+            </p>
+          </div>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: '16px' }}>
+            <label
+              htmlFor="account-name"
+              style={{
+                display: 'block',
+                fontSize: '13px',
+                fontWeight: 500,
+                color: 'var(--theme-foreground)',
+                marginBottom: '6px',
+              }}
+            >
+              Account name
+            </label>
+            <input
+              id="account-name"
+              type="text"
+              value={accountName}
+              onChange={(e) => {
+                setAccountName(e.target.value);
+                if (error) setError('');
+              }}
+              placeholder={`Your ${platform.name} handle or display name`}
+              disabled={submitting}
+              autoFocus
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: error
+                  ? '1px solid var(--theme-danger, #ef4444)'
+                  : '1px solid var(--theme-card-border)',
+                backgroundColor: 'var(--theme-surface, var(--theme-card-bg))',
+                color: 'var(--theme-foreground)',
+                fontSize: '14px',
+                outline: 'none',
+              }}
+            />
+            {error && (
+              <p
+                role="alert"
+                style={{
+                  fontSize: '12px',
+                  color: 'var(--theme-danger, #ef4444)',
+                  marginTop: '4px',
+                  margin: '4px 0 0 0',
+                }}
+              >
+                {error}
+              </p>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={submitting}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: '1px solid var(--theme-card-border)',
+                backgroundColor: 'transparent',
+                color: 'var(--theme-foreground)',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                opacity: submitting ? 0.5 : 1,
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                padding: '8px 16px',
+                borderRadius: '6px',
+                border: 'none',
+                backgroundColor: platform.brandColor,
+                color: '#ffffff',
+                fontSize: '13px',
+                fontWeight: 500,
+                cursor: submitting ? 'not-allowed' : 'pointer',
+                opacity: submitting ? 0.7 : 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              {submitting ? (
+                <>
+                  <span
+                    style={{
+                      display: 'inline-block',
+                      width: '12px',
+                      height: '12px',
+                      border: '2px solid rgba(255,255,255,0.4)',
+                      borderTopColor: '#ffffff',
+                      borderRadius: '50%',
+                      animation: 'spin 0.6s linear infinite',
+                    }}
+                  />
+                  Connecting…
+                </>
+              ) : (
+                'Connect'
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Keyframe animation injected once */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+/* ─── Page ─── */
+
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<DistributionAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activePlatform, setActivePlatform] = useState<(typeof platforms)[number] | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -83,33 +314,48 @@ export default function AccountsPage() {
     load();
   }, []);
 
-  const handleConnect = async (platform: Platform) => {
-    const name = window.prompt(`Enter your ${platform} account name:`);
-    if (!name) return;
+  const handleConnect = (platformId: Platform) => {
+    const platform = platforms.find((p) => p.id === platformId);
+    if (platform) setActivePlatform(platform);
+  };
 
-    try {
-      const res = await fetch('/api/distribution/accounts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          platform,
-          accountName: name,
-          externalAccountId: `manual-${Date.now()}`,
-          metadata: { connectionType: 'manual' },
-        }),
-      });
-      if (!res.ok) throw new Error('Failed to connect');
-      const account = await res.json();
-      setAccounts((prev) => [...prev, account]);
-    } catch (e) {
-      console.error('Connect failed:', e);
-    }
+  const handleModalCancel = () => {
+    setActivePlatform(null);
+  };
+
+  const handleModalSubmit = async (accountName: string) => {
+    if (!activePlatform) return;
+
+    const res = await fetch('/api/distribution/accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        platform: activePlatform.id,
+        accountName,
+        externalAccountId: `manual-${Date.now()}`,
+        metadata: { connectionType: 'manual' },
+      }),
+    });
+
+    if (!res.ok) throw new Error('Failed to connect');
+    const account = await res.json();
+    setAccounts((prev) => [...prev, account]);
+    setActivePlatform(null);
   };
 
   const connectedPlatforms = new Set(accounts.map((a) => a.platform));
 
   return (
     <div className="h-full flex flex-col">
+      {/* Connect modal */}
+      {activePlatform && (
+        <ConnectModal
+          platform={activePlatform}
+          onCancel={handleModalCancel}
+          onSubmit={handleModalSubmit}
+        />
+      )}
+
       {/* Header */}
       <div
         className="h-14 flex items-center justify-between px-6"
