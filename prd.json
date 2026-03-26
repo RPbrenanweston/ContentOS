@@ -363,8 +363,8 @@
         "Typecheck passes"
       ],
       "priority": 22,
-      "passes": false,
-      "notes": "Model: sonnet. Similar pattern to calendar drag-drop."
+      "passes": true,
+      "notes": "Model: sonnet. KanbanBoard component at components/content/kanban-board.tsx. View toggle (Calendar|Kanban) added to /plan page. Drag-drop deferred per story spec."
     },
     {
       "id": "PLAN-004",

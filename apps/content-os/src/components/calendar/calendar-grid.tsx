@@ -11,6 +11,7 @@
 
 'use client';
 
+import type { ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ContentNode, ContentNodeStatus } from '@/domain';
 
@@ -32,6 +33,8 @@ export interface CalendarGridProps {
   onTodayClick: () => void;
   onDayClick?: (dateStr: string) => void;
   onNodeClick?: (nodeId: string) => void;
+  /** Optional element rendered on the right side of the calendar header */
+  headerExtra?: ReactNode;
 }
 
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -214,6 +217,7 @@ export function CalendarGrid({
   onTodayClick,
   onDayClick,
   onNodeClick,
+  headerExtra,
 }: CalendarGridProps) {
   const today = todayStr();
   const calendarDays = buildCalendarDays(year, month);
@@ -242,6 +246,7 @@ export function CalendarGrid({
         </div>
 
         <div className="flex items-center gap-2">
+          {headerExtra}
           <button
             onClick={onTodayClick}
             className="px-3 py-1 text-xs font-medium rounded transition-colors"

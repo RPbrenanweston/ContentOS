@@ -6,6 +6,7 @@
 // hazard: Date math uses local timezone; ISO strings from server stored as UTC may shift to wrong day for users far from UTC
 // hazard: No loading skeleton—calendar renders empty then fills in, causing layout shift
 // edge:../../components/calendar/calendar-grid.tsx -> USES (CalendarGrid, toCalendarNodes)
+// edge:../../components/content/kanban-board.tsx -> USES (KanbanBoard)
 // edge:../content/[id]/page.tsx -> NAVIGATES-TO (on node pill click)
 // edge:../content/new -> NAVIGATES-TO (on empty day click with ?date= param)
 // edge:../../app/api/content/route.ts -> FETCHES
@@ -16,7 +17,10 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarGrid, toCalendarNodes, type CalendarNode } from '@/components/calendar/calendar-grid';
+import { KanbanBoard } from '@/components/content/kanban-board';
 import type { ContentNode } from '@/domain';
+
+type ViewMode = 'calendar' | 'kanban';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -25,11 +29,46 @@ function todayYearMonth(): { year: number; month: number } {
   return { year: now.getFullYear(), month: now.getMonth() };
 }
 
+// ─── View Toggle ─────────────────────────────────────────────────────────────
+
+function ViewToggle({
+  view,
+  onChange,
+}: {
+  view: ViewMode;
+  onChange: (v: ViewMode) => void;
+}) {
+  return (
+    <div
+      className="flex items-center rounded-md overflow-hidden"
+      style={{ border: '1px solid var(--theme-border)' }}
+    >
+      {(['calendar', 'kanban'] as ViewMode[]).map((mode) => {
+        const active = view === mode;
+        return (
+          <button
+            key={mode}
+            onClick={() => onChange(mode)}
+            className="px-3 py-1.5 text-xs font-medium transition-colors capitalize"
+            style={{
+              backgroundColor: active ? 'var(--theme-btn-primary-bg)' : 'transparent',
+              color: active ? 'var(--theme-btn-primary-text)' : 'var(--theme-muted)',
+            }}
+          >
+            {mode === 'calendar' ? 'Calendar' : 'Kanban'}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PlanPage() {
   const router = useRouter();
 
+  const [view, setView] = useState<ViewMode>('calendar');
   const [{ year, month }, setYearMonth] = useState(todayYearMonth);
   const [nodes, setNodes] = useState<ContentNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +126,33 @@ export default function PlanPage() {
     return (
       <div className="h-full flex items-center justify-center">
         <span className="text-xs" style={{ color: 'var(--theme-muted)' }}>
-          Loading calendar...
+          Loading...
         </span>
+      </div>
+    );
+  }
+
+  if (view === 'kanban') {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        {/* Header with toggle */}
+        <div
+          className="h-12 flex items-center justify-between px-4 shrink-0"
+          style={{ borderBottom: '1px solid var(--theme-border)' }}
+        >
+          <span
+            className="text-sm font-semibold"
+            style={{ color: 'var(--theme-foreground)' }}
+          >
+            Pipeline
+          </span>
+          <ViewToggle view={view} onChange={setView} />
+        </div>
+
+        {/* Kanban board */}
+        <div className="flex-1 overflow-hidden">
+          <KanbanBoard nodes={nodes} />
+        </div>
       </div>
     );
   }
@@ -103,6 +167,7 @@ export default function PlanPage() {
       onTodayClick={handleTodayClick}
       onDayClick={handleDayClick}
       onNodeClick={handleNodeClick}
+      headerExtra={<ViewToggle view={view} onChange={setView} />}
     />
   );
 }
