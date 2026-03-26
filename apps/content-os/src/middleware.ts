@@ -25,10 +25,13 @@ export async function middleware(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
+  // Build mutable request headers — these get forwarded to route handlers
+  const requestHeaders = new Headers(request.headers)
+
   // Build a mutable response so cookie mutations from createServerClient are applied
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: {
-      headers: new Headers(request.headers),
+      headers: requestHeaders,
     },
   })
 
@@ -39,6 +42,16 @@ export async function middleware(request: NextRequest) {
         return request.cookies.getAll()
       },
       setAll(cookiesToSet) {
+        // Update cookies on the request headers (for downstream route handlers)
+        cookiesToSet.forEach(({ name, value }) => {
+          requestHeaders.set(`cookie-${name}`, value)
+        })
+        // Also update cookies on the response (for the browser)
+        response = NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        })
         cookiesToSet.forEach(({ name, value, options }) => {
           response.cookies.set(name, value, options)
         })
@@ -68,9 +81,26 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  // Stamp the verified user ID so downstream route handlers don't re-verify
-  response.headers.set('x-user-id', user.id)
-  return response
+  // Stamp the verified user ID on the FORWARDED REQUEST headers so downstream
+  // route handlers can read it via request.headers.get('x-user-id').
+  // BUG FIX: Previously this was set on response.headers, which only sends the
+  // header back to the browser — route handlers never saw it, causing userId to
+  // be empty string and all writes to fail silently.
+  requestHeaders.set('x-user-id', user.id)
+
+  // Rebuild the response with the updated request headers
+  const finalResponse = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
+
+  // Carry over any cookies that were set during session refresh
+  response.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie.name, cookie.value)
+  })
+
+  return finalResponse
 }
 
 export const config = {

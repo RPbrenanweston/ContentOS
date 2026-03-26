@@ -46,6 +46,7 @@ export default function WritePage() {
   const [bodyText, setBodyText] = useState('');
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [sourceFile, setSourceFile] = useState<{ url: string; name: string; type: string } | null>(null);
 
@@ -153,15 +154,21 @@ export default function WritePage() {
   const handleSave = async () => {
     if (!title.trim()) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const body: Record<string, unknown> = { title: title.trim(), contentType, status: 'draft' };
       if (contentType === 'blog') { body.bodyHtml = bodyHtml; body.bodyText = bodyText; }
       const res = await fetch('/api/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const data = await res.json(); if (!res.ok) throw new Error(data.error || data.message);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || data.error || 'Save failed');
       if (sourceFile) { await fetch(`/api/content/${data.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceUrl: sourceFile.url }) }); }
       setLastSaved(new Date());
       router.push(`/content/${data.id}`);
-    } catch (err) { console.error('Save failed:', err); } finally { setSaving(false); }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Save failed';
+      setSaveError(message);
+      console.error('Save failed:', err);
+    } finally { setSaving(false); }
   };
 
   return (
@@ -170,18 +177,25 @@ export default function WritePage() {
       <div className="h-14 flex items-center justify-between px-6" style={{ borderBottom: '1px solid var(--theme-border)' }}>
         <div className="flex items-center gap-3">
           <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: 'var(--theme-surface)' }}>
-            {(['blog', 'video', 'audio'] as ContentNodeType[]).map((type) => (
-              <button key={type} onClick={() => setContentType(type)}
+            {(['blog', 'image', 'video', 'audio'] as ContentNodeType[]).map((type) => (
+              <button
+                key={type}
+                onClick={() => {
+                  if (type === 'image') {
+                    window.location.href = '/editor/image';
+                    return;
+                  }
+                  setContentType(type);
+                }}
                 className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize"
-                style={{ backgroundColor: contentType === type ? 'var(--theme-pill-active-bg)' : 'transparent', color: contentType === type ? 'var(--theme-pill-active-text)' : 'var(--theme-pill-inactive-text)' }}>
+                style={{
+                  backgroundColor: contentType === type ? 'var(--theme-pill-active-bg)' : 'transparent',
+                  color: contentType === type ? 'var(--theme-pill-active-text)' : 'var(--theme-pill-inactive-text)',
+                }}
+              >
                 {type}
               </button>
             ))}
-            <a href="/editor/image"
-              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize"
-              style={{ color: 'var(--theme-pill-inactive-text)' }}>
-              Image
-            </a>
           </div>
 
           {contentType === 'blog' && (
@@ -328,7 +342,8 @@ export default function WritePage() {
             {wordCount > 0 && sprintState !== 'active' && sprintState !== 'complete' && (
               <><span>{wordCount.toLocaleString()} words</span><span style={{ color: 'var(--theme-border)' }}>|</span><span>{readingTime} min read</span></>
             )}
-            {lastSaved && (<><span style={{ color: 'var(--theme-border)' }}>|</span><span style={{ color: 'var(--theme-success)' }}>Saved</span></>)}
+            {saveError && (<><span style={{ color: 'var(--theme-border)' }}>|</span><span style={{ color: 'var(--theme-accent)' }}>{saveError}</span></>)}
+            {lastSaved && !saveError && (<><span style={{ color: 'var(--theme-border)' }}>|</span><span style={{ color: 'var(--theme-success)' }}>Saved</span></>)}
           </div>
           <button onClick={handleSave} disabled={saving || !title.trim()}
             className="px-4 py-1.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-40"
