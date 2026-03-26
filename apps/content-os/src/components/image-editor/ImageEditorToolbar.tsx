@@ -63,6 +63,36 @@ const TOOLS: ToolDef[] = [
   },
 ];
 
+function Divider() {
+  return (
+    <div
+      className="w-px h-5 mx-1"
+      style={{ backgroundColor: 'var(--theme-border)' }}
+    />
+  );
+}
+
+interface ActionButtonProps {
+  onClick: () => void;
+  disabled?: boolean;
+  title: string;
+  children: React.ReactNode;
+}
+
+function ActionButton({ onClick, disabled, title, children }: ActionButtonProps) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className="flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+      style={{ color: 'var(--theme-muted)' }}
+      title={title}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function ImageEditorToolbar({ editor }: ImageEditorToolbarProps) {
   return (
     <div
@@ -79,10 +109,7 @@ export function ImageEditorToolbar({ editor }: ImageEditorToolbarProps) {
         Image Editor
       </span>
 
-      <div
-        className="w-px h-5 mx-1"
-        style={{ backgroundColor: 'var(--theme-border)' }}
-      />
+      <Divider />
 
       {TOOLS.map((tool) => {
         const isActive = editor.activeTool === tool.id;
@@ -106,6 +133,75 @@ export function ImageEditorToolbar({ editor }: ImageEditorToolbarProps) {
           </button>
         );
       })}
+
+      <Divider />
+
+      {/* Undo */}
+      <ActionButton
+        onClick={editor.undo}
+        disabled={!editor.canUndo}
+        title="Undo (Ctrl+Z)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="9 14 4 9 9 4" />
+          <path d="M20 20v-7a4 4 0 0 0-4-4H4" />
+        </svg>
+        <span>Undo</span>
+      </ActionButton>
+
+      {/* Redo */}
+      <ActionButton
+        onClick={editor.redo}
+        disabled={!editor.canRedo}
+        title="Redo (Ctrl+Shift+Z)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <polyline points="15 14 20 9 15 4" />
+          <path d="M4 20v-7a4 4 0 0 1 4-4h12" />
+        </svg>
+        <span>Redo</span>
+      </ActionButton>
+
+      <Divider />
+
+      {/* Save */}
+      <ActionButton
+        onClick={editor.saveToLocal}
+        title="Save to browser (Ctrl+S)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+          <polyline points="17 21 17 13 7 13 7 21" />
+          <polyline points="7 3 7 8 15 8" />
+        </svg>
+        <span>Save</span>
+      </ActionButton>
+
+      {/* Load */}
+      <ActionButton
+        onClick={editor.loadFromLocal}
+        title="Load from browser"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="17 8 12 3 7 8" />
+          <line x1="12" y1="3" x2="12" y2="15" />
+        </svg>
+        <span>Load</span>
+      </ActionButton>
+
+      {/* Export JSON */}
+      <ActionButton
+        onClick={editor.exportJSON}
+        title="Export as JSON file"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <polyline points="7 10 12 15 17 10" />
+          <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+        <span>Export JSON</span>
+      </ActionButton>
     </div>
   );
 }

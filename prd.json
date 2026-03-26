@@ -217,8 +217,8 @@
         "Typecheck passes"
       ],
       "priority": 13,
-      "passes": false,
-      "notes": "Model: sonnet. State management for canvas history."
+      "passes": true,
+      "notes": "COMPLETED: historyStack/redoStack refs (max 50) in useImageEditor. captureState() called on object:added/removed/modified events. undo()/redo() use canvas.toObject()/loadFromJSON(). saveToLocal()/loadFromLocal() use localStorage. exportJSON() triggers file download. Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+S (save). canUndo/canRedo state drives disabled state on toolbar buttons. Undo/Redo/Save/Load/Export JSON buttons added to ImageEditorToolbar. No type errors in image-editor files."
     },
     {
       "id": "IMG-003",
