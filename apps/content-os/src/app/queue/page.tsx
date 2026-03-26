@@ -1,14 +1,53 @@
 // @crumb publishing-queue
-// UI | timeline-view | scheduling-display
-// why: Visualizes publishing queue across channels; enables creators to review and manage scheduled content distribution rhythm
+// UI | timeline-view | scheduling-display | kanban-pipeline
+// why: Visualizes publishing queue across channels with two tabs — Queues (timeline) and Pipeline (Kanban); enables creators to review, manage, and track scheduled content
 // in:[/api/queue, /api/queue/slots] out:[JSX-timeline-ui] err:[fetch-failure, date-parse-error]
 // edge:../../services/queue.service.ts -> CALLS
 // edge:../../components/queue/queue-creation-modal.tsx -> RENDERS [modal for new queue creation]
+// edge:../../components/content/kanban-board.tsx -> USES (Pipeline tab)
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import type { QueueSlot, PublishingQueue } from '@/domain';
+import type { ContentNode } from '@/domain';
 import { QueueCreationModal } from '@/components/queue/queue-creation-modal';
+import { KanbanBoard } from '@/components/content/kanban-board';
+
+type QueueTabId = 'queues' | 'pipeline';
+
+/* ------------------------------------------------------------------ */
+/*  Tab bar                                                           */
+/* ------------------------------------------------------------------ */
+
+function QueueTabBar({ active, onChange }: { active: QueueTabId; onChange: (tab: QueueTabId) => void }) {
+  const tabs: { id: QueueTabId; label: string }[] = [
+    { id: 'queues', label: 'Queues' },
+    { id: 'pipeline', label: 'Pipeline' },
+  ];
+  return (
+    <div
+      className="flex items-center gap-1 px-4 shrink-0"
+      style={{ borderBottom: '1px solid var(--theme-border)', height: '44px' }}
+    >
+      {tabs.map((tab) => {
+        const isActive = tab.id === active;
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
+            className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+            style={{
+              backgroundColor: isActive ? 'var(--theme-btn-primary-bg)' : 'transparent',
+              color: isActive ? 'var(--theme-btn-primary-text)' : 'var(--theme-muted)',
+            }}
+          >
+            {tab.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
@@ -130,11 +169,15 @@ function QueueError({ onRetry }: { onRetry: () => void }) {
 /* ------------------------------------------------------------------ */
 
 export default function QueuePage() {
+  const [activeTab, setActiveTab] = useState<QueueTabId>('queues');
   const [queues, setQueues] = useState<PublishingQueue[]>([]);
   const [slots, setSlots] = useState<QueueSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  // Pipeline (Kanban) content nodes
+  const [pipelineNodes, setPipelineNodes] = useState<ContentNode[]>([]);
+  const [pipelineLoading, setPipelineLoading] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -159,7 +202,23 @@ export default function QueuePage() {
     }
   }, []);
 
+  const loadPipelineNodes = useCallback(() => {
+    setPipelineLoading(true);
+    fetch('/api/content?limit=200')
+      .then((r) => r.json())
+      .then((data) => setPipelineNodes(data.nodes ?? []))
+      .catch((err) => console.error('[QueuePage] Failed to fetch pipeline nodes:', err))
+      .finally(() => setPipelineLoading(false));
+  }, []);
+
   useEffect(() => { loadData(); }, [loadData]);
+
+  // Fetch pipeline nodes when Pipeline tab is first activated
+  useEffect(() => {
+    if (activeTab === 'pipeline' && pipelineNodes.length === 0 && !pipelineLoading) {
+      loadPipelineNodes();
+    }
+  }, [activeTab, pipelineNodes.length, pipelineLoading, loadPipelineNodes]);
 
   const slotsByDate = slots.reduce<Record<string, QueueSlot[]>>((acc, slot) => {
     const date = safeFormatDateGroup(slot.scheduledFor);
@@ -168,17 +227,47 @@ export default function QueuePage() {
     return acc;
   }, {});
 
-  if (loading) {
-    return <QueueSkeleton />;
+  if (loading && activeTab === 'queues') {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        <QueueTabBar active={activeTab} onChange={setActiveTab} />
+        <QueueSkeleton />
+      </div>
+    );
   }
 
-  if (error) {
-    return <QueueError onRetry={loadData} />;
+  if (error && activeTab === 'queues') {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        <QueueTabBar active={activeTab} onChange={setActiveTab} />
+        <QueueError onRetry={loadData} />
+      </div>
+    );
+  }
+
+  // Pipeline tab
+  if (activeTab === 'pipeline') {
+    return (
+      <div className="h-full flex flex-col overflow-hidden">
+        <QueueTabBar active={activeTab} onChange={setActiveTab} />
+        {pipelineLoading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <span className="text-xs" style={{ color: 'var(--theme-muted)' }}>Loading pipeline...</span>
+          </div>
+        ) : (
+          <div className="flex-1 overflow-hidden">
+            <KanbanBoard nodes={pipelineNodes} />
+          </div>
+        )}
+      </div>
+    );
   }
 
   return (
     <>
     <div className="h-full flex flex-col">
+      {/* Tab bar */}
+      <QueueTabBar active={activeTab} onChange={setActiveTab} />
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-6" style={{ borderBottom: '1px solid var(--theme-border)' }}>
         <h1 className="text-lg font-semibold" style={{ color: 'var(--theme-foreground)' }}>Queue</h1>

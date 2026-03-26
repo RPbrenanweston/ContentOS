@@ -53,10 +53,9 @@ export default function RootLayout({
             </div>
 
             <div className="flex-1 px-2 space-y-0.5">
+              <NavItem href="/content/new" label="Create" icon={PenIcon} />
               <NavItem href="/plan" label="Plan" icon={PlanIcon} />
-              <NavItem href="/content/new" label="Write" icon={PenIcon} />
-              <NavItem href="/editor/image" label="Image Editor" icon={ImageEditorIcon} />
-              <NavItem href="/content" label="Pieces" icon={PiecesIcon} />
+              <NavItem href="/calendar" label="Calendar" icon={CalendarIcon} />
               <NavItem href="/drafts" label="Drafts" icon={DraftsIcon} />
               <NavItem href="/queue" label="Queue" icon={QueueIcon} />
 
@@ -169,12 +168,13 @@ function InsightsIcon({ className }: { className?: string }) {
   );
 }
 
-function ImageEditorIcon({ className }: { className?: string }) {
+function CalendarIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="18" height="18" rx="2" />
-      <circle cx="8.5" cy="8.5" r="1.5" />
-      <path d="m21 15-5-5L5 21" />
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
     </svg>
   );
 }
