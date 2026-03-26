@@ -103,8 +103,8 @@
         "Typecheck passes"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": "Model: sonnet. Extends modal from QUEUE-001."
+      "passes": true,
+      "notes": "COMPLETED: ScheduleBuilder added to queue-creation-modal.tsx. Frequency selector (Daily/Mon-Fri/Custom) controls active days. Custom mode shows individual day checkboxes (Mon-Sun). Time picker uses hour:minute selects with Add/Remove per slot. Week preview grid shows dots on scheduled days with time labels. schedule[] array sent as {dayOfWeek, timeOfDay} entries matching the API schema. Submit disabled until at least one day+time combination is valid. No new type errors introduced."
     },
     {
       "id": "QUEUE-003",

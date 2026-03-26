@@ -1,6 +1,6 @@
 // @crumb queue-creation-modal
-// UI | queue management | modal form | account selection
-// why: Allow users to create a publishing queue tied to a distribution account—name, platform filter, account multi-select, timezone
+// UI | queue management | modal form | account selection | schedule builder
+// why: Allow users to create a publishing queue tied to a distribution account—name, platform filter, account multi-select, timezone, and a recurring schedule
 // in:[open: bool, onClose callback, onSuccess callback] out:[POST /api/queue on submit] err:[fetch failure, validation error, API error]
 // hazard: Account list is fetched fresh on every modal open—no caching; slow connections show empty list until resolved
 // hazard: Timezone list from Intl.supportedValuesOf('timeZone') varies by browser/OS—exotic timezones may not be recognized by the server
@@ -42,6 +42,89 @@ const TIMEZONES: string[] = (() => {
   }
 })();
 
+type DayOfWeek =
+  | 'monday'
+  | 'tuesday'
+  | 'wednesday'
+  | 'thursday'
+  | 'friday'
+  | 'saturday'
+  | 'sunday';
+
+const ALL_DAYS: DayOfWeek[] = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+  'saturday',
+  'sunday',
+];
+
+const WEEKDAYS: DayOfWeek[] = [
+  'monday',
+  'tuesday',
+  'wednesday',
+  'thursday',
+  'friday',
+];
+
+const DAY_LABELS: Record<DayOfWeek, string> = {
+  monday: 'Mon',
+  tuesday: 'Tue',
+  wednesday: 'Wed',
+  thursday: 'Thu',
+  friday: 'Fri',
+  saturday: 'Sat',
+  sunday: 'Sun',
+};
+
+type Frequency = 'daily' | 'weekdays' | 'custom';
+
+interface TimeSlot {
+  id: string;
+  hour: string;
+  minute: string;
+}
+
+interface ScheduleEntry {
+  dayOfWeek: DayOfWeek;
+  timeOfDay: string; // HH:MM
+}
+
+function buildScheduleEntries(
+  frequency: Frequency,
+  customDays: Set<DayOfWeek>,
+  timeSlots: TimeSlot[],
+): ScheduleEntry[] {
+  const activeDays =
+    frequency === 'daily'
+      ? ALL_DAYS
+      : frequency === 'weekdays'
+        ? WEEKDAYS
+        : Array.from(customDays);
+
+  const validSlots = timeSlots.filter(
+    (s) => s.hour !== '' && s.minute !== '',
+  );
+
+  const entries: ScheduleEntry[] = [];
+  for (const day of activeDays) {
+    for (const slot of validSlots) {
+      entries.push({
+        dayOfWeek: day,
+        timeOfDay: `${slot.hour.padStart(2, '0')}:${slot.minute.padStart(2, '0')}`,
+      });
+    }
+  }
+  return entries;
+}
+
+let slotCounter = 0;
+function nextSlotId() {
+  return `slot-${++slotCounter}`;
+}
+
 export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationModalProps) {
   const [name, setName] = useState('');
   const [platform, setPlatform] = useState<Platform | ''>('');
@@ -51,6 +134,13 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
   const [loadingAccounts, setLoadingAccounts] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Schedule state
+  const [frequency, setFrequency] = useState<Frequency>('daily');
+  const [customDays, setCustomDays] = useState<Set<DayOfWeek>>(new Set());
+  const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
+    { id: nextSlotId(), hour: '09', minute: '00' },
+  ]);
 
   // Fetch accounts when modal opens
   useEffect(() => {
@@ -78,6 +168,9 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
       setTimezone('UTC');
       setError(null);
       setSubmitting(false);
+      setFrequency('daily');
+      setCustomDays(new Set());
+      setTimeSlots([{ id: nextSlotId(), hour: '09', minute: '00' }]);
     }
   }, [open]);
 
@@ -89,7 +182,6 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
   // Deselect accounts that are no longer visible when platform changes
   const handlePlatformChange = (newPlatform: Platform | '') => {
     setPlatform(newPlatform);
-    // Clear selections that don't match the new platform filter
     if (newPlatform) {
       setSelectedAccountIds((prev) => {
         const validIds = new Set(
@@ -115,6 +207,53 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
     });
   };
 
+  const toggleCustomDay = (day: DayOfWeek) => {
+    setCustomDays((prev) => {
+      const next = new Set(prev);
+      if (next.has(day)) next.delete(day);
+      else next.add(day);
+      return next;
+    });
+  };
+
+  const addTimeSlot = () => {
+    setTimeSlots((prev) => [
+      ...prev,
+      { id: nextSlotId(), hour: '12', minute: '00' },
+    ]);
+  };
+
+  const removeTimeSlot = (id: string) => {
+    setTimeSlots((prev) => prev.filter((s) => s.id !== id));
+  };
+
+  const updateTimeSlot = (id: string, field: 'hour' | 'minute', value: string) => {
+    setTimeSlots((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
+    );
+  };
+
+  // Build scheduled entries from current state
+  const scheduleEntries = buildScheduleEntries(frequency, customDays, timeSlots);
+
+  // Active days for display and validation
+  const activeDaysForDisplay =
+    frequency === 'daily'
+      ? ALL_DAYS
+      : frequency === 'weekdays'
+        ? WEEKDAYS
+        : Array.from(customDays);
+
+  const validTimeSlots = timeSlots.filter((s) => s.hour !== '' && s.minute !== '');
+  const scheduleValid =
+    activeDaysForDisplay.length > 0 && validTimeSlots.length > 0;
+
+  const canSubmit =
+    name.trim() !== '' &&
+    selectedAccountIds.size > 0 &&
+    scheduleValid &&
+    !submitting;
+
   const handleSubmit = async () => {
     if (!name.trim()) {
       setError('Queue name is required.');
@@ -124,12 +263,15 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
       setError('Select at least one distribution account.');
       return;
     }
+    if (!scheduleValid) {
+      setError('Add at least one day and time to the schedule.');
+      return;
+    }
 
     setError(null);
     setSubmitting(true);
 
     try {
-      // Create one queue per selected account (each queue ties to one distribution account)
       const accountId = Array.from(selectedAccountIds)[0];
 
       const res = await fetch('/api/queue', {
@@ -139,7 +281,7 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
           distributionAccountId: accountId,
           name: name.trim(),
           timezone,
-          schedule: [],
+          schedule: scheduleEntries,
         }),
       });
 
@@ -174,12 +316,12 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
         style={{ pointerEvents: 'none' }}
       >
         <div
-          className="w-full max-w-md rounded-xl shadow-xl flex flex-col"
+          className="w-full max-w-lg rounded-xl shadow-xl flex flex-col"
           style={{
             backgroundColor: 'var(--theme-card-bg)',
             border: '1px solid var(--theme-card-border)',
             pointerEvents: 'auto',
-            maxHeight: '90vh',
+            maxHeight: '92vh',
           }}
         >
           {/* Header */}
@@ -295,7 +437,7 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
                     : 'No active accounts connected.'}
                 </div>
               ) : (
-                <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                <div className="space-y-1.5 max-h-36 overflow-y-auto">
                   {filteredAccounts.map((account) => {
                     const isSelected = selectedAccountIds.has(account.id);
                     return (
@@ -379,6 +521,270 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
               </select>
             </div>
 
+            {/* ── Schedule Builder ── */}
+            <div
+              className="rounded-lg p-4 space-y-4"
+              style={{
+                backgroundColor: 'var(--theme-surface)',
+                border: '1px solid var(--theme-border)',
+              }}
+            >
+              <p className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--theme-muted)' }}>
+                Posting Schedule
+              </p>
+
+              {/* Frequency selector */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium" style={{ color: 'var(--theme-foreground)' }}>
+                  Frequency
+                </p>
+                <div className="flex gap-2">
+                  {(['daily', 'weekdays', 'custom'] as Frequency[]).map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => setFrequency(f)}
+                      disabled={submitting}
+                      className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors capitalize"
+                      style={{
+                        backgroundColor:
+                          frequency === f
+                            ? 'var(--theme-btn-primary-bg)'
+                            : 'var(--theme-card-bg)',
+                        color:
+                          frequency === f
+                            ? 'var(--theme-btn-primary-text)'
+                            : 'var(--theme-foreground)',
+                        border: `1px solid ${frequency === f ? 'var(--theme-btn-primary-bg)' : 'var(--theme-border)'}`,
+                      }}
+                    >
+                      {f === 'weekdays' ? 'Mon–Fri' : f.charAt(0).toUpperCase() + f.slice(1)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom day checkboxes — only when Custom selected */}
+              {frequency === 'custom' && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium" style={{ color: 'var(--theme-foreground)' }}>
+                    Days
+                  </p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {ALL_DAYS.map((day) => {
+                      const active = customDays.has(day);
+                      return (
+                        <button
+                          key={day}
+                          type="button"
+                          onClick={() => toggleCustomDay(day)}
+                          disabled={submitting}
+                          className="w-10 h-8 rounded-md text-xs font-medium transition-colors"
+                          style={{
+                            backgroundColor: active
+                              ? 'var(--theme-btn-primary-bg)'
+                              : 'var(--theme-card-bg)',
+                            color: active
+                              ? 'var(--theme-btn-primary-text)'
+                              : 'var(--theme-foreground)',
+                            border: `1px solid ${active ? 'var(--theme-btn-primary-bg)' : 'var(--theme-border)'}`,
+                          }}
+                        >
+                          {DAY_LABELS[day]}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {customDays.size === 0 && (
+                    <p className="text-xs" style={{ color: 'var(--theme-muted)' }}>
+                      Select at least one day.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Time slots */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium" style={{ color: 'var(--theme-foreground)' }}>
+                  Posting Times
+                </p>
+                <div className="space-y-2">
+                  {timeSlots.map((slot) => (
+                    <div key={slot.id} className="flex items-center gap-2">
+                      {/* Hour */}
+                      <select
+                        value={slot.hour}
+                        onChange={(e) => updateTimeSlot(slot.id, 'hour', e.target.value)}
+                        disabled={submitting}
+                        className="text-sm px-2 py-1.5 rounded-md outline-none"
+                        style={{
+                          backgroundColor: 'var(--theme-card-bg)',
+                          border: '1px solid var(--theme-border)',
+                          color: 'var(--theme-foreground)',
+                          minWidth: '4rem',
+                        }}
+                        aria-label="Hour"
+                      >
+                        {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(
+                          (h) => (
+                            <option key={h} value={h}>
+                              {h}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                      <span style={{ color: 'var(--theme-muted)' }} className="text-sm font-medium">
+                        :
+                      </span>
+                      {/* Minute */}
+                      <select
+                        value={slot.minute}
+                        onChange={(e) => updateTimeSlot(slot.id, 'minute', e.target.value)}
+                        disabled={submitting}
+                        className="text-sm px-2 py-1.5 rounded-md outline-none"
+                        style={{
+                          backgroundColor: 'var(--theme-card-bg)',
+                          border: '1px solid var(--theme-border)',
+                          color: 'var(--theme-foreground)',
+                          minWidth: '4rem',
+                        }}
+                        aria-label="Minute"
+                      >
+                        {['00', '15', '30', '45'].map((m) => (
+                          <option key={m} value={m}>
+                            {m}
+                          </option>
+                        ))}
+                      </select>
+                      {/* Remove button */}
+                      <button
+                        type="button"
+                        onClick={() => removeTimeSlot(slot.id)}
+                        disabled={submitting || timeSlots.length === 1}
+                        className="w-6 h-6 flex items-center justify-center rounded-md transition-colors disabled:opacity-30"
+                        style={{ color: 'var(--theme-muted)' }}
+                        aria-label="Remove time slot"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <line x1="18" y1="6" x2="6" y2="18" />
+                          <line x1="6" y1="6" x2="18" y2="18" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  onClick={addTimeSlot}
+                  disabled={submitting}
+                  className="flex items-center gap-1.5 text-xs font-medium transition-opacity hover:opacity-70"
+                  style={{ color: 'var(--theme-btn-primary-bg)' }}
+                >
+                  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  Add time
+                </button>
+              </div>
+
+              {/* Week preview grid */}
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium" style={{ color: 'var(--theme-foreground)' }}>
+                  Weekly Preview
+                </p>
+                <div
+                  className="rounded-lg overflow-hidden"
+                  style={{ border: '1px solid var(--theme-border)' }}
+                >
+                  <div className="grid grid-cols-7">
+                    {ALL_DAYS.map((day) => {
+                      const isActive =
+                        frequency === 'daily' ||
+                        (frequency === 'weekdays' && WEEKDAYS.includes(day)) ||
+                        (frequency === 'custom' && customDays.has(day));
+                      const dayEntries = scheduleEntries.filter(
+                        (e) => e.dayOfWeek === day,
+                      );
+                      return (
+                        <div
+                          key={day}
+                          className="flex flex-col items-center py-2 px-1 gap-1"
+                          style={{
+                            borderRight: day !== 'sunday' ? '1px solid var(--theme-border)' : undefined,
+                            backgroundColor: isActive
+                              ? 'color-mix(in srgb, var(--theme-btn-primary-bg) 8%, transparent)'
+                              : 'transparent',
+                          }}
+                        >
+                          <span
+                            className="text-xs font-medium"
+                            style={{
+                              color: isActive
+                                ? 'var(--theme-btn-primary-bg)'
+                                : 'var(--theme-muted)',
+                            }}
+                          >
+                            {DAY_LABELS[day]}
+                          </span>
+                          <div className="flex flex-col gap-0.5 items-center">
+                            {isActive && dayEntries.length > 0
+                              ? dayEntries.map((entry) => (
+                                  <div
+                                    key={entry.timeOfDay}
+                                    className="rounded-full"
+                                    style={{
+                                      width: 6,
+                                      height: 6,
+                                      backgroundColor: 'var(--theme-btn-primary-bg)',
+                                    }}
+                                    title={entry.timeOfDay}
+                                  />
+                                ))
+                              : isActive && (
+                                  <div
+                                    className="rounded-full opacity-30"
+                                    style={{
+                                      width: 6,
+                                      height: 6,
+                                      backgroundColor: 'var(--theme-btn-primary-bg)',
+                                    }}
+                                  />
+                                )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {/* Time labels row */}
+                  {validTimeSlots.length > 0 && (
+                    <div
+                      className="px-3 py-1.5 flex flex-wrap gap-1.5"
+                      style={{ borderTop: '1px solid var(--theme-border)' }}
+                    >
+                      {validTimeSlots.map((slot) => (
+                        <span
+                          key={slot.id}
+                          className="text-xs px-1.5 py-0.5 rounded"
+                          style={{
+                            backgroundColor: 'color-mix(in srgb, var(--theme-btn-primary-bg) 12%, transparent)',
+                            color: 'var(--theme-btn-primary-bg)',
+                          }}
+                        >
+                          {slot.hour.padStart(2, '0')}:{slot.minute.padStart(2, '0')}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {scheduleEntries.length > 0 && (
+                  <p className="text-xs" style={{ color: 'var(--theme-muted)' }}>
+                    {scheduleEntries.length} posting{scheduleEntries.length === 1 ? ' slot' : ' slots'} per week
+                  </p>
+                )}
+              </div>
+            </div>
+
             {/* Error */}
             {error && (
               <div
@@ -415,7 +821,7 @@ export function QueueCreationModal({ open, onClose, onSuccess }: QueueCreationMo
             <button
               type="button"
               onClick={handleSubmit}
-              disabled={submitting || selectedAccountIds.size === 0 || !name.trim()}
+              disabled={!canSubmit}
               className="px-4 py-2 text-sm font-medium rounded-lg transition-opacity hover:opacity-90 disabled:opacity-50"
               style={{
                 backgroundColor: 'var(--theme-btn-primary-bg)',
