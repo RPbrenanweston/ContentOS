@@ -1178,27 +1178,6 @@ export function useImageEditor(): UseImageEditorReturn {
     syncLayers();
   }, [syncLayers]);
 
-  // Filter and crop stubs — implemented in IMG-005
-  const applyFilter = useCallback((_type: FilterType, _intensity: number) => {
-    // Placeholder — IMG-005
-  }, []);
-
-  const removeFilter = useCallback((_type: FilterType) => {
-    // Placeholder — IMG-005
-  }, []);
-
-  const enterCropMode = useCallback(() => {
-    // Placeholder — IMG-005
-  }, []);
-
-  const applyCrop = useCallback(() => {
-    // Placeholder — IMG-005
-    setIsCropMode(false);
-  }, []);
-
-  const cancelCrop = useCallback(() => {
-    setIsCropMode(false);
-  }, []);
 
   return {
     canvasRef,
