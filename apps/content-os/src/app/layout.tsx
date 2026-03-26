@@ -12,6 +12,7 @@ const navItems = [
   { href: '/calendar', label: 'Calendar', icon: '\uD83D\uDCC5' },
   { href: '/drafts', label: 'Drafts', icon: '\uD83D\uDCC4' },
   { href: '/queue', label: 'Queue', icon: '\u23F3' },
+  { href: '/podcasts', label: 'Podcasts', icon: '\uD83C\uDFA7' },
 ];
 
 const bottomNav = [
