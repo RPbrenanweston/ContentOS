@@ -97,7 +97,15 @@ export function createContentOSAIClient(config: AIClientConfig): AIClient {
   };
 }
 
-export const aiClient = createContentOSAIClient({
-  appId: 'content-os',
-  defaultModel: 'claude-sonnet-4-20250514',
-});
+// Lazy singleton — deferred until first request so env vars are available at runtime.
+let _aiClient: AIClient | undefined;
+
+export function getAIClient(): AIClient {
+  if (!_aiClient) {
+    _aiClient = createContentOSAIClient({
+      appId: 'content-os',
+      defaultModel: 'claude-sonnet-4-20250514',
+    });
+  }
+  return _aiClient;
+}

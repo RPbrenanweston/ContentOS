@@ -33,7 +33,7 @@ import { AIDecompositionService } from '@/services/decomposition.service';
 import { AIAssetGeneratorService } from '@/services/asset-generator.service';
 import { FFmpegMediaService } from '@/services/media.service';
 import { DistributionServiceImpl } from '@/services/distribution.service';
-import { aiClient } from '@/lib/ai';
+import { getAIClient } from '@/lib/ai';
 import type { ITranscriptService } from '@/services/interfaces/transcript.service';
 import type { IDecompositionService } from '@/services/interfaces/decomposition.service';
 import type { IAssetGeneratorService } from '@/services/interfaces/asset-generator.service';
@@ -79,8 +79,8 @@ export function getServices(supabase: SupabaseClient): ServiceContainer {
     metricRepo,
 
     transcriptService: new DeepgramTranscriptService(),
-    decompositionService: new AIDecompositionService(aiClient),
-    assetGeneratorService: new AIAssetGeneratorService(aiClient, assetRepo),
+    decompositionService: new AIDecompositionService(getAIClient()),
+    assetGeneratorService: new AIAssetGeneratorService(getAIClient(), assetRepo),
     mediaService: new FFmpegMediaService(),
     distributionService: new DistributionServiceImpl(jobRepo, accountRepo, metricRepo),
   };
