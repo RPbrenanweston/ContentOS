@@ -55,6 +55,7 @@ export default function RootLayout({
             <div className="flex-1 px-2 space-y-0.5">
               <NavItem href="/plan" label="Plan" icon={PlanIcon} />
               <NavItem href="/content/new" label="Write" icon={PenIcon} />
+              <NavItem href="/editor/image" label="Image Editor" icon={ImageEditorIcon} />
               <NavItem href="/content" label="Pieces" icon={PiecesIcon} />
               <NavItem href="/drafts" label="Drafts" icon={DraftsIcon} />
               <NavItem href="/queue" label="Queue" icon={QueueIcon} />
@@ -164,6 +165,16 @@ function InsightsIcon({ className }: { className?: string }) {
       <line x1="18" y1="20" x2="18" y2="10" />
       <line x1="12" y1="20" x2="12" y2="4" />
       <line x1="6" y1="20" x2="6" y2="14" />
+    </svg>
+  );
+}
+
+function ImageEditorIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="m21 15-5-5L5 21" />
     </svg>
   );
 }

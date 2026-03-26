@@ -154,12 +154,13 @@ export default function WritePage() {
     if (!title.trim()) return;
     setSaving(true);
     try {
-      const body: Record<string, unknown> = { title: title.trim(), contentType };
+      const body: Record<string, unknown> = { title: title.trim(), contentType, status: 'draft' };
       if (contentType === 'blog') { body.bodyHtml = bodyHtml; body.bodyText = bodyText; }
       const res = await fetch('/api/content', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const data = await res.json(); if (!res.ok) throw new Error(data.error);
+      const data = await res.json(); if (!res.ok) throw new Error(data.error || data.message);
       if (sourceFile) { await fetch(`/api/content/${data.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ sourceUrl: sourceFile.url }) }); }
-      setLastSaved(new Date()); router.push(`/content/${data.id}`);
+      setLastSaved(new Date());
+      router.push(`/content/${data.id}`);
     } catch (err) { console.error('Save failed:', err); } finally { setSaving(false); }
   };
 
@@ -176,6 +177,11 @@ export default function WritePage() {
                 {type}
               </button>
             ))}
+            <a href="/editor/image"
+              className="px-3 py-1.5 text-xs font-medium rounded-md transition-colors capitalize"
+              style={{ color: 'var(--theme-pill-inactive-text)' }}>
+              Image
+            </a>
           </div>
 
           {contentType === 'blog' && (
