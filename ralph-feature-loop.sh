@@ -39,7 +39,32 @@ for i in $(seq 1 $MAX_ITERATIONS); do
   echo "  $(date)"
   echo "==============================================================="
 
-  OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+  # Build the prompt for this iteration
+  NEXT_ID=$(jq -r '[.userStories[] | select(.passes == false)] | sort_by(.priority) | .[0].id' "$PRD_FILE")
+  NEXT_JSON=$(jq '[.userStories[] | select(.passes == false)] | sort_by(.priority) | .[0]' "$PRD_FILE")
+
+  PROMPT="You are Ralph, an autonomous coding agent. Your job is to implement ONE user story from prd.json.
+
+INSTRUCTIONS:
+1. Read prd.json and progress.txt for context
+2. Implement story $NEXT_ID (the highest priority incomplete story)
+3. The story details: $NEXT_JSON
+4. Write the code changes needed
+5. After implementing, verify typecheck would pass (check for obvious errors)
+6. Update prd.json: set passes=true for story $NEXT_ID
+7. Append a summary to progress.txt with what you changed
+8. Commit all changes with message: 'feat($NEXT_ID): <story title>'
+9. Push to contentos remote: git push contentos HEAD:main
+
+RULES:
+- Only implement the ONE story listed above
+- Follow existing code patterns (read progress.txt for codebase patterns)
+- Do NOT modify other stories in prd.json
+- Do NOT skip steps or combine stories
+- If blocked, write why in progress.txt and output <promise>BLOCKED</promise>
+- If ALL stories are done, output <promise>COMPLETE</promise>"
+
+  OUTPUT=$(echo "$PROMPT" | claude --dangerously-skip-permissions --print 2>&1 | tee /dev/stderr) || true
 
   # Log output
   echo "=== Iteration $i — $(date) ===" >> "$LOG_FILE"

@@ -1,0 +1,68 @@
+# Ralph Progress Log — PAI-Adjusted (Approach C)
+Started: 2026-03-24
+Project: Content Platform — Architectural Fixes
+Branch: ralph/architectural-fixes
+
+## Codebase Patterns
+- **Supabase client pattern:** Three client factories in content-os/src/infrastructure/supabase/client.ts — browser (anon), server (access token), service (bypasses RLS). Studio has separate clients at lib/supabase/client.ts and server.ts.
+- **Repository pattern:** DAT layer uses typed repos at infrastructure/supabase/repositories/ — each maps DB rows to domain entities.
+- **Service DI:** services/container.ts is the dependency injection root — creates all service instances with shared Supabase client.
+- **Platform adapter pattern:** infrastructure/distribution/platform-adapter.ts defines the interface. LinkedIn and X adapters implement getAuthUrl(), exchangeCode(), publish(), getMetrics().
+- **API route pattern:** Next.js App Router at src/app/api/. All routes use withApiHandler() wrapper and auth middleware.
+- **Breadcrumb format:** Line-comment style: // @crumb id / // [AREA] | tags / // why: / // in: out: err: / // hazard: / // edge: -> TYPE / // prompt:
+- **Domain models:** TypeScript interfaces at domain/ with enums.ts centralizing allowed values.
+- **Queue:** pg-boss for job processing at infrastructure/queue/pg-boss.ts. Workers at infrastructure/queue/workers.ts.
+- **Existing tests:** packages/ai-core has 18 TS tests + 6 Python tests. Apps have NO tests yet.
+- **Migration pattern:** Sequential numbered SQL files at supabase/migrations/001-013.
+- **ai-core integration:** createAIClient(config: {appId, supabaseClient, defaultModel?}) from packages/ai-core/src/client.ts. ChatParams={userId, featureId, messages, model?, maxTokens?, temperature?, tools?}. ChatResult={content, usage:{tokensIn, tokensOut, costUsd}, model, latencyMs}. Types match Content OS facade almost 1:1.
+
+## Key Context
+- This is a self-hosted Supabase platform (Docker Compose at infra/supabase/)
+- FreeFlow voice transcription at infra/freeflow/
+- Do NOT modify salesblock-io or jobtracker repos
+- All Supabase changes target self-hosted instance only
+- Content OS (port 3000), Studio (port 3100)
+- No tests exist in apps yet — don't add test-running to quality gates
+- Security stories WS1-WS5 (25 stories) COMPLETE — auth, rate limiting, SSRF, encryption, transactions, all done
+- Phase 2: Feature work — AI client wiring, platform adapters, queue workers, analytics, Studio integration
+
+---
+
+## Phase 2: Feature Work (started 2026-03-25)
+
+## 2026-03-25 - Wave 1 - FW-001 to FW-004 (AI Client + Platform Adapters)
+- **Implemented:** Wired AI client stub to @org/ai-core (1:1 type delegation), created Bluesky adapter (AT Protocol), Threads adapter (Meta API two-step publish), Reddit adapter (OAuth2 + self-post submit)
+- **Files changed:** ai.ts, bluesky.adapter.ts (new), threads.adapter.ts (new), reddit.adapter.ts (new), platforms/index.ts, distribution.service.ts, platform-adapter.ts
+- **Quality:** tsc passed (only pre-existing missing node_modules errors)
+- **Learnings:**
+  - ai-core types match Content OS facade types 1:1 — no mapping needed, just delegation
+  - Bluesky uses app passwords, not OAuth — getAuthUrl/exchangeCode should throw
+  - Threads uses two-step publish (create container → publish container)
+  - Reddit requires Basic auth header for token exchange, User-Agent header for all API calls
+  - Platform adapter registry is in distribution.service.ts module init, not in a config file
+---
+
+## 2026-03-25 - Wave 2 - FW-005 to FW-008 (Queue Workers + Analytics + Regeneration)
+- **Implemented:** Analytics batch sync loop (iterates published jobs, 6hr cron), asset regeneration with original context loading, CLIP_EXTRACT worker (ffmpeg + storage), DISTRIBUTION_PUBLISH worker (adapter delegation)
+- **Files changed:** analytics/sync/route.ts, workers.ts, asset-generator.service.ts, container.ts
+- **Quality:** tsc passed
+- **Learnings:**
+  - DistributionJobRepo uses updateStatus(id, status, extra?) not generic update()
+  - Service container property name for derived assets is `assetRepo` not `derivedAssetRepo`
+  - pg-boss schedule() takes cron string as second arg: boss.schedule(name, '0 */6 * * *', {})
+  - Asset regeneration prompt should include platform-specific guidelines from the service's existing formatPrompt helpers
+---
+
+## 2026-03-25 - Wave 3 - FW-009 to FW-010 (Queue UI + Studio Export)
+- **Implemented:** Queue page null safety (safeFormatDate helper, error state with retry, loading skeleton, asset null guards), Studio-to-ContentOS export endpoint + ExportToContentOS button component
+- **Files changed:** queue/page.tsx, compilations/[id]/export/route.ts (new), ExportToContentOS.tsx (new), AssemblyLayout.tsx, assembly/[videoId]/page.tsx
+- **Quality:** tsc passed
+- **Learnings:**
+  - Studio uses MVP_USER_ID constant for hardcoded user, same pattern as Content OS pre-auth
+  - Both apps share Supabase instance — direct cross-app table inserts work
+  - Studio's AssemblyLayout accepts optional ReactNode props for extensibility
+  - Date grouping in queue page needed its own safe parser separate from display formatting
+---
+
+## PHASE 2 COMPLETE — All 10 feature stories passed
+---

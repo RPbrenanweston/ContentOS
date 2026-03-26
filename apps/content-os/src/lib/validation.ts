@@ -51,11 +51,28 @@ export const updateDerivedAssetSchema = z.object({
 });
 
 // Distribution schemas
-export const publishAssetSchema = z.object({
-  assetId: z.string().uuid(),
-  accountIds: z.array(z.string().uuid()).min(1),
-  scheduledAt: z.string().datetime().optional(),
-});
+export const publishAssetSchema = z
+  .object({
+    assetId: z.string().uuid(),
+    accountIds: z.array(z.string().uuid()).min(1),
+    scheduledAt: z.string().datetime().optional(),
+  })
+  .refine(
+    (data) => {
+      // If scheduledAt is not provided, allow it (immediate publish)
+      if (!data.scheduledAt) {
+        return true;
+      }
+      // Validate that scheduledAt is in the future
+      const scheduledDate = new Date(data.scheduledAt);
+      const now = new Date();
+      return scheduledDate > now;
+    },
+    {
+      message: 'scheduledAt must be a future date (ISO 8601 format)',
+      path: ['scheduledAt'],
+    },
+  );
 
 // Media schemas — max clip duration: 30 minutes
 const MAX_CLIP_DURATION_MS = 1_800_000;

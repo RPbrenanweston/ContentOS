@@ -49,8 +49,11 @@ export function withApiHandler<T = unknown>(
         const result = options.schema.safeParse(raw)
 
         if (!result.success) {
+          const firstError = result.error.errors[0]
+          const errorMessage = firstError?.message || 'Invalid request body'
+
           return NextResponse.json(
-            { error: 'Bad Request', message: 'Invalid request body' },
+            { error: 'Bad Request', message: errorMessage },
             { status: 400, headers: { 'x-request-id': requestId } },
           )
         }

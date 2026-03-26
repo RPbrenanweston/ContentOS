@@ -15,7 +15,7 @@ import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
-import { useCallback } from 'react';
+import { useCallback, forwardRef, useImperativeHandle } from 'react';
 
 interface TipTapEditorProps {
   content?: string;
@@ -26,13 +26,17 @@ interface TipTapEditorProps {
   mode?: 'write' | 'edit';
 }
 
-export function TipTapEditor({
+export interface TipTapEditorHandle {
+  insertText: (text: string) => void;
+}
+
+export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(function TipTapEditor({
   content = '',
   onChange,
   placeholder = 'Tell your story...',
   editable = true,
   mode = 'write',
-}: TipTapEditorProps) {
+}, ref) {
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -68,6 +72,13 @@ export function TipTapEditor({
       onChange?.(e.getHTML(), e.getText());
     },
   });
+
+  useImperativeHandle(ref, () => ({
+    insertText: (text: string) => {
+      if (!editor) return;
+      editor.chain().focus().insertContent(text).run();
+    },
+  }), [editor, ref]);
 
   const addImage = useCallback(() => {
     if (!editor) return;
@@ -154,7 +165,7 @@ export function TipTapEditor({
       </div>
     </div>
   );
-}
+});
 
 function BubbleButton({
   active,

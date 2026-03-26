@@ -60,3 +60,4 @@ dist/
 
 # Ralph
 ralph-output.log
+.vercel

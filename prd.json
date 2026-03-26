@@ -59,7 +59,7 @@
         "Typecheck passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Model: haiku. ~5 lines in 1 file."
     },
     {

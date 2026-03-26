@@ -18,7 +18,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { TipTapEditor } from '@/components/editor/tiptap-editor';
+import { TipTapEditor, type TipTapEditorHandle } from '@/components/editor/tiptap-editor';
 import { useVoiceInput } from '@/hooks/use-voice-input';
 import type { ContentNodeType } from '@/domain';
 
@@ -75,15 +75,13 @@ export default function WritePage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* ─── Voice input ─── */
-  const editorRef = useRef<{ insertText: (text: string) => void } | null>(null);
+  const editorRef = useRef<TipTapEditorHandle | null>(null);
 
   const voice = useVoiceInput({
     provider: 'browser',
     language: 'en-GB',
     onTranscript: (text) => {
-      // Insert transcribed text into the editor body
-      setBodyText((prev) => prev ? `${prev} ${text}` : text);
-      // Also try to insert via editor ref if available
+      // Insert transcribed text at TipTap cursor — onChange will sync bodyText
       editorRef.current?.insertText(text);
     },
   });

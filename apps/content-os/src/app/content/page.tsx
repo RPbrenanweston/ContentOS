@@ -12,10 +12,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { StatusBadge } from '@/components/content/status-badge';
 import type { ContentNode } from '@/domain';
 
 export default function ContentListPage() {
+  const router = useRouter();
   const [nodes, setNodes] = useState<ContentNode[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export default function ContentListPage() {
                 <tr
                   key={node.id}
                   className="border-b border-border hover:bg-surface transition-colors cursor-pointer"
-                  onClick={() => window.location.href = `/content/${node.id}`}
+                  onClick={() => router.push(`/content/${node.id}`)}
                 >
                   <td className="px-4 py-2 text-foreground">{node.title}</td>
                   <td className="px-4 py-2">
