@@ -299,8 +299,8 @@
         "Typecheck passes"
       ],
       "priority": 18,
-      "passes": false,
-      "notes": "Model: sonnet. Fabric.js canvas.getObjects() + moveTo()."
+      "passes": true,
+      "notes": "COMPLETED: LayerPanel component at components/image-editor/LayerPanel.tsx. useImageEditor hook extended with LayerInfo interface, _ensureLayerMeta/buildLayers helpers, syncLayers(), getLayers(), selectLayer(), toggleLayerVisibility(), toggleLayerLock(), deleteLayer(), duplicateLayer(), reorderLayer(), renameLayer(). Layers state reactive to all canvas mutations. LayerPanel shows layers in reverse z-order (top = front), eye/lock/copy/trash row actions, HTML5 drag-drop reordering, double-click inline rename. Wired into ImageEditorSidebar. Typecheck passes with zero new errors."
     },
     {
       "id": "IMG-008",

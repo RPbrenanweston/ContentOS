@@ -271,6 +271,8 @@ export interface UseImageEditorReturn {
   canRedo: boolean;
   selectedTextProps: TextProperties | null;
   selectedShapeProps: ShapeProperties | null;
+  selectedImageProps: ImageProperties | null;
+  uploadedImages: UploadedImage[];
   layers: LayerInfo[];
   // Image filter state
   activeFilters: ActiveFilter[];
@@ -373,6 +375,10 @@ export function useImageEditor(): UseImageEditorReturn {
   const [canRedo, setCanRedo] = useState(false);
   const [selectedTextProps, setSelectedTextProps] = useState<TextProperties | null>(null);
   const [selectedShapeProps, setSelectedShapeProps] = useState<ShapeProperties | null>(null);
+  const [selectedImageProps, setSelectedImageProps] = useState<ImageProperties | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
+  const canvasWidthRef = useRef(1080);
+  const canvasHeightRef = useRef(1080);
   const [layers, setLayers] = useState<LayerInfo[]>([]);
   const [activeFilters, setActiveFilters] = useState<ActiveFilter[]>([]);
   const [isCropMode, setIsCropMode] = useState(false);
@@ -430,6 +436,94 @@ export function useImageEditor(): UseImageEditorReturn {
     if (!fc) { setLayers([]); return; }
     setLayers(buildLayers(fc));
   }, [buildLayers]);
+
+  const readImageProps = useCallback((obj: FabricImage): ImageProperties => ({
+    opacity: Math.round((obj.opacity ?? 1) * 100),
+    flipX: obj.flipX ?? false,
+    flipY: obj.flipY ?? false,
+  }), []);
+
+  const scaleImageToFit = useCallback((img: FabricImage, cw: number, ch: number) => {
+    const maxW = cw * 0.8;
+    const maxH = ch * 0.8;
+    const naturalW = img.width ?? 1;
+    const naturalH = img.height ?? 1;
+    const scale = Math.min(maxW / naturalW, maxH / naturalH, 1);
+    img.scale(scale);
+    img.set({ left: cw / 2, top: ch / 2, originX: 'center', originY: 'center' });
+  }, []);
+
+  const placeUploadedImage = useCallback((dataUrl: string) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const cw = canvasWidthRef.current;
+    const ch = canvasHeightRef.current;
+    FabricImage.fromURL(dataUrl).then((img) => {
+      scaleImageToFit(img, cw, ch);
+      fc.add(img);
+      fc.setActiveObject(img);
+      fc.requestRenderAll();
+    });
+  }, [scaleImageToFit]);
+
+  const addImage = useCallback(async (file: File): Promise<void> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        if (!dataUrl) { resolve(); return; }
+        const entry: UploadedImage = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          dataUrl,
+          name: file.name,
+        };
+        setUploadedImages((prev) => [...prev, entry]);
+        placeUploadedImage(dataUrl);
+        resolve();
+      };
+      reader.readAsDataURL(file);
+    });
+  }, [placeUploadedImage]);
+
+  const handleImageDrop = useCallback((e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const files = e.dataTransfer?.files;
+    if (!files || files.length === 0) return;
+    for (const file of Array.from(files)) {
+      if (file.type.startsWith('image/')) addImage(file);
+    }
+  }, [addImage]);
+
+  const setSelectedImageOpacity = useCallback((opacity: number) => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!(obj instanceof FabricImage)) return;
+    obj.set({ opacity: opacity / 100 });
+    fc.requestRenderAll();
+    setSelectedImageProps(readImageProps(obj));
+  }, [readImageProps]);
+
+  const flipSelectedImageHorizontal = useCallback(() => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!(obj instanceof FabricImage)) return;
+    obj.set({ flipX: !obj.flipX });
+    fc.requestRenderAll();
+    setSelectedImageProps(readImageProps(obj));
+  }, [readImageProps]);
+
+  const flipSelectedImageVertical = useCallback(() => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const obj = fc.getActiveObject();
+    if (!(obj instanceof FabricImage)) return;
+    obj.set({ flipY: !obj.flipY });
+    fc.requestRenderAll();
+    setSelectedImageProps(readImageProps(obj));
+  }, [readImageProps]);
 
   const syncHistoryState = useCallback(() => {
     setCanUndo(historyStack.current.length > 0);
@@ -678,6 +772,8 @@ export function useImageEditor(): UseImageEditorReturn {
   const setCanvasSize = useCallback((width: number, height: number) => {
     setCanvasWidth(width);
     setCanvasHeight(height);
+    canvasWidthRef.current = width;
+    canvasHeightRef.current = height;
     const fc = fabricRef.current;
     const container = containerRef.current;
     if (!fc || !container) return;
@@ -810,6 +906,114 @@ export function useImageEditor(): UseImageEditorReturn {
       setActiveTool('select');
     }
   }, [readShapeProps, setActiveTool]);
+
+  // ---------------------------------------------------------------------------
+  // Image filters
+  // ---------------------------------------------------------------------------
+
+  const applyFilter = (type: FilterType, intensity: number) => {
+    const img = selectedImageRef.current;
+    if (!img) return;
+    img.filters = img.filters.filter((f) => (f as { type?: string }).type !== type);
+    const newFilter = buildFabricFilter(type, intensity);
+    if (newFilter) img.filters.push(newFilter);
+    img.applyFilters();
+    fabricRef.current?.requestRenderAll();
+    setActiveFilters((prev) => [...prev.filter((f) => f.type !== type), { type, intensity }]);
+  };
+
+  const removeFilter = (type: FilterType) => {
+    const img = selectedImageRef.current;
+    if (!img) return;
+    img.filters = img.filters.filter((f) => (f as { type?: string }).type !== type);
+    img.applyFilters();
+    fabricRef.current?.requestRenderAll();
+    setActiveFilters((prev) => prev.filter((f) => f.type !== type));
+  };
+
+  // ---------------------------------------------------------------------------
+  // Crop mode
+  // ---------------------------------------------------------------------------
+
+  const enterCropMode = () => {
+    const fc = fabricRef.current;
+    const img = selectedImageRef.current;
+    if (!fc || !img) return;
+    setIsCropMode(true);
+    fc.discardActiveObject();
+    const imgLeft = img.left ?? 0;
+    const imgTop = img.top ?? 0;
+    const imgW = img.getScaledWidth();
+    const imgH = img.getScaledHeight();
+    const cropRect = new Rect({
+      left: imgLeft,
+      top: imgTop,
+      width: imgW,
+      height: imgH,
+      fill: 'rgba(0,0,0,0.25)',
+      stroke: '#ffffff',
+      strokeWidth: 2,
+      strokeDashArray: [6, 3],
+      selectable: true,
+      hasControls: true,
+      hasBorders: true,
+      lockRotation: true,
+      transparentCorners: false,
+      cornerColor: '#ffffff',
+      cornerStrokeColor: '#555',
+      cornerSize: 10,
+    });
+    cropRectRef.current = cropRect;
+    fc.add(cropRect);
+    fc.setActiveObject(cropRect);
+    fc.requestRenderAll();
+  };
+
+  const applyCrop = () => {
+    const fc = fabricRef.current;
+    const img = selectedImageRef.current;
+    const cropRect = cropRectRef.current;
+    if (!fc || !img || !cropRect) return;
+    const scaleX = img.scaleX ?? 1;
+    const scaleY = img.scaleY ?? 1;
+    const imgLeft = img.left ?? 0;
+    const imgTop = img.top ?? 0;
+    const rectLeft = cropRect.left ?? 0;
+    const rectTop = cropRect.top ?? 0;
+    const rectW = (cropRect.width ?? 0) * (cropRect.scaleX ?? 1);
+    const rectH = (cropRect.height ?? 0) * (cropRect.scaleY ?? 1);
+    const cropX = Math.max(0, (rectLeft - imgLeft) / scaleX);
+    const cropY = Math.max(0, (rectTop - imgTop) / scaleY);
+    const cropW = Math.max(1, rectW / scaleX);
+    const cropH = Math.max(1, rectH / scaleY);
+    const naturalW = img.width ?? cropW;
+    const naturalH = img.height ?? cropH;
+    img.set({
+      cropX: Math.round(cropX),
+      cropY: Math.round(cropY),
+      width: Math.round(Math.min(cropW, naturalW - cropX)),
+      height: Math.round(Math.min(cropH, naturalH - cropY)),
+      left: rectLeft,
+      top: rectTop,
+    });
+    fc.remove(cropRect);
+    cropRectRef.current = null;
+    img.applyFilters();
+    fc.setActiveObject(img);
+    fc.requestRenderAll();
+    captureState();
+    setIsCropMode(false);
+  };
+
+  const cancelCrop = () => {
+    const fc = fabricRef.current;
+    if (!fc) return;
+    const cropRect = cropRectRef.current;
+    if (cropRect) { fc.remove(cropRect); cropRectRef.current = null; }
+    if (selectedImageRef.current) fc.setActiveObject(selectedImageRef.current);
+    fc.requestRenderAll();
+    setIsCropMode(false);
+  };
 
   // ---------------------------------------------------------------------------
   // Shape property updates
@@ -1009,6 +1213,8 @@ export function useImageEditor(): UseImageEditorReturn {
     canRedo,
     selectedTextProps,
     selectedShapeProps,
+    selectedImageProps,
+    uploadedImages,
     layers,
     activeFilters,
     isCropMode,
@@ -1044,5 +1250,11 @@ export function useImageEditor(): UseImageEditorReturn {
     duplicateLayer,
     reorderLayer,
     renameLayer,
+    addImage,
+    handleImageDrop,
+    setSelectedImageOpacity,
+    flipSelectedImageHorizontal,
+    flipSelectedImageVertical,
+    placeUploadedImage,
   };
 }
