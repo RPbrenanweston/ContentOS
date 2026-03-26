@@ -13,14 +13,10 @@ import {
   Path,
   FabricObject,
   FabricImage,
-  Brightness,
-  Contrast,
-  Saturation,
-  Grayscale,
-  Blur,
-  Invert,
-  Sepia,
+  filters as fabricFilters,
 } from 'fabric';
+
+const { Brightness, Contrast, Saturation, Grayscale, Blur, Invert, Sepia } = fabricFilters;
 import type { TemplatePreset } from './templatePresets';
 
 export type EditorTool =
@@ -275,6 +271,7 @@ export interface UseImageEditorReturn {
   canRedo: boolean;
   selectedTextProps: TextProperties | null;
   selectedShapeProps: ShapeProperties | null;
+  layers: LayerInfo[];
   // Image filter state
   activeFilters: ActiveFilter[];
   isCropMode: boolean;
@@ -977,6 +974,28 @@ export function useImageEditor(): UseImageEditorReturn {
     syncLayers();
   }, [syncLayers]);
 
+  // Filter and crop stubs — implemented in IMG-005
+  const applyFilter = useCallback((_type: FilterType, _intensity: number) => {
+    // Placeholder — IMG-005
+  }, []);
+
+  const removeFilter = useCallback((_type: FilterType) => {
+    // Placeholder — IMG-005
+  }, []);
+
+  const enterCropMode = useCallback(() => {
+    // Placeholder — IMG-005
+  }, []);
+
+  const applyCrop = useCallback(() => {
+    // Placeholder — IMG-005
+    setIsCropMode(false);
+  }, []);
+
+  const cancelCrop = useCallback(() => {
+    setIsCropMode(false);
+  }, []);
+
   return {
     canvasRef,
     fabricRef,
@@ -991,6 +1010,13 @@ export function useImageEditor(): UseImageEditorReturn {
     selectedTextProps,
     selectedShapeProps,
     layers,
+    activeFilters,
+    isCropMode,
+    applyFilter,
+    removeFilter,
+    enterCropMode,
+    applyCrop,
+    cancelCrop,
     setCanvasSize,
     setBackgroundColor,
     zoomIn,

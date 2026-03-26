@@ -1,6 +1,7 @@
 'use client';
 
 import { CANVAS_PRESETS, SHAPE_DEFS, type ShapeProperties, type UseImageEditorReturn } from './useImageEditor';
+import { LayerPanel } from './LayerPanel';
 
 interface ImageEditorSidebarProps {
   editor: UseImageEditorReturn;
@@ -363,7 +364,7 @@ export function ImageEditorSidebar({ editor }: ImageEditorSidebarProps) {
 
       {/* No selection state */}
       {!editor.selectedShapeProps && (
-        <div className="p-4 flex-1">
+        <div className="p-4">
           <h3
             className="text-xs font-semibold uppercase tracking-wider mb-3"
             style={{ color: 'var(--theme-muted)' }}
@@ -375,6 +376,22 @@ export function ImageEditorSidebar({ editor }: ImageEditorSidebarProps) {
           </p>
         </div>
       )}
+
+      {/* Layers panel */}
+      <div
+        className="flex flex-col flex-1 min-h-[120px]"
+        style={{ borderTop: '1px solid var(--theme-border)' }}
+      >
+        <div className="px-4 pt-4 pb-1">
+          <h3
+            className="text-xs font-semibold uppercase tracking-wider"
+            style={{ color: 'var(--theme-muted)' }}
+          >
+            Layers
+          </h3>
+        </div>
+        <LayerPanel editor={editor} />
+      </div>
     </div>
   );
 }

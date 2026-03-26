@@ -233,7 +233,7 @@
         "Typecheck passes"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": "Model: sonnet. Use Fabric.js IText class."
     },
     {
@@ -282,7 +282,7 @@
         "Typecheck passes"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": "Model: sonnet. Config-driven pattern from Canva clone analysis."
     },
     {
