@@ -185,8 +185,8 @@
         "Typecheck passes"
       ],
       "priority": 11,
-      "passes": false,
-      "notes": "Model: sonnet. JWT auth is the tricky part \u2014 use jsonwebtoken or jose."
+      "passes": true,
+      "notes": "Model: sonnet. JWT generated using Node.js built-in crypto (no external library). Admin API key split on first ':' to handle secrets containing colons. Registered in both platforms/index.ts and distribution.service.ts. 'ghost' added to Platform union type in enums.ts."
     },
     {
       "id": "IMG-001",

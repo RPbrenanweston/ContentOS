@@ -134,6 +134,7 @@ export default function QueuePage() {
   const [slots, setSlots] = useState<QueueSlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -176,16 +177,26 @@ export default function QueuePage() {
   }
 
   return (
+    <>
     <div className="h-full flex flex-col">
       {/* Header */}
       <div className="h-14 flex items-center justify-between px-6" style={{ borderBottom: '1px solid var(--theme-border)' }}>
         <h1 className="text-lg font-semibold" style={{ color: 'var(--theme-foreground)' }}>Queue</h1>
-        <button
-          className="px-4 py-1.5 text-sm font-medium rounded-lg transition-colors"
-          style={{ border: '1px solid var(--theme-border)', color: 'var(--theme-foreground)' }}
-        >
-          Set up cadence
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="px-4 py-1.5 text-sm font-medium rounded-lg transition-colors"
+            style={{ border: '1px solid var(--theme-border)', color: 'var(--theme-foreground)' }}
+          >
+            Set up cadence
+          </button>
+          <button
+            onClick={() => setModalOpen(true)}
+            className="px-4 py-1.5 text-sm font-medium rounded-lg transition-opacity hover:opacity-90"
+            style={{ backgroundColor: 'var(--theme-btn-primary-bg)', color: 'var(--theme-btn-primary-text)' }}
+          >
+            New Queue
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
@@ -205,6 +216,7 @@ export default function QueuePage() {
                 automatically fill the queue — you just review and go.
               </p>
               <button
+                onClick={() => setModalOpen(true)}
                 className="px-5 py-2.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
                 style={{ backgroundColor: 'var(--theme-btn-primary-bg)', color: 'var(--theme-btn-primary-text)' }}
               >
@@ -257,6 +269,12 @@ export default function QueuePage() {
         )}
       </div>
     </div>
+    <QueueCreationModal
+      open={modalOpen}
+      onClose={() => setModalOpen(false)}
+      onSuccess={loadData}
+    />
+    </>
   );
 }
 
