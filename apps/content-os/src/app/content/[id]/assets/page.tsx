@@ -18,6 +18,7 @@ import { useEffect, useState, useCallback, use } from 'react';
 import { AssetCard } from '@/components/assets/asset-card';
 import { GeneratePanel } from '@/components/assets/generate-panel';
 import { PublishPanel } from '@/components/distribution/publish-panel';
+import { PreviewPanel } from '@/components/preview';
 import type { DerivedAsset, AssetType, Platform, ContentNode } from '@/domain';
 
 /**
@@ -36,6 +37,7 @@ export default function AdaptPage({
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const loadAssets = useCallback(async () => {
     try {
@@ -148,9 +150,21 @@ export default function AdaptPage({
             </h1>
           </div>
         </div>
-        <span className="text-ui-sm">
-          {assets.length} {assets.length === 1 ? 'variant' : 'variants'}
-        </span>
+        <div className="flex items-center gap-3">
+          <span className="text-ui-sm">
+            {assets.length} {assets.length === 1 ? 'variant' : 'variants'}
+          </span>
+          <button
+            onClick={() => setShowPreview((v) => !v)}
+            className={`text-[11px] font-medium border px-2 py-1 rounded transition-colors ${
+              showPreview
+                ? 'border-primary-accent text-primary-accent bg-primary-accent/5'
+                : 'border-border text-muted hover:border-muted'
+            }`}
+          >
+            {showPreview ? 'Hide Preview' : 'Preview'}
+          </button>
+        </div>
       </div>
 
       {/* 3-column layout — softer styling */}
@@ -201,6 +215,25 @@ export default function AdaptPage({
             </div>
           )}
         </div>
+
+        {/* Preview Panel — shown when preview toggled */}
+        {showPreview && (
+          <div className="w-[380px] border-l border-border flex flex-col">
+            <div className="px-4 py-3 border-b border-border flex-shrink-0">
+              <span className="text-sm font-medium text-foreground">Platform Preview</span>
+            </div>
+            <div className="flex-1 overflow-hidden p-3">
+              <PreviewPanel
+                text={
+                  assets.length > 0
+                    ? (assets[0].body ?? node?.bodyText ?? '')
+                    : (node?.bodyText ?? '')
+                }
+                title={node?.title ?? undefined}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Right: Share / Queue */}
         <div className="w-[260px] border-l border-border overflow-y-auto bg-surface">
