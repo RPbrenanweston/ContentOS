@@ -332,8 +332,8 @@
         "Typecheck passes"
       ],
       "priority": 20,
-      "passes": false,
-      "notes": "Model: opus. Complex date math + multi-source data fetching."
+      "passes": true,
+      "notes": "COMPLETED: CalendarGrid component in src/components/calendar/calendar-grid.tsx. PlanPage replaced at src/app/plan/page.tsx. Mon-Sun 7-column grid, prev/next/today navigation, status-colored content pills, today highlighted, empty day click -> /content/new?date=, pill click -> /content/[id]. Reusable CalendarGrid ready for PLAN-002 drag-drop."
     },
     {
       "id": "PLAN-002",
