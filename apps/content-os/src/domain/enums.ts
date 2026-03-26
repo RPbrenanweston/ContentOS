@@ -59,7 +59,9 @@ export type Platform =
   | 'threads'
   | 'reddit'
   | 'substack'
-  | 'beehiiv';
+  | 'beehiiv'
+  | 'ghost'
+  | 'medium';
 
 export type JobStatus =
   | 'pending'
