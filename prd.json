@@ -266,8 +266,8 @@
         "Typecheck passes"
       ],
       "priority": 16,
-      "passes": false,
-      "notes": "Model: opus. Fabric.js filter pipeline + clipPath cropping."
+      "passes": true,
+      "notes": "COMPLETED: FiltersPanel at components/image-editor/FiltersPanel.tsx. FilterType union (Grayscale|Sepia|Blur|Brightness|Contrast|Saturation|Invert). buildFabricFilter() maps intensity 0-100 to Fabric filter params. applyFilter/removeFilter update img.filters array and call applyFilters(). enterCropMode/applyCrop/cancelCrop use Fabric Rect overlay + img.set({cropX,cropY,width,height}). FiltersPanel shown in sidebar when selectedImageProps !== null. Filter state synced on selection change. Typecheck passes."
     },
     {
       "id": "IMG-006",

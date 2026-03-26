@@ -1,10 +1,11 @@
 export { ImageEditorCanvas } from './ImageEditorCanvas';
 export { LayerPanel } from './LayerPanel';
+export { FiltersPanel } from './FiltersPanel';
 export { ImageEditorToolbar } from './ImageEditorToolbar';
 export { ImageEditorSidebar } from './ImageEditorSidebar';
 export { TemplateGallery } from './TemplateGallery';
 export { ExportPanel } from './ExportPanel';
-export { useImageEditor, CANVAS_PRESETS, FONT_FAMILIES, TEXT_PRESET_COLORS, SHAPE_DEFS } from './useImageEditor';
+export { useImageEditor, CANVAS_PRESETS, FONT_FAMILIES, TEXT_PRESET_COLORS, SHAPE_DEFS, INTENSITY_FILTERS, TOGGLE_FILTERS } from './useImageEditor';
 export type { EditorTool, CanvasPreset, UseImageEditorReturn, TextProperties, ShapeProperties, ImageProperties, UploadedImage, ExportFormat, FilterType, ActiveFilter, ShapeDef, LayerInfo } from './useImageEditor';
 export type { TemplatePreset } from './templatePresets';
 export { TEMPLATE_PRESETS } from './templatePresets';
