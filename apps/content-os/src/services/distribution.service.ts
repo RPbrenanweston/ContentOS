@@ -40,6 +40,7 @@ import { XAdapter } from '@/infrastructure/distribution/platforms/x.adapter';
 import { BlueskyAdapter } from '@/infrastructure/distribution/platforms/bluesky.adapter';
 import { ThreadsAdapter } from '@/infrastructure/distribution/platforms/threads.adapter';
 import { RedditAdapter } from '@/infrastructure/distribution/platforms/reddit.adapter';
+import { GhostAdapter } from '@/infrastructure/distribution/platforms/ghost.adapter';
 import type { DistributionJobRepo } from '@/infrastructure/supabase/repositories/distribution-job.repo';
 import type { DistributionAccountRepo } from '@/infrastructure/supabase/repositories/distribution-account.repo';
 import type { PerformanceMetricRepo } from '@/infrastructure/supabase/repositories/performance-metric.repo';
@@ -50,6 +51,7 @@ registerAdapter(new XAdapter());
 registerAdapter(new BlueskyAdapter());
 registerAdapter(new ThreadsAdapter());
 registerAdapter(new RedditAdapter());
+registerAdapter(new GhostAdapter());
 
 export class DistributionServiceImpl implements IDistributionService {
   constructor(
