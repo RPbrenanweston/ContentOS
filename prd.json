@@ -6,7 +6,7 @@
     {
       "id": "BUG-001",
       "title": "Fix voice recording not delivering text to TipTap editor",
-      "description": "Voice recording captures speech (visible in header as interim text) but transcribed text never appears in the TipTap editor canvas. Root cause: (1) TipTapEditor component doesn't support forwardRef/useImperativeHandle so editorRef.current?.insertText() silently fails. (2) setBodyText() updates React state but TipTap is uncontrolled after init — content prop only used at mount. Fix: Add forwardRef to TipTapEditor exposing insertText method that calls editor.chain().focus().insertContent(text).run(). In content/new/page.tsx, pass ref={editorRef} to TipTapEditor. Remove the setBodyText fallback since TipTap onChange already syncs to bodyText.",
+      "description": "Voice recording captures speech (visible in header as interim text) but transcribed text never appears in the TipTap editor canvas. Root cause: (1) TipTapEditor component doesn't support forwardRef/useImperativeHandle so editorRef.current?.insertText() silently fails. (2) setBodyText() updates React state but TipTap is uncontrolled after init \u2014 content prop only used at mount. Fix: Add forwardRef to TipTapEditor exposing insertText method that calls editor.chain().focus().insertContent(text).run(). In content/new/page.tsx, pass ref={editorRef} to TipTapEditor. Remove the setBodyText fallback since TipTap onChange already syncs to bodyText.",
       "acceptanceCriteria": [
         "TipTapEditor wrapped in forwardRef with useImperativeHandle exposing insertText(text)",
         "insertText uses editor.chain().focus().insertContent(text).run()",
@@ -17,7 +17,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug — voice recording UI works but text never reaches editor."
+      "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug \u2014 voice recording UI works but text never reaches editor."
     },
     {
       "id": "SEC-001",
@@ -136,7 +136,7 @@
       ],
       "priority": 8,
       "passes": true,
-      "notes": "Model: sonnet. Follow existing adapter pattern (see linkedin.adapter.ts). COMPLETED: SubstackAdapter in substack.adapter.ts — API token auth, createPost to /api/v1/drafts, getMetrics stub, validateCredentials via GET /api/v1/publications. Platform=substack added to enums.ts. Registered via registerAdapter() in platforms/index.ts. Typecheck passes with zero errors in changed files."
+      "notes": "Model: sonnet. Follow existing adapter pattern (see linkedin.adapter.ts). COMPLETED: SubstackAdapter in substack.adapter.ts \u2014 API token auth, createPost to /api/v1/drafts, getMetrics stub, validateCredentials via GET /api/v1/publications. Platform=substack added to enums.ts. Registered via registerAdapter() in platforms/index.ts. Typecheck passes with zero errors in changed files."
     },
     {
       "id": "PUB-002",
@@ -315,7 +315,7 @@
         "Typecheck passes"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": "Model: opus. Canvas export + Supabase integration."
     },
     {
@@ -380,7 +380,7 @@
       ],
       "priority": 23,
       "passes": true,
-      "notes": "COMPLETED: PreviewPanel in apps/content-os/src/components/preview/ with individual platform components: LinkedInPreview (3000 char, professional card), TwitterPreview (280 char, thread splitting), InstagramPreview (2200 char, 1:1 aspect ratio), ThreadsPreview (500 char, thread-style), RedditPreview (40k char, upvote chrome), NewsletterPreview (no limit, shared for Substack/Medium/Ghost/Beehiiv). CharCount/CharBar provide green/yellow/red indicators. PreviewPanel wired into assets page via toggle button. Typecheck passes — zero errors in new files."
+      "notes": "COMPLETED: PreviewPanel in apps/content-os/src/components/preview/ with individual platform components: LinkedInPreview (3000 char, professional card), TwitterPreview (280 char, thread splitting), InstagramPreview (2200 char, 1:1 aspect ratio), ThreadsPreview (500 char, thread-style), RedditPreview (40k char, upvote chrome), NewsletterPreview (no limit, shared for Substack/Medium/Ghost/Beehiiv). CharCount/CharBar provide green/yellow/red indicators. PreviewPanel wired into assets page via toggle button. Typecheck passes \u2014 zero errors in new files."
     },
     {
       "id": "STUDIO-001",
@@ -414,7 +414,7 @@
       ],
       "priority": 25,
       "passes": true,
-      "notes": "COMPLETED: VideoPlayer extended with draggable trim handles (emerald In, rose Out), highlighted trim region, mm:ss.ms timecode display for both points, Set In/Set Out/Reset buttons, trim-preview loop, export via POST /api/media/clip with progress bar and download link. TypeScript clean in video-player.tsx — pre-existing errors in ExportToContentOS.tsx and middleware.ts not introduced by this story."
+      "notes": "COMPLETED: VideoPlayer extended with draggable trim handles (emerald In, rose Out), highlighted trim region, mm:ss.ms timecode display for both points, Set In/Set Out/Reset buttons, trim-preview loop, export via POST /api/media/clip with progress bar and download link. TypeScript clean in video-player.tsx \u2014 pre-existing errors in ExportToContentOS.tsx and middleware.ts not introduced by this story."
     },
     {
       "id": "STUDIO-003",
