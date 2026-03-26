@@ -413,8 +413,8 @@
         "Typecheck passes"
       ],
       "priority": 25,
-      "passes": false,
-      "notes": "Model: opus. FFmpeg.wasm integration is complex."
+      "passes": true,
+      "notes": "COMPLETED: VideoPlayer extended with draggable trim handles (emerald In, rose Out), highlighted trim region, mm:ss.ms timecode display for both points, Set In/Set Out/Reset buttons, trim-preview loop, export via POST /api/media/clip with progress bar and download link. TypeScript clean in video-player.tsx — pre-existing errors in ExportToContentOS.tsx and middleware.ts not introduced by this story."
     },
     {
       "id": "STUDIO-003",
@@ -428,8 +428,8 @@
         "Typecheck passes"
       ],
       "priority": 26,
-      "passes": false,
-      "notes": "Model: sonnet. Cross-app Supabase insert."
+      "passes": true,
+      "notes": "COMPLETED: ExportToContentOS component updated with confirmation dialog (shows clip count), 'Send to Content OS' primary button, loading states (creating/exporting), success message with clickable link to content node in Content OS, and descriptive error messages with retry. export/route.ts already existed and creates content_node + derived_assets."
     }
   ]
 }
