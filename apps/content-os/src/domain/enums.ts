@@ -57,7 +57,9 @@ export type Platform =
   | 'newsletter'
   | 'bluesky'
   | 'threads'
-  | 'reddit';
+  | 'reddit'
+  | 'substack'
+  | 'beehiiv';
 
 export type JobStatus =
   | 'pending'

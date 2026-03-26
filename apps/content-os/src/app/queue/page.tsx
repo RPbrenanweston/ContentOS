@@ -3,10 +3,12 @@
 // why: Visualizes publishing queue across channels; enables creators to review and manage scheduled content distribution rhythm
 // in:[/api/queue, /api/queue/slots] out:[JSX-timeline-ui] err:[fetch-failure, date-parse-error]
 // edge:../../services/queue.service.ts -> CALLS
+// edge:../../components/queue/queue-creation-modal.tsx -> RENDERS [modal for new queue creation]
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import type { QueueSlot, PublishingQueue } from '@/domain';
+import { QueueCreationModal } from '@/components/queue/queue-creation-modal';
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                           */
