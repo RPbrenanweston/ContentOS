@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #D4F85A;
+  --color-background: #111210;
+  --color-surface: #1E201D;
+  --color-text: #E1E5DF;
+  --color-muted: #6B7067;
+  --color-accent: #FF453A;
+  --color-border: #383C35;
+  --font-heading: 'Archivo', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius: 0px;
+  --spacing: 4px;
+}
+
+@layer base {
+  * {
+    border-radius: 0;
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: var(--font-heading);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background-color: var(--color-primary);
+    color: var(--color-background);
+  }
+
+  /* Scrollbar styling — brutalist thin track */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--color-background);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-muted);
+  }
+}
+
+@layer components {
+  /* Brutalist panel borders */
+  .panel-border {
+    border: 1px solid var(--color-border);
+  }
+
+  /* Neon flash animation for breadcrumb capture */
+  @keyframes capture-flash {
+    0% { opacity: 1; }
+    50% { opacity: 0.3; }
+    100% { opacity: 1; }
+  }
+
+  .capture-flash {
+    animation: capture-flash 0.2s ease-out;
+  }
+
+  /* Terminal-style blinking cursor */
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+}

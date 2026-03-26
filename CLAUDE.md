@@ -1,135 +1,136 @@
-# Brenan Weston — Central Workspace
-## Claude Code Master Context
+# Ralph Agent — Content Platform Feature Work
 
-> **Read this file completely before starting any task.**
-> This is the root of all active projects. Never start work without knowing which project you are in.
+You are an autonomous coding agent. Each iteration you receive fresh context — your memory persists through files (progress.txt, prd.json, AGENTS.md) and git history, NOT conversation.
 
----
+## Working Directory
 
-## ⚠️ Anti-Drift Rules (mandatory before every session)
+You are in: `/Users/robertpeacock/Desktop/Claude code/content platform/.claude/worktrees/suspicious-mendel`
 
-1. **Identify your target project first.** Ask: which folder should I be working in?
-2. **`cd` into the correct project directory before making any changes.**
-3. **Never commit recruitment code to `shared-ai-layer` or `codesignal-20`.** Recruitment logic lives in `ai-recruitment` (not yet cloned here — clone from GitHub if needed).
-4. **Never commit salesblock UI or logic into any other repo.** SalesBlock is its own product.
-5. **Check the current branch before starting.** Run `git branch --show-current` and verify it matches the table below.
-6. **Never set a `claude/*` branch as default.** Always work toward `main` or a `ralph/*` branch.
+This is a git worktree of the shared-ai-layer repo. The content platform lives under:
+- `apps/content-os/` — Next.js 15, React 19 content distribution app
+- `apps/studio/` — Next.js 15, React 19 video console app
+- `packages/ai-core/` — Shared AI layer (LLM providers, billing, BYOK)
+- `supabase/migrations/` — PostgreSQL migrations
+- `infra/` — Docker Compose for self-hosted Supabase + FreeFlow
 
----
+## Phase Detection
 
-## Project Map
+Check: Does `progress.txt` contain completed story entries (beyond the header)?
 
-| Folder | Repo | Purpose | Stack | Active Branch |
-|--------|------|---------|-------|---------------|
-| `.` (root) | shared-ai-layer | Shared AI infrastructure layer (LLM providers, prompts, shared types) | TypeScript + Python | `main` |
-| `jobtrackr/` | jobtrackr | Two-sided job marketplace for tech/security recruitment | Next.js 14, Supabase, TypeScript | `ralph/marketplace-features` |
-| `codesignal-20/` | codesignal-20 | Multi-agent sourcing platform (CodeSignal + ExecSignal agents) | TypeScript, Bun, Vercel | `main` |
-| `escapement/` | escapement | AI control plane — govern AI usage across all apps | Hono, Next.js, Supabase | `main` |
-| `Ultralearning-Architect/` | Ultralearning-Architect | Public HTML showcase | HTML | `main` |
+- **NO previous entries** → FIRST iteration. Read the full codebase context below, then implement the highest priority incomplete story.
+- **YES previous entries** → CONTINUATION. Read Codebase Patterns in progress.txt and AGENTS.md, identify next story, implement it.
+- **STUCK** (same story failed 2+ iterations per progress.txt) → Re-assess approach. Try a different strategy or document blockers.
 
-### Not yet cloned (GitHub only)
-| Repo | Purpose |
-|------|---------|
-| `salesblock-io` | SalesBlock CRM product — **default branch BROKEN, fix before cloning** |
-| `ai-recruitment` | AI recruitment tooling (Python) — **no main branch yet, fix before cloning** |
-| `sourcing-mission-control` | Sourcing control UI |
-| `SPP` | Sourcing pipeline product |
-| `Breadcrumb` | Breadcrumb product |
+## Your Task
 
----
+1. Read `prd.json` — identify the highest priority story where `passes: false`
+2. Read `progress.txt` — check Codebase Patterns section, then recent entries
+3. Read `AGENTS.md` — load operational patterns and safety rules
+4. Verify you're on branch `claude/suspicious-mendel`. If not: `git checkout claude/suspicious-mendel`
+5. Implement that **single** user story
+6. Run quality check: `cd apps/content-os && npx tsc --noEmit`
+7. If check passes, commit: `git add -A && git commit -m "feat: [Story ID] - [Story Title]"`
+8. Update `prd.json` — set `passes: true` for the completed story
+9. Append progress to `progress.txt` (format below)
+10. Update `AGENTS.md` if you discover reusable patterns
 
-## Root Repo (shared-ai-layer) Structure
+## Codebase Context
 
-```
-Claude code/           ← YOU ARE HERE (shared-ai-layer root)
-├── packages/
-│   └── ai-core/       ← TypeScript package: unified LLM provider access
-├── backend/
-│   └── ai_core/       ← Python equivalent
-├── supabase/          ← Shared DB migrations
-├── docs/              ← Shared documentation
-├── skills/            ← PAI skill definitions
-└── commands/          ← CLI command definitions
-```
+### Key Files You'll Touch
 
-**This root repo is for shared infrastructure only.**
-Do not put product code (jobtrackr features, salesblock UI, recruitment flows) here.
-
----
-
-## How to Start a Claude Code Session
-
-### Working on a nested project
-```bash
-# Always cd into the project first
-cd jobtrackr/
-# Verify branch
-git branch --show-current   # should be ralph/marketplace-features or main
-# Then start your work
-```
-
-### Working on shared AI layer
-```bash
-# Stay at root — you're already in the right place
-git branch --show-current   # should be main
-# Work in packages/ai-core/ or backend/ai_core/
-```
-
-### Working on a GitHub-only repo (not yet cloned)
-```bash
-# Clone it first into this folder
-git clone https://github.com/RPbrenanweston/salesblock-io ./SalesBlock
-# BUT: fix the default branch FIRST (see audit report)
-```
-
----
-
-## Branch Status (as of March 2026 audit)
-
-| Repo | Issue | Required Fix |
-|------|-------|-------------|
-| `salesblock-io` | Default branch is `ralph/salesblock-io` not `main` | Fix in GitHub Settings → Branches **before next session** |
-| `ai-recruitment` | No `main` branch — Claude session branch is default | Create `main` from current default in GitHub |
-| `jobtrackr` | `ralph/marketplace-features` is 2,450 commits ahead of main | Merge to main before next session |
-| `shared-ai-layer` | `claude/separate-recruitment-project-3l4Ll` is cross-contamination | Delete after reviewing |
-| `escapement` | On `ralph/escapement-gaps-v1` locally — not on main | `git checkout main` |
-
----
-
-## PAI Skills
-
-Skills live in `skills/` at the root. These are PAI skill definitions used by Claude and other agents.
-
-To use a skill from Claude Code:
-```bash
-# Skills are available as prompts/instructions, not as executables
-ls skills/
-cat skills/<skill-name>.md
-```
-
----
-
-## Loose Files at Root
-
-The root contains legacy PAI enrichment scripts (`.py`, `.json`, `.csv`). These are archived work from the data pipeline phase. **Do not modify or delete these without checking the archive.** If asked to clean up, move them to `archive/pai-legacy/`.
-
----
-
-## Tech Stack Summary
-
-| Layer | Technology |
+| Story | Key Files |
 |-------|-----------|
-| Frontend | Next.js 14, TypeScript, Tailwind, Shadcn UI |
-| Backend | Supabase (PostgreSQL + Auth + RLS), Python FastAPI |
-| AI | Anthropic Claude (primary), OpenAI, OpenRouter (via shared-ai-layer) |
-| Runtime | Bun (tests/local), Node 20 (Vercel) |
-| Deployment | Vercel (all apps) |
-| DB | Supabase (shared project for root, dedicated for jobtrackr, escapement) |
+| FW-001 (AI client) | `apps/content-os/src/lib/ai.ts`, `packages/ai-core/src/client.ts`, `packages/ai-core/src/types.ts`, `packages/ai-core/src/index.ts` |
+| FW-002 (Bluesky) | `apps/content-os/src/infrastructure/distribution/platforms/bluesky.adapter.ts` (new), `platforms/index.ts` |
+| FW-003 (Threads) | `apps/content-os/src/infrastructure/distribution/platforms/threads.adapter.ts` (new), `platforms/index.ts` |
+| FW-004 (Reddit) | `apps/content-os/src/infrastructure/distribution/platforms/reddit.adapter.ts` (new), `platforms/index.ts` |
+| FW-005 (Analytics sync) | `apps/content-os/src/app/api/analytics/sync/route.ts`, `infrastructure/queue/workers.ts` |
+| FW-006 (Regenerate) | `apps/content-os/src/services/asset-generator.service.ts`, `services/container.ts` |
+| FW-007 (Clip worker) | `apps/content-os/src/infrastructure/queue/workers.ts` |
+| FW-008 (Publish worker) | `apps/content-os/src/infrastructure/queue/workers.ts` |
+| FW-009 (Queue UI) | `apps/content-os/src/app/queue/page.tsx` |
+| FW-010 (Studio export) | `apps/studio/src/app/api/compilations/[id]/export/route.ts` (new), Studio compilation UI |
 
+### Architecture Patterns
+
+- **Platform adapters**: Implement `PlatformAdapter` interface from `infrastructure/distribution/platform-adapter.ts`. See `linkedin.adapter.ts` for reference implementation.
+- **Queue workers**: Register in `registerWorkers()` in `infrastructure/queue/workers.ts`. Job types defined in `pg-boss.ts`.
+- **API routes**: Use `withApiHandler()` wrapper from `lib/api-handler.ts`. All routes use auth middleware.
+- **Repos**: Supabase repos in `infrastructure/supabase/repositories/`. Use `getServices(supabase)` from `services/container.ts`.
+- **AI client**: `packages/ai-core` exports `createAIClient(config, supabase)` — see `packages/ai-core/src/client.ts` and `packages/ai-core/src/types.ts` for the real API.
+- **Transactions**: Use `withTransaction()` from `infrastructure/supabase/transaction.ts` for multi-table ops.
+- **Imports**: Both apps use `@/` path alias mapping to `src/`.
+
+### ai-core Type Mapping (for FW-001)
+
+ai-core exports from `packages/ai-core/src/types.ts`:
+```typescript
+interface AIClientConfig { appId: string; supabaseClient: SupabaseClient; defaultModel?: string; }
+interface ChatParams { userId: string; featureId: string; messages: Message[]; model?: string; maxTokens?: number; temperature?: number; tools?: Tool[]; }
+interface ChatResult { content: string; usage: { tokensIn: number; tokensOut: number; costUsd: number; }; model: string; latencyMs: number; }
+interface Message { role: 'user' | 'assistant'; content: string; }
+```
+
+**The types are nearly 1:1!** Content OS ai.ts's local interfaces (AIChatParams, AIChatResult, AIMessage) match ai-core's (ChatParams, ChatResult, Message) field-for-field. The facade just needs to:
+1. Import `createAIClient` from `@org/ai-core`
+2. Import `createServiceClient` from supabase/client.ts for the SupabaseClient
+3. Construct: `const coreClient = createAIClient({ appId: 'content-os', supabaseClient: createServiceClient(), defaultModel: 'claude-sonnet-4-20250514' })`
+4. Delegate `chat()` calls directly — params and result shapes match
+
+### Env Vars (for adapters)
+
+Adapters read from process.env. Expected vars (already in .env.example):
+- `BLUESKY_SERVICE_URL` (default: https://bsky.social)
+- `THREADS_APP_ID`, `THREADS_APP_SECRET`, `THREADS_REDIRECT_URI`
+- `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_REDIRECT_URI`, `REDDIT_USER_AGENT`
+
+## Scope Boundaries
+
+- **DO**: Edit files under apps/, packages/, supabase/, infra/
+- **DO NOT**: Touch SalesBlock, JobTracker, or any repo outside this worktree
+- **DO NOT**: Push to remote
+- **DO NOT**: Run npm install (dependencies are already installed)
+- **DO NOT**: Modify Supabase hosted instances — self-hosted only
+- **DO NOT**: Delete existing @crumb breadcrumb metadata
+
+## Quality Gates
+
+Before committing, run:
+```bash
+cd apps/content-os && npx tsc --noEmit
+```
+
+If it fails, fix the errors before committing. Do NOT commit broken TypeScript.
+
+## Progress Report Format
+
+APPEND to progress.txt:
+
+```
+## [timestamp] - [Story ID] - [Story Title]
+- **Implemented:** [What was built]
+- **Files changed:** [List of files]
+- **Quality:** tsc passed / failed
+- **Learnings:**
+  - [Pattern discovered]
+  - [Gotcha encountered]
 ---
+```
 
-## Contacts / Ownership
+## Completion Protocol
 
-**Project Owner:** Robert (RPbrenanweston)
-**Email:** robert@brenanweston.com
-**GitHub:** https://github.com/RPbrenanweston
+After completing a story, check if ALL stories have `passes: true`.
+
+**If ALL complete:**
+```
+<promise>COMPLETE</promise>
+```
+
+**If stories remain with `passes: false`:**
+End normally. Next iteration picks up next story.
+
+**If blocked 2+ iterations on same story:**
+Document blockers, then:
+```
+<promise>BLOCKED</promise>
+```

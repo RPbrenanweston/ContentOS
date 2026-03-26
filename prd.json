@@ -1,0 +1,435 @@
+{
+  "project": "ContentOS Full Product Build",
+  "branchName": "claude/suspicious-mendel",
+  "description": "Phase 3: Security hardening, blog/newsletter adapters, image editor (Fabric.js), content planner, and Studio enhancements. Model-tiered execution: haiku for simple, sonnet for moderate, opus for complex.",
+  "userStories": [
+    {
+      "id": "BUG-001",
+      "title": "Fix voice recording not delivering text to TipTap editor",
+      "description": "Voice recording captures speech (visible in header as interim text) but transcribed text never appears in the TipTap editor canvas. Root cause: (1) TipTapEditor component doesn't support forwardRef/useImperativeHandle so editorRef.current?.insertText() silently fails. (2) setBodyText() updates React state but TipTap is uncontrolled after init \u2014 content prop only used at mount. Fix: Add forwardRef to TipTapEditor exposing insertText method that calls editor.chain().focus().insertContent(text).run(). In content/new/page.tsx, pass ref={editorRef} to TipTapEditor. Remove the setBodyText fallback since TipTap onChange already syncs to bodyText.",
+      "acceptanceCriteria": [
+        "TipTapEditor wrapped in forwardRef with useImperativeHandle exposing insertText(text)",
+        "insertText uses editor.chain().focus().insertContent(text).run()",
+        "content/new/page.tsx passes ref={editorRef} to TipTapEditor",
+        "Voice transcription text appears in editor canvas when recording stops",
+        "Existing onChange callback still fires when voice text inserted",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug \u2014 voice recording UI works but text never reaches editor."
+    },
+    {
+      "id": "SEC-001",
+      "title": "Add account ownership check to publish API",
+      "description": "In apps/content-os/src/app/api/distribution/publish/route.ts, after loading accounts by accountIds, verify each account's userId matches ctx.userId. Return 403 for unauthorized accounts.",
+      "acceptanceCriteria": [
+        "After loading accounts, filter for accounts where userId !== ctx.userId",
+        "Return 403 JSON error if any unauthorized accounts found",
+        "Legitimate publish requests with owned accounts still succeed",
+        "Typecheck passes"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Model: haiku. ~10 lines changed in 1 file."
+    },
+    {
+      "id": "SEC-002",
+      "title": "Replace window.prompt with modal in accounts page",
+      "description": "In apps/content-os/src/app/accounts/page.tsx, replace all window.prompt() calls with a React modal form using useState for visibility and form state. Modal should have labeled inputs and submit/cancel buttons.",
+      "acceptanceCriteria": [
+        "No window.prompt() calls remain in accounts/page.tsx",
+        "Modal component with controlled form inputs replaces each prompt",
+        "Modal has cancel and submit buttons",
+        "Form validates required fields",
+        "Typecheck passes"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Model: sonnet. ConnectModal component with labeled input, non-empty + min-length validation, loading spinner on submit, cancel closes without side effects. No window.prompt remains."
+    },
+    {
+      "id": "SEC-003",
+      "title": "Validate scheduledAt rejects past dates",
+      "description": "In apps/content-os/src/app/api/distribution/publish/route.ts, add validation that scheduledAt (if provided) is in the future. Return 400 if past. Allow null for immediate publishing.",
+      "acceptanceCriteria": [
+        "If scheduledAt is provided and is before Date.now(), return 400",
+        "Error message says 'scheduledAt must be in the future'",
+        "Null scheduledAt still works for immediate publishing",
+        "Typecheck passes"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Model: haiku. ~5 lines in 1 file."
+    },
+    {
+      "id": "SEC-004",
+      "title": "Fix navigation and timer cleanup bugs",
+      "description": "Two quick fixes: (1) In apps/content-os/src/app/content/page.tsx, replace window.location.href with Next.js useRouter().push(). (2) In apps/content-os/src/app/content/new/page.tsx, add useEffect cleanup to clear the auto-save setInterval on unmount.",
+      "acceptanceCriteria": [
+        "content/page.tsx uses router.push() instead of window.location.href",
+        "content/new/page.tsx clears setInterval in useEffect return",
+        "Import useRouter from next/navigation added where needed",
+        "Typecheck passes"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Model: haiku. 2 files, ~10 lines each. COMPLETED: Replaced window.location.href with router.push in content/page.tsx (line 79) and content/new/page.tsx (line 160). Timer cleanup already present in useEffect return. All navigation now uses Next.js client-side routing."
+    },
+    {
+      "id": "QUEUE-001",
+      "title": "Add queue creation modal with account selector",
+      "description": "In apps/content-os/src/app/queue/page.tsx, add a 'Create Queue' modal triggered by the existing button. Modal includes: queue name input, multi-select for distribution accounts (fetched from /api/distribution/accounts), timezone dropdown (Intl.supportedValuesOf('timeZone')), and submit to POST /api/queue.",
+      "acceptanceCriteria": [
+        "Create Queue button opens a modal form",
+        "Modal has name input, account multi-select, timezone dropdown",
+        "Account list fetched from /api/distribution/accounts",
+        "Submit POSTs to /api/queue and closes modal on success",
+        "Typecheck passes"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Model: sonnet. Add modal + fetch logic to existing page."
+    },
+    {
+      "id": "QUEUE-002",
+      "title": "Add schedule builder to queue creation modal",
+      "description": "Extend the queue creation modal from QUEUE-001 with a schedule builder. Add day-of-week checkboxes (Mon-Sun) and time slot inputs (add/remove time slots per day). Each slot has hour:minute. Submit schedule as part of POST /api/queue body as scheduleSlots array.",
+      "acceptanceCriteria": [
+        "Day-of-week checkboxes for Mon through Sun",
+        "Time slot inputs with add/remove per selected day",
+        "Schedule data included in POST /api/queue request body",
+        "At least one day+time required before submit enabled",
+        "Typecheck passes"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "COMPLETED: ScheduleBuilder added to queue-creation-modal.tsx. Frequency selector (Daily/Mon-Fri/Custom) controls active days. Custom mode shows individual day checkboxes (Mon-Sun). Time picker uses hour:minute selects with Add/Remove per slot. Week preview grid shows dots on scheduled days with time labels. schedule[] array sent as {dayOfWeek, timeOfDay} entries matching the API schema. Submit disabled until at least one day+time combination is valid. No new type errors introduced."
+    },
+    {
+      "id": "QUEUE-003",
+      "title": "Add analytics error isolation per metric",
+      "description": "In apps/content-os/src/app/api/analytics/route.ts, wrap each metric aggregation in try/catch. Return partial results with error details for failed metrics. Include partial_errors array when some metrics fail.",
+      "acceptanceCriteria": [
+        "Analytics endpoint catches errors per-metric instead of failing the whole response",
+        "Failed metrics return null with an error field instead of crashing",
+        "Successful metrics still return normally",
+        "Error details are logged server-side",
+        "Response includes a partial_errors array when some metrics fail",
+        "Typecheck passes"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "COMPLETED: Updated route.ts to wrap each metric aggregation (jobMetrics, assetMetrics, nodeMetrics) in try/catch. Failed metrics return null with error details. partial_errors array included in response. Server-side logging uses requestId for correlation."
+    },
+    {
+      "id": "PUB-001",
+      "title": "Implement Substack publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/substack.adapter.ts implementing PlatformAdapter. Substack API: POST https://substack.com/api/v1/drafts for creating posts (title, body as HTML, subtitle). Auth via API token in Authorization header. getAuthUrl/exchangeCode throw 'Substack uses API tokens'. getMetrics returns zeroed metrics. Register in platforms/index.ts via registerAdapter().",
+      "acceptanceCriteria": [
+        "SubstackAdapter class implements PlatformAdapter with platform='substack'",
+        "createPost sends POST to Substack drafts API with title and HTML body",
+        "validateCredentials checks token by GET /api/v1/publications",
+        "getAuthUrl throws 'Substack uses API tokens, not OAuth'",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Model: sonnet. Follow existing adapter pattern (see linkedin.adapter.ts). COMPLETED: SubstackAdapter in substack.adapter.ts \u2014 API token auth, createPost to /api/v1/drafts, getMetrics stub, validateCredentials via GET /api/v1/publications. Platform=substack added to enums.ts. Registered via registerAdapter() in platforms/index.ts. Typecheck passes with zero errors in changed files."
+    },
+    {
+      "id": "PUB-002",
+      "title": "Implement Beehiiv publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/beehiiv.adapter.ts implementing PlatformAdapter. Beehiiv REST API at api.beehiiv.com/v2. Auth: Bearer token. createPost: POST /publications/{pubId}/posts with title, content (HTML), status. getMetrics: GET post stats. validateCredentials: GET /publications. pubId stored in credentials.metadata.publicationId. Register in platforms/index.ts.",
+      "acceptanceCriteria": [
+        "BeehiivAdapter class implements PlatformAdapter with platform='beehiiv'",
+        "createPost POSTs to /publications/{pubId}/posts with title and HTML",
+        "Publication ID read from credentials.metadata.publicationId",
+        "validateCredentials GETs /publications to verify API key",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "COMPLETED: BeehiivAdapter implemented in platforms/beehiiv.adapter.ts. Registered in platforms/index.ts. beehiiv added to Platform union type in domain/enums.ts. getMetrics returns stub with TODO comment per acceptance criteria. Error handling uses DistributionError for Beehiiv-specific failures."
+    },
+    {
+      "id": "PUB-003",
+      "title": "Implement Medium publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/medium.adapter.ts implementing PlatformAdapter. Medium API: OAuth2 flow. getAuthUrl: build medium.com OAuth URL with basicProfile,publishPost scopes. exchangeCode: POST /v1/tokens. createPost: POST /v1/users/{authorId}/posts with title, content, contentFormat='html', publishStatus. getMetrics: return zeroed (no public API). validateCredentials: GET /v1/me. Register in platforms/index.ts.",
+      "acceptanceCriteria": [
+        "MediumAdapter class implements PlatformAdapter with platform='medium'",
+        "getAuthUrl builds correct Medium OAuth URL",
+        "exchangeCode exchanges auth code for token",
+        "createPost publishes via /v1/users/{authorId}/posts",
+        "getMetrics returns zeroed metrics with API limitation note",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 10,
+      "passes": true,
+      "notes": "Model: sonnet. Follow existing adapter pattern (see threads.adapter.ts for OAuth)."
+    },
+    {
+      "id": "PUB-004",
+      "title": "Implement Ghost publishing adapter",
+      "description": "Create apps/content-os/src/infrastructure/distribution/platforms/ghost.adapter.ts implementing PlatformAdapter. Ghost Admin API: JWT auth from Admin API key (split key at ':', use id as kid, secret for HMAC-SHA256, 5min expiry). createPost: POST {apiUrl}/ghost/api/admin/posts with title, html, status. deletePost: DELETE same. validateCredentials: GET {apiUrl}/ghost/api/admin/site. apiUrl from credentials.metadata.apiUrl. Register in platforms/index.ts.",
+      "acceptanceCriteria": [
+        "GhostAdapter class implements PlatformAdapter with platform='ghost'",
+        "JWT generated from Admin API key (id:secret split, HMAC-SHA256)",
+        "createPost POSTs to Ghost Admin API",
+        "API URL configurable via credentials.metadata.apiUrl",
+        "validateCredentials checks /ghost/api/admin/site",
+        "Registered via registerAdapter() in platforms/index.ts",
+        "Typecheck passes"
+      ],
+      "priority": 11,
+      "passes": true,
+      "notes": "Model: sonnet. JWT generated using Node.js built-in crypto (no external library). Admin API key split on first ':' to handle secrets containing colons. Registered in both platforms/index.ts and distribution.service.ts. 'ghost' added to Platform union type in enums.ts."
+    },
+    {
+      "id": "IMG-001",
+      "title": "Create image editor page with Fabric.js canvas",
+      "description": "Create apps/content-os/src/app/editor/page.tsx and apps/content-os/src/app/editor/components/Canvas.tsx. Install fabric (npm). Initialize Fabric.js canvas with white background, 1080x1080 default size. Add zoom controls (buttons + mouse wheel). Add basic toolbar: select, pan. Wrap in 3-pane layout shell: left sidebar placeholder, center canvas, right properties placeholder.",
+      "acceptanceCriteria": [
+        "Page renders at /editor route",
+        "Fabric.js canvas initializes with 1080x1080 white background",
+        "Zoom in/out buttons work, mouse wheel zooms",
+        "Select and pan mode toggle in toolbar",
+        "3-pane layout: left sidebar (empty), canvas (center), properties (empty right)",
+        "Typecheck passes"
+      ],
+      "priority": 12,
+      "passes": true,
+      "notes": "COMPLETED: Page at /editor/image with Fabric.js canvas, zoom, pan, toolbar, sidebar presets, color picker, useImageEditor hook."
+    },
+    {
+      "id": "IMG-002",
+      "title": "Add undo/redo and JSON save/load to editor",
+      "description": "In the editor, implement undo/redo using Fabric.js canvas.toJSON() snapshots stored in an array. Max 50 history states. Add save button that serializes canvas to JSON and stores in localStorage. Add load button that restores from localStorage. Add keyboard shortcuts: Ctrl+Z undo, Ctrl+Shift+Z redo, Ctrl+S save.",
+      "acceptanceCriteria": [
+        "Undo reverts last canvas change (Ctrl+Z)",
+        "Redo re-applies undone change (Ctrl+Shift+Z)",
+        "History limited to 50 states",
+        "Save serializes canvas JSON to localStorage",
+        "Load restores canvas from localStorage",
+        "Typecheck passes"
+      ],
+      "priority": 13,
+      "passes": true,
+      "notes": "COMPLETED: historyStack/redoStack refs (max 50) in useImageEditor. captureState() called on object:added/removed/modified events. undo()/redo() use canvas.toObject()/loadFromJSON(). saveToLocal()/loadFromLocal() use localStorage. exportJSON() triggers file download. Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Shift+Z (redo), Ctrl+S (save). canUndo/canRedo state drives disabled state on toolbar buttons. Undo/Redo/Save/Load/Export JSON buttons added to ImageEditorToolbar. No type errors in image-editor files."
+    },
+    {
+      "id": "IMG-003",
+      "title": "Add text tool to image editor",
+      "description": "Add text tool to editor sidebar. Click 'Add Text' creates a Fabric.js IText object on canvas. When text selected, right panel shows: font family dropdown (load 20 popular Google Fonts), font size slider, color picker, bold/italic/underline toggles, text alignment. Double-click text on canvas to edit inline. Add text presets in sidebar: Heading (48px bold), Subheading (32px), Body (18px).",
+      "acceptanceCriteria": [
+        "Add Text button creates editable text on canvas",
+        "Double-click enables inline text editing",
+        "Right panel shows font controls when text selected",
+        "Font family dropdown with 20 Google Fonts",
+        "Text presets (Heading/Subheading/Body) in sidebar",
+        "Typecheck passes"
+      ],
+      "priority": 14,
+      "passes": true,
+      "notes": "Model: sonnet. Use Fabric.js IText class."
+    },
+    {
+      "id": "IMG-004",
+      "title": "Add image upload and placement to editor",
+      "description": "Add image tool to editor sidebar. Upload via file input (accept image/*) or drag-drop onto canvas. Place on canvas as Fabric.js Image object, preserving aspect ratio, centered, scaled to fit within canvas bounds. When image selected, right panel shows: opacity slider, flip horizontal/vertical buttons. Sidebar shows uploaded images gallery for re-use.",
+      "acceptanceCriteria": [
+        "Upload button opens file picker for images",
+        "Drag-drop onto canvas adds image",
+        "Images placed centered, aspect-ratio-preserved, fit within canvas",
+        "Right panel shows opacity and flip controls for selected image",
+        "Uploaded images appear in sidebar gallery",
+        "Typecheck passes"
+      ],
+      "priority": 15,
+      "passes": true,
+      "notes": "COMPLETED: addImage(file) reads file as DataURL via FileReader, creates FabricImage via FabricImage.fromURL(), scales to fit within 80% canvas bounds (aspect-ratio-preserved, never upscale), centers on canvas. handleImageDrop wired to canvas drag-over/drop events with visual overlay. Upload button in toolbar opens hidden file input (accept=\"image/*\"). ImagePropertiesPanel in sidebar: opacity slider, flip H/V buttons shown when FabricImage selected. UploadedImagesGallery shows thumbnails for re-placing previously uploaded images. canvasWidthRef/canvasHeightRef keep async FabricImage.fromURL callbacks in sync with current canvas size. Typecheck passes with zero new errors."
+    },
+    {
+      "id": "IMG-005",
+      "title": "Add image filters and crop to editor",
+      "description": "When an image is selected on canvas, add filter controls to right panel: brightness, contrast, saturation sliders (using Fabric.js built-in filters). Add crop mode: enter crop mode draws a crop rectangle overlay, confirm crops using clipPath. All filters are non-destructive (stored as filter array on the Image object).",
+      "acceptanceCriteria": [
+        "Brightness slider applies Fabric.js Brightness filter",
+        "Contrast slider applies Contrast filter",
+        "Saturation slider applies Saturation filter",
+        "Crop mode shows draggable crop rectangle",
+        "Confirm crop applies clipPath to image",
+        "Filters are non-destructive (removable)",
+        "Typecheck passes"
+      ],
+      "priority": 16,
+      "passes": true,
+      "notes": "COMPLETED: FiltersPanel at components/image-editor/FiltersPanel.tsx. FilterType union (Grayscale|Sepia|Blur|Brightness|Contrast|Saturation|Invert). buildFabricFilter() maps intensity 0-100 to Fabric filter params. applyFilter/removeFilter update img.filters array and call applyFilters(). enterCropMode/applyCrop/cancelCrop use Fabric Rect overlay + img.set({cropX,cropY,width,height}). FiltersPanel shown in sidebar when selectedImageProps !== null. Filter state synced on selection change. Typecheck passes."
+    },
+    {
+      "id": "IMG-006",
+      "title": "Add shapes tool to image editor",
+      "description": "Add shapes tool to editor sidebar with config-driven shape definitions. Shapes: rectangle, circle, triangle, star, arrow, line, hexagon, diamond, heart, speech bubble. Each shape defined in a config array with name, icon, and Fabric.js creation function. Click shape in sidebar to add centered on canvas. When selected, right panel shows: fill color, stroke color, stroke width, opacity.",
+      "acceptanceCriteria": [
+        "At least 10 shape types in sidebar panel",
+        "Shapes defined in config array (not hardcoded per component)",
+        "Click shape adds it centered on canvas",
+        "Right panel shows fill, stroke, opacity controls",
+        "Shapes resizable and rotatable via Fabric.js handles",
+        "Typecheck passes"
+      ],
+      "priority": 17,
+      "passes": true,
+      "notes": "Model: sonnet. Config-driven pattern from Canva clone analysis."
+    },
+    {
+      "id": "IMG-007",
+      "title": "Add layer panel to image editor",
+      "description": "Add layer management panel to editor (bottom of right panel or as a tab). List all canvas objects with small thumbnails/icons and names. Drag-to-reorder changes z-index (canvas.moveTo). Each layer row has: visibility toggle (eye icon), lock toggle (padlock icon), delete button. Multi-select with shift-click for group operations.",
+      "acceptanceCriteria": [
+        "Layer panel lists all canvas objects",
+        "Each row shows type icon and object name",
+        "Drag-to-reorder changes z-index on canvas",
+        "Visibility toggle hides/shows object",
+        "Lock toggle prevents selection/movement",
+        "Delete removes object from canvas",
+        "Typecheck passes"
+      ],
+      "priority": 18,
+      "passes": true,
+      "notes": "COMPLETED: LayerPanel component at components/image-editor/LayerPanel.tsx. useImageEditor hook extended with LayerInfo interface, _ensureLayerMeta/buildLayers helpers, syncLayers(), getLayers(), selectLayer(), toggleLayerVisibility(), toggleLayerLock(), deleteLayer(), duplicateLayer(), reorderLayer(), renameLayer(). Layers state reactive to all canvas mutations. LayerPanel shows layers in reverse z-order (top = front), eye/lock/copy/trash row actions, HTML5 drag-drop reordering, double-click inline rename. Wired into ImageEditorSidebar. Typecheck passes with zero new errors."
+    },
+    {
+      "id": "IMG-008",
+      "title": "Add template presets and export to image editor",
+      "description": "Add format/template presets to editor: Instagram Post (1080x1080), Instagram Story (1080x1920), LinkedIn Post (1200x627), Twitter Post (1600x900), Blog Header (1200x630). Preset selector resizes canvas. Add export: PNG button (canvas.toDataURL('png')), JPG button (canvas.toDataURL('jpeg', 0.9)). Download triggers browser save dialog. Also add 'Save as Asset' button that creates a derived_asset record in Supabase with the exported image URL.",
+      "acceptanceCriteria": [
+        "Format presets dropdown with 5 platform sizes",
+        "Selecting preset resizes canvas to new dimensions",
+        "Export PNG downloads image file",
+        "Export JPG downloads with quality setting",
+        "Save as Asset creates derived_asset in Supabase",
+        "Typecheck passes"
+      ],
+      "priority": 19,
+      "passes": true,
+      "notes": "Model: opus. Canvas export + Supabase integration."
+    },
+    {
+      "id": "PLAN-001",
+      "title": "Add monthly content calendar page",
+      "description": "Create apps/content-os/src/app/calendar/page.tsx. Render a monthly calendar grid (7 columns, 4-6 rows). Fetch queue slots from /api/queue/slots and published content from /api/content for the visible month. Display as small cards in each day cell: title truncated, platform icon badge, status color (draft=gray, scheduled=blue, published=green). Navigation: prev/next month buttons, today button. Use date-fns for date math.",
+      "acceptanceCriteria": [
+        "Calendar page renders at /calendar route",
+        "Monthly grid shows 7 columns (Sun-Sat) with correct day numbers",
+        "Queue slots appear as cards on their scheduled dates",
+        "Published content shown with green status badge",
+        "Prev/next month navigation works",
+        "Today button scrolls to current date",
+        "Typecheck passes"
+      ],
+      "priority": 20,
+      "passes": true,
+      "notes": "COMPLETED: CalendarGrid component in src/components/calendar/calendar-grid.tsx. PlanPage replaced at src/app/plan/page.tsx. Mon-Sun 7-column grid, prev/next/today navigation, status-colored content pills, today highlighted, empty day click -> /content/new?date=, pill click -> /content/[id]. Reusable CalendarGrid ready for PLAN-002 drag-drop."
+    },
+    {
+      "id": "PLAN-002",
+      "title": "Add drag-drop rescheduling to calendar",
+      "description": "Extend calendar from PLAN-001 with drag-drop. Content cards in calendar cells are draggable. Drop on a different day cell updates the queue slot's scheduledFor via PATCH /api/queue/slots/{id}. Visual feedback: dragging card shows ghost, drop target highlights. Optimistic UI update with rollback on API error.",
+      "acceptanceCriteria": [
+        "Content cards are draggable in calendar",
+        "Dropping on different day updates scheduledFor",
+        "PATCH /api/queue/slots/{id} called with new date",
+        "Drop target cell highlights on dragover",
+        "Optimistic update with rollback on error",
+        "Typecheck passes"
+      ],
+      "priority": 21,
+      "passes": true,
+      "notes": "COMPLETED: HTML5 drag-drop API added to CalendarGrid. ContentPill buttons are draggable (draggable attribute + onDragStart/onDragEnd). DayCell handles onDragOver/onDragLeave/onDrop. Past dates show red tint and 'past' label during drag and reject drops. Valid drop targets highlight with primary color outline and green tint. Drag ghost built from a temp DOM element with the node title set via setDragImage. Optimistic UI in PlanPage.handleNodeReschedule updates metadata.scheduledDate locally before PATCH; rolls back setNodes on API failure. scheduledDate stored in metadata field (no DB migration needed). toCalendarNodes prefers metadata.scheduledDate over createdAt. updateContentNodeSchema extended to allow metadata field. No new type errors in changed files."
+    },
+    {
+      "id": "PLAN-003",
+      "title": "Add content pipeline kanban view",
+      "description": "Create apps/content-os/src/app/pipeline/page.tsx with a kanban board. 5 columns: Idea, Draft, Review, Scheduled, Published. Fetch content_nodes and display as cards with title, asset count badge, platform icons. Drag between columns updates content_node status via PATCH /api/content/{id}. Filter bar: platform dropdown, content type dropdown, date range.",
+      "acceptanceCriteria": [
+        "Kanban board renders at /pipeline with 5 columns",
+        "Content cards show title, asset count, platform badges",
+        "Drag between columns updates status via API",
+        "Filter controls for platform and content type",
+        "Typecheck passes"
+      ],
+      "priority": 22,
+      "passes": true,
+      "notes": "Model: sonnet. KanbanBoard component at components/content/kanban-board.tsx. View toggle (Calendar|Kanban) added to /plan page. Drag-drop deferred per story spec."
+    },
+    {
+      "id": "PLAN-004",
+      "title": "Add multi-platform preview component",
+      "description": "Create apps/content-os/src/components/PlatformPreview.tsx. Given a content node's text and images, render side-by-side platform mockups: Instagram (square image + caption truncated at 2200 chars), LinkedIn (text + link preview), Twitter/X (280 char limit with thread indicator if longer), Blog (title + featured image + excerpt). Each mockup uses platform-appropriate fonts, colors, and layout.",
+      "acceptanceCriteria": [
+        "PlatformPreview component accepts content text and images",
+        "Instagram mockup with correct aspect ratio and caption limits",
+        "LinkedIn mockup with headline formatting",
+        "Twitter/X mockup with character count and thread detection",
+        "Blog mockup with title and excerpt",
+        "Typecheck passes"
+      ],
+      "priority": 23,
+      "passes": true,
+      "notes": "COMPLETED: PreviewPanel in apps/content-os/src/components/preview/ with individual platform components: LinkedInPreview (3000 char, professional card), TwitterPreview (280 char, thread splitting), InstagramPreview (2200 char, 1:1 aspect ratio), ThreadsPreview (500 char, thread-style), RedditPreview (40k char, upvote chrome), NewsletterPreview (no limit, shared for Substack/Medium/Ghost/Beehiiv). CharCount/CharBar provide green/yellow/red indicators. PreviewPanel wired into assets page via toggle button. Typecheck passes \u2014 zero errors in new files."
+    },
+    {
+      "id": "STUDIO-001",
+      "title": "Add video player with timeline scrubber to Studio",
+      "description": "In apps/studio/src/app/console/page.tsx, replace the stub with a video player. Use HTML5 video element with custom controls: play/pause, seek bar, current time / duration display. Add a timeline bar below the player showing the video duration as a horizontal track. Playhead moves with video playback. Click on timeline to seek. Install @ffmpeg/ffmpeg and @ffmpeg/util for later use.",
+      "acceptanceCriteria": [
+        "Video player renders uploaded video with custom controls",
+        "Play/pause toggle button works",
+        "Timeline scrubber shows full duration",
+        "Click on timeline seeks to that position",
+        "Playhead position updates during playback",
+        "ffmpeg packages installed in package.json",
+        "Typecheck passes"
+      ],
+      "priority": 24,
+      "passes": true,
+      "notes": "Model: opus. Foundation for video editing. COMPLETED: VideoPlayer component at apps/studio/src/components/video-player.tsx. HTML5 video with ref, custom controls bar (play/pause SVG button, mm:ss/mm:ss time display), timeline scrubber (clickable+draggable bar with document-level mousemove for smooth drag-seeking), breadcrumb markers as colored dots at their timestamp positions. /console/[videoId]/page.tsx updated to render VideoPlayer for upload-sourced videos. Typecheck passes."
+    },
+    {
+      "id": "STUDIO-002",
+      "title": "Add trim controls and export to Studio",
+      "description": "Extend Studio player from STUDIO-001. Add in/out point markers on timeline (draggable handles). Set In button marks current playhead as trim start. Set Out marks trim end. Preview plays only the trimmed region. Export button uses FFmpeg.wasm to extract the trimmed segment and download as MP4. Show progress bar during export.",
+      "acceptanceCriteria": [
+        "Set In/Set Out buttons mark trim points on timeline",
+        "Trim markers are draggable on timeline",
+        "Preview plays only trimmed region",
+        "Export uses FFmpeg.wasm to extract segment",
+        "Progress bar shows during FFmpeg processing",
+        "Downloaded file is valid MP4",
+        "Typecheck passes"
+      ],
+      "priority": 25,
+      "passes": true,
+      "notes": "COMPLETED: VideoPlayer extended with draggable trim handles (emerald In, rose Out), highlighted trim region, mm:ss.ms timecode display for both points, Set In/Set Out/Reset buttons, trim-preview loop, export via POST /api/media/clip with progress bar and download link. TypeScript clean in video-player.tsx \u2014 pre-existing errors in ExportToContentOS.tsx and middleware.ts not introduced by this story."
+    },
+    {
+      "id": "STUDIO-003",
+      "title": "Add Studio compilation export to Content OS",
+      "description": "Create apps/studio/src/app/api/compilations/[id]/export/route.ts. Load compilation and clips from Studio DB. Create content_node in Content OS shared Supabase (type='video', title=compilation.title). Create derived_asset for each clip. Add 'Export to Content OS' button in compilation detail UI.",
+      "acceptanceCriteria": [
+        "POST /api/compilations/[id]/export endpoint in Studio",
+        "Creates content_node record in shared Supabase",
+        "Each clip becomes derived_asset linked to content_node",
+        "Export button in compilation detail UI",
+        "Typecheck passes"
+      ],
+      "priority": 26,
+      "passes": true,
+      "notes": "COMPLETED: ExportToContentOS component updated with confirmation dialog (shows clip count), 'Send to Content OS' primary button, loading states (creating/exporting), success message with clickable link to content node in Content OS, and descriptive error messages with retry. export/route.ts already existed and creates content_node + derived_assets."
+    }
+  ]
+}

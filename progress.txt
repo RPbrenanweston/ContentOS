@@ -1,0 +1,35 @@
+# Ralph Progress Log — ContentOS Full Product Build (Phase 3)
+Started: 2026-03-25
+Project: ContentOS Full Product Build
+Branch: claude/suspicious-mendel
+
+## Codebase Patterns
+- **Supabase client pattern:** Three client factories in content-os/src/infrastructure/supabase/client.ts — browser (anon), server (access token), service (bypasses RLS). Studio has separate clients at lib/supabase/client.ts and server.ts.
+- **Repository pattern:** DAT layer uses typed repos at infrastructure/supabase/repositories/ — each maps DB rows to domain entities.
+- **Service DI:** services/container.ts is the dependency injection root — creates all service instances with shared Supabase client.
+- **Platform adapter pattern:** infrastructure/distribution/platform-adapter.ts defines the interface. Existing adapters: linkedin, x, bluesky, threads, reddit. All implement getAuthUrl(), exchangeCode(), createPost(), deletePost(), getMetrics(), validateCredentials().
+- **API route pattern:** Next.js App Router at src/app/api/. All routes use withApiHandler() wrapper from lib/api-handler.ts.
+- **Domain models:** TypeScript interfaces at domain/ with enums.ts centralizing allowed values.
+- **Queue:** pg-boss for job processing at infrastructure/queue/pg-boss.ts. Workers at infrastructure/queue/workers.ts.
+- **Migration pattern:** Sequential numbered SQL at supabase/migrations/001-014.
+- **ai-core integration:** createAIClient(config) from packages/ai-core. ChatParams/ChatResult types match 1:1.
+- **Self-hosted Supabase:** Coolify at 204.168.149.15, Kong on port 8000, Postgres on 5432.
+- **Vercel:** contentos-app and contentos-studio projects, auto-deploy from GitHub RPbrenanweston/ContentOS.
+
+## Model Tier Assignment
+- SEC-001 to SEC-004, QUEUE-003: haiku (simple fixes)
+- QUEUE-001, QUEUE-002, PUB-001 to PUB-004, IMG-002 to IMG-004, IMG-006, IMG-007, PLAN-002 to PLAN-004, STUDIO-003: sonnet (moderate features)
+- IMG-001, IMG-005, IMG-008, PLAN-001, STUDIO-001, STUDIO-002: opus (complex architecture)
+
+## Key Context
+- Security stories WS1-WS5 (25 stories) + Feature stories FW-001 to FW-010 COMPLETE from prior phases
+- TypeScript build errors bypassed via ignoreBuildErrors in next.config.ts (fix types later)
+- ESLint disabled during builds (ignoreDuringBuilds)
+- Both apps deployed to Vercel with self-hosted Supabase env vars
+- No tests exist in apps yet — don't add test-running to quality gates
+- Image editor inspired by Canva clone (lidojs) — use Fabric.js (open source) not @lidojs (closed)
+- Content planner inspired by dxlliv/planner — adopt drag-drop, config-driven approach
+- Blog adapters: Substack, Beehiiv, Medium, Ghost — follow existing adapter pattern
+
+---
+
