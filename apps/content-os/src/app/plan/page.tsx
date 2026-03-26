@@ -90,7 +90,7 @@ export default function PlanPage() {
       });
   }, []);
 
-  // Filter nodes to only those whose createdAt falls in the current month
+  // Filter nodes to only those whose date (scheduledDate in metadata or createdAt) falls in the current month
   const calendarNodes: CalendarNode[] = toCalendarNodes(nodes).filter((n) => {
     const [y, m] = n.date.split('-').map(Number);
     return y === year && m - 1 === month;
@@ -121,6 +121,54 @@ export default function PlanPage() {
   const handleNodeClick = useCallback((nodeId: string) => {
     router.push(`/content/${nodeId}`);
   }, [router]);
+
+  /**
+   * Drag-drop reschedule handler.
+   * 1. Optimistically update the node's metadata.scheduledDate in local state.
+   * 2. PATCH /api/content/[id] with the new metadata.
+   * 3. On API failure, roll back to the previous state.
+   */
+  const handleNodeReschedule = useCallback((nodeId: string, newDate: string) => {
+    // Snapshot previous state for rollback
+    const previousNodes = nodes;
+
+    // Optimistic update — mutate metadata.scheduledDate for the affected node
+    setNodes((prev) =>
+      prev.map((n) => {
+        if (n.id !== nodeId) return n;
+        return {
+          ...n,
+          metadata: {
+            ...n.metadata,
+            scheduledDate: newDate,
+          },
+        };
+      })
+    );
+
+    // Persist via API
+    fetch(`/api/content/${nodeId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        metadata: {
+          // Spread existing metadata for the target node, then override scheduledDate
+          ...(nodes.find((n) => n.id === nodeId)?.metadata ?? {}),
+          scheduledDate: newDate,
+        },
+      }),
+    }).catch((err) => {
+      // Rollback on network or server failure
+      console.error('[PlanPage] Reschedule failed, rolling back:', err);
+      setNodes(previousNodes);
+    }).then((res) => {
+      if (res && !res.ok) {
+        // Rollback on non-2xx response
+        console.error('[PlanPage] Reschedule API error, rolling back:', res.status);
+        setNodes(previousNodes);
+      }
+    });
+  }, [nodes]);
 
   if (loading) {
     return (
@@ -167,6 +215,7 @@ export default function PlanPage() {
       onTodayClick={handleTodayClick}
       onDayClick={handleDayClick}
       onNodeClick={handleNodeClick}
+      onNodeReschedule={handleNodeReschedule}
       headerExtra={<ViewToggle view={view} onChange={setView} />}
     />
   );

@@ -32,6 +32,7 @@ export const updateContentNodeSchema = z.object({
   bodyHtml: z.string().optional(),
   summary: z.string().optional(),
   tags: z.array(z.string()).optional(),
+  metadata: z.record(z.unknown()).optional(),
 });
 
 // Derived Asset schemas

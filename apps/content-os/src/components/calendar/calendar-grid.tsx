@@ -1,18 +1,18 @@
 // @crumb calendar-grid
 // UI | calendar | content-scheduling
-// why: Reusable monthly calendar grid for visualizing scheduled content nodes; designed for PLAN-001 display and PLAN-002 drag-drop extension
-// in:[year, month, nodes[], onDayClick?, onNodeClick?] out:[JSX monthly grid] err:[none-critical]
+// why: Reusable monthly calendar grid for visualizing scheduled content nodes; supports drag-drop rescheduling via HTML5 DnD API (PLAN-002)
+// in:[year, month, nodes[], onDayClick?, onNodeClick?, onNodeReschedule?] out:[JSX monthly grid] err:[none-critical]
 // hazard: Date math uses local timezone; scheduledAt stored as UTC ISO string could shift day when rendered
 // hazard: Nodes without scheduledAt fall back to createdAt, mixing intent (scheduled) with history (created)
 // edge:../../domain/content-node.ts -> READS (ContentNode type)
 // edge:../../domain/enums.ts -> READS (ContentNodeStatus)
 // edge:../../app/plan/page.tsx -> USED-BY
-// prompt: Add timezone-aware date parsing; distinguish scheduled vs created fallback visually; consider data-drag-id attributes for PLAN-002 drag-drop
+// prompt: Add timezone-aware date parsing; distinguish scheduled vs created fallback visually
 
 'use client';
 
+import { useState, useRef } from 'react';
 import type { ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
 import type { ContentNode, ContentNodeStatus } from '@/domain';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -33,6 +33,8 @@ export interface CalendarGridProps {
   onTodayClick: () => void;
   onDayClick?: (dateStr: string) => void;
   onNodeClick?: (nodeId: string) => void;
+  /** Called when a node is dropped onto a new date. Parent handles API call + optimistic update. */
+  onNodeReschedule?: (nodeId: string, newDate: string) => void;
   /** Optional element rendered on the right side of the calendar header */
   headerExtra?: ReactNode;
 }
@@ -68,6 +70,11 @@ function toLocalDateStr(date: Date): string {
 /** Today's date as YYYY-MM-DD in local time */
 function todayStr(): string {
   return toLocalDateStr(new Date());
+}
+
+/** Returns true when dateStr is strictly before today (past date) */
+function isPastDate(dateStr: string): boolean {
+  return dateStr < todayStr();
 }
 
 /**
@@ -108,14 +115,23 @@ function buildCalendarDays(year: number, month: number): (string | null)[] {
 
 function ContentPill({
   node,
+  isDragging,
   onNodeClick,
+  onDragStart,
+  onDragEnd,
 }: {
   node: CalendarNode;
+  isDragging: boolean;
   onNodeClick?: (id: string) => void;
+  onDragStart: (e: React.DragEvent, nodeId: string, title: string) => void;
+  onDragEnd: () => void;
 }) {
   const pill = STATUS_PILL[node.status] ?? STATUS_PILL.draft;
   return (
     <button
+      draggable
+      onDragStart={(e) => onDragStart(e, node.id, node.title)}
+      onDragEnd={onDragEnd}
       onClick={(e) => {
         e.stopPropagation();
         onNodeClick?.(node.id);
@@ -125,6 +141,8 @@ function ContentPill({
       style={{
         backgroundColor: pill.bg,
         color: pill.text,
+        cursor: 'grab',
+        opacity: isDragging ? 0.4 : 1,
       }}
       data-node-id={node.id}
     >
@@ -138,16 +156,28 @@ function DayCell({
   nodes,
   isToday,
   isCurrentMonth,
+  draggingNodeId,
+  draggingNodeTitle,
   onDayClick,
   onNodeClick,
+  onDragStart,
+  onDragEnd,
+  onNodeReschedule,
 }: {
   dateStr: string | null;
   nodes: CalendarNode[];
   isToday: boolean;
   isCurrentMonth: boolean;
+  draggingNodeId: string | null;
+  draggingNodeTitle: string | null;
   onDayClick?: (dateStr: string) => void;
   onNodeClick?: (nodeId: string) => void;
+  onDragStart: (e: React.DragEvent, nodeId: string, title: string) => void;
+  onDragEnd: () => void;
+  onNodeReschedule?: (nodeId: string, newDate: string) => void;
 }) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
   if (!dateStr) {
     return (
       <div
@@ -158,17 +188,59 @@ function DayCell({
   }
 
   const dayNumber = parseInt(dateStr.split('-')[2], 10);
+  const isPast = isPastDate(dateStr);
+  const isDraggingActive = draggingNodeId !== null;
+  // A past cell cannot accept drops; also no drop if node is already on this date
+  const isValidDropTarget = isDraggingActive && !isPast;
+  const currentNodeIds = new Set(nodes.map((n) => n.id));
+  const isNodeAlreadyHere = draggingNodeId !== null && currentNodeIds.has(draggingNodeId);
+
+  function handleDragOver(e: React.DragEvent) {
+    if (!isValidDropTarget || isNodeAlreadyHere) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setIsDragOver(true);
+  }
+
+  function handleDragLeave() {
+    setIsDragOver(false);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragOver(false);
+    if (!isValidDropTarget || isNodeAlreadyHere || !draggingNodeId || !dateStr) return;
+    onNodeReschedule?.(draggingNodeId, dateStr);
+  }
+
+  // Visual state during a drag operation
+  let cellBg = isToday ? 'rgba(212, 248, 90, 0.04)' : 'var(--theme-background)';
+  if (isDraggingActive && isPast) {
+    cellBg = 'rgba(239, 68, 68, 0.04)'; // faint red tint for past — cannot drop
+  }
+  if (isDragOver && isValidDropTarget && !isNodeAlreadyHere) {
+    cellBg = 'rgba(212, 248, 90, 0.12)'; // green tint — valid drop target
+  }
 
   return (
     <div
       className="min-h-[90px] p-1 cursor-pointer transition-colors relative"
       style={{
-        backgroundColor: isToday ? 'rgba(212, 248, 90, 0.04)' : 'var(--theme-background)',
+        backgroundColor: cellBg,
         borderRight: '1px solid var(--theme-border)',
-        borderBottom: '1px solid var(--theme-border)',
+        borderBottom: isDragOver && isValidDropTarget && !isNodeAlreadyHere
+          ? '2px solid var(--theme-primary)'
+          : '1px solid var(--theme-border)',
+        outline: isDragOver && isValidDropTarget && !isNodeAlreadyHere
+          ? '2px solid var(--theme-primary)'
+          : 'none',
+        outlineOffset: '-2px',
         opacity: isCurrentMonth ? 1 : 0.4,
       }}
-      onClick={() => onDayClick?.(dateStr)}
+      onClick={() => !isDraggingActive && onDayClick?.(dateStr)}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
       {/* Day number */}
       <div className="flex items-center justify-between mb-1">
@@ -176,25 +248,43 @@ function DayCell({
           className="w-5 h-5 flex items-center justify-center rounded text-[11px] font-semibold"
           style={{
             backgroundColor: isToday ? 'var(--theme-primary)' : 'transparent',
-            color: isToday ? 'var(--theme-btn-primary-text)' : 'var(--theme-muted)',
+            color: isToday ? 'var(--theme-btn-primary-text)' : isDraggingActive && isPast ? 'rgba(239, 68, 68, 0.6)' : 'var(--theme-muted)',
           }}
         >
           {dayNumber}
         </span>
-        {nodes.length === 0 && (
-          <span
-            className="text-[9px] opacity-0 group-hover:opacity-100 transition-opacity"
-            style={{ color: 'var(--theme-muted)' }}
-          >
-            +
+        {/* Past-date indicator during drag */}
+        {isDraggingActive && isPast && (
+          <span className="text-[9px]" style={{ color: 'rgba(239, 68, 68, 0.7)' }}>
+            past
           </span>
         )}
       </div>
 
+      {/* Drop ghost label — shown in empty space while dragging over a valid cell */}
+      {isDragOver && isValidDropTarget && !isNodeAlreadyHere && draggingNodeTitle && (
+        <div
+          className="absolute inset-x-1 bottom-1 text-[9px] text-center px-1 py-0.5 rounded truncate pointer-events-none"
+          style={{
+            border: '1px dashed var(--theme-primary)',
+            color: 'var(--theme-primary)',
+          }}
+        >
+          {draggingNodeTitle}
+        </div>
+      )}
+
       {/* Content pills — show up to 3, +N overflow */}
       <div className="space-y-0.5">
         {nodes.slice(0, 3).map((node) => (
-          <ContentPill key={node.id} node={node} onNodeClick={onNodeClick} />
+          <ContentPill
+            key={node.id}
+            node={node}
+            isDragging={draggingNodeId === node.id}
+            onNodeClick={onNodeClick}
+            onDragStart={onDragStart}
+            onDragEnd={onDragEnd}
+          />
         ))}
         {nodes.length > 3 && (
           <span className="text-[9px] pl-1" style={{ color: 'var(--theme-muted)' }}>
@@ -217,10 +307,35 @@ export function CalendarGrid({
   onTodayClick,
   onDayClick,
   onNodeClick,
+  onNodeReschedule,
   headerExtra,
 }: CalendarGridProps) {
   const today = todayStr();
   const calendarDays = buildCalendarDays(year, month);
+
+  // Active drag state — tracked here so all cells can react
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
+  const [draggingNodeTitle, setDraggingNodeTitle] = useState<string | null>(null);
+
+  function handleDragStart(e: React.DragEvent, nodeId: string, title: string) {
+    e.dataTransfer.effectAllowed = 'move';
+    // Transparent 1x1 pixel to suppress browser default ghost (we rely on CSS opacity instead)
+    const ghost = document.createElement('div');
+    ghost.style.cssText = 'position:fixed;top:-9999px;left:-9999px;background:transparent;';
+    ghost.textContent = title;
+    ghost.style.cssText += 'font-size:12px;padding:4px 8px;background:var(--theme-surface,#1a1a1a);color:var(--theme-foreground,#fff);border-radius:4px;white-space:nowrap;pointer-events:none;';
+    document.body.appendChild(ghost);
+    e.dataTransfer.setDragImage(ghost, 0, 0);
+    // Clean up after the browser snapshots it
+    requestAnimationFrame(() => document.body.removeChild(ghost));
+    setDraggingNodeId(nodeId);
+    setDraggingNodeTitle(title);
+  }
+
+  function handleDragEnd() {
+    setDraggingNodeId(null);
+    setDraggingNodeTitle(null);
+  }
 
   // Index nodes by YYYY-MM-DD date string for O(1) lookup per cell
   const nodesByDate = new Map<string, CalendarNode[]>();
@@ -331,8 +446,13 @@ export function CalendarGrid({
                 nodes={cellNodes}
                 isToday={isToday}
                 isCurrentMonth={isCurrentMonth}
+                draggingNodeId={draggingNodeId}
+                draggingNodeTitle={draggingNodeTitle}
                 onDayClick={onDayClick}
                 onNodeClick={onNodeClick}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+                onNodeReschedule={onNodeReschedule}
               />
             );
           })}
@@ -366,14 +486,21 @@ export function CalendarGrid({
 // ─── Utility: Convert ContentNode[] to CalendarNode[] ────────────────────────
 
 /**
- * Maps content nodes to calendar nodes using createdAt as the date.
- * The ContentNode domain type has no scheduledAt field; use createdAt.
+ * Maps content nodes to calendar nodes.
+ * Prefers metadata.scheduledDate (set by drag-drop rescheduling) over createdAt.
  */
 export function toCalendarNodes(nodes: ContentNode[]): CalendarNode[] {
-  return nodes.map((node) => ({
-    id: node.id,
-    title: node.title,
-    status: node.status,
-    date: toLocalDateStr(new Date(node.createdAt)),
-  }));
+  return nodes.map((node) => {
+    const scheduledDate =
+      typeof node.metadata?.scheduledDate === 'string'
+        ? node.metadata.scheduledDate
+        : null;
+    const date = scheduledDate ?? toLocalDateStr(new Date(node.createdAt));
+    return {
+      id: node.id,
+      title: node.title,
+      status: node.status,
+      date,
+    };
+  });
 }

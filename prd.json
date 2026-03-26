@@ -348,8 +348,8 @@
         "Typecheck passes"
       ],
       "priority": 21,
-      "passes": false,
-      "notes": "Model: sonnet. HTML5 drag-drop API."
+      "passes": true,
+      "notes": "COMPLETED: HTML5 drag-drop API added to CalendarGrid. ContentPill buttons are draggable (draggable attribute + onDragStart/onDragEnd). DayCell handles onDragOver/onDragLeave/onDrop. Past dates show red tint and 'past' label during drag and reject drops. Valid drop targets highlight with primary color outline and green tint. Drag ghost built from a temp DOM element with the node title set via setDragImage. Optimistic UI in PlanPage.handleNodeReschedule updates metadata.scheduledDate locally before PATCH; rolls back setNodes on API failure. scheduledDate stored in metadata field (no DB migration needed). toCalendarNodes prefers metadata.scheduledDate over createdAt. updateContentNodeSchema extended to allow metadata field. No new type errors in changed files."
     },
     {
       "id": "PLAN-003",
