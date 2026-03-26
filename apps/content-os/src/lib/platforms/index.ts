@@ -1,6 +1,7 @@
 import type { PlatformType } from '@/domain';
 import type { PlatformAdapter } from './types';
 import { TwitterAdapter } from './twitter/adapter';
+import { LinkedInAdapter } from './linkedin/adapter';
 
 /**
  * Platform adapter factory.
@@ -8,8 +9,9 @@ import { TwitterAdapter } from './twitter/adapter';
  *
  * Currently supported:
  *   - twitter: TwitterAdapter (requires TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET, TWITTER_REDIRECT_URI)
+ *   - linkedin: LinkedInAdapter (requires LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, LINKEDIN_REDIRECT_URI)
  *
- * TODO: Add adapters for linkedin, youtube, instagram, facebook, threads,
+ * TODO: Add adapters for youtube, instagram, facebook, threads,
  *       tiktok, bluesky, reddit, medium, substack, ghost, beehiiv
  */
 export function getAdapter(platform: PlatformType): PlatformAdapter {
@@ -17,7 +19,9 @@ export function getAdapter(platform: PlatformType): PlatformAdapter {
     case 'twitter':
       return new TwitterAdapter();
 
-    // TODO: case 'linkedin': return new LinkedInAdapter();
+    case 'linkedin':
+      return new LinkedInAdapter();
+
     // TODO: case 'youtube': return new YouTubeAdapter();
     // TODO: case 'instagram': return new InstagramAdapter();
     // TODO: case 'facebook': return new FacebookAdapter();
@@ -33,7 +37,7 @@ export function getAdapter(platform: PlatformType): PlatformAdapter {
     default:
       throw new Error(
         `Unsupported platform: "${platform}". ` +
-          `Currently supported: twitter. ` +
+          `Currently supported: twitter, linkedin. ` +
           `See src/lib/platforms/index.ts to add new adapters.`,
       );
   }
