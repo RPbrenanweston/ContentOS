@@ -1,0 +1,1253 @@
+{
+  "draftPosts": [
+    {
+      "title": "How to build a hiring scorecard in 30 minutes",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Step-by-step guide to defining criteria, rating scales, and role-specific questions.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Building a hiring scorecard doesn't need to take days. With the right framework, you can create a robust evaluation tool in just 30 minutes.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Step 1: Define Your Must-Haves",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Start by listing 3-5 critical criteria that a candidate must demonstrate. These are non-negotiable skills or attributes for the role.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Step 2: Create a Rating Scale",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Use a simple 1-5 scale where each number has a clear definition. This removes subjectivity and ensures consistency across interviewers.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Step 3: Map Questions to Criteria",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "For each criterion, write 2-3 interview questions that help you assess it. Be specific and behavioural.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "Why async interviews save time (and improve candidate experience)",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Pre-recorded video questions reduce scheduling friction and give candidates flexibility.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Scheduling interviews is one of the biggest time drains in hiring. Async interviews solve this while improving the candidate experience.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "The Scheduling Problem",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Traditional interviews require coordinating calendars across time zones. This can delay hiring by weeks.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "How Async Interviews Work",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Candidates receive a link with pre-recorded questions. They record their answers on their own schedule. You review transcripts and videos when convenient.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Benefits for Candidates",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Candidates can complete interviews at times that work for them, reducing stress and showing them you respect their time.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "The 75th percentile rule for pre-screening senior candidates",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Only advance candidates who score in the top 25% of the pool to reduce interview noise.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "For senior roles, you can't afford to waste time interviewing marginal candidates. The 75th percentile rule helps you focus on only the best.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "What It Means",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "After initial screening, only candidates who score in the top 25% of your candidate pool move to final interviews. Everyone else gets a polite rejection.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Why It Works",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "This rule forces you to compare candidates against each other, not against an abstract standard. It ensures you only spend time on genuinely strong performers.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "How to Apply It",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Score all candidates using your scorecard. Rank them. Draw a line at the 75th percentile. Only candidates above that line advance.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "Five email outreach templates that get replies",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Proven sequences for engaging passive candidates with personalised messaging.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Most outreach emails get ignored. These five templates have proven reply rates above 30%.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Template 1: The Problem-Solution Opener",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Start with a problem you know they face, then introduce your role as the solution.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Template 2: The Mutual Connection",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Reference someone you both know or a shared interest to build immediate credibility.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Template 3: The Specific Compliment",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Mention something specific they've built or written. Shows you've done research.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "How to set up an ATS in Notion (free template)",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Lightweight candidate tracking for small teams, no expensive software required.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "You don't need expensive ATS software to track candidates effectively. Notion provides everything you need.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Database Structure",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Create a database with columns for candidate name, role, stage, scorecard rating, interview notes, and next action.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Pipeline Views",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Set up board views grouped by stage (Applied, Screening, Interview, Offer, Rejected) so you can see your pipeline at a glance.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Automation Tips",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Use Notion formulas to calculate days in stage and flag stale candidates. Link to Zapier for email notifications.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "What to include on a candidate landing page",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Role description, application form, and company context that converts visitors to applicants.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "A dedicated landing page for each role converts better than a generic careers page. Here's what to include.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Clear Role Description",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Lead with what the candidate will actually do, not generic responsibilities. Be specific about projects and outcomes.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Company Context",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Tell candidates why the company exists, what stage you're at, and what success looks like. This filters for cultural fit.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Application Form",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Keep it short. Name, email, LinkedIn, and one or two role-specific questions. Long forms kill conversion.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "How to coordinate hiring across Slack without losing candidates",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Pipeline updates, reminders, and team coordination patterns that work.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Slack can be a great hiring coordination tool, but only if you set up the right patterns. Here's how to avoid chaos.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Create a Dedicated Channel",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Don't mix hiring discussions with general chatter. A dedicated #hiring channel keeps everything in one place.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Use Threads for Each Candidate",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Post a parent message for each candidate with their name and role. All discussion happens in the thread. This keeps the channel scannable.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Automate Status Updates",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Use Zapier or similar tools to post to Slack when candidates move stages in your ATS. This keeps everyone informed without manual updates.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "Salary benchmarking for UK startups (2026 data)",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Current market rates for operations, engineering, product, and marketing roles.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Salary benchmarking helps you stay competitive without overpaying. Here are 2026 market rates for UK startups.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Engineering Roles",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Software engineers (mid-level): £55k-75k. Senior engineers: £75k-95k. Engineering leads: £95k-120k.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Product Roles",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Product managers (mid-level): £60k-80k. Senior PMs: £80k-100k. Head of Product: £100k-130k.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Operations and Marketing",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Operations managers: £45k-65k. Marketing managers: £50k-70k. Heads of department: £80k-110k.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "Three signs your hiring process is broken (and how to fix it)",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Inconsistent pipelines, slow response times, and ghosting candidates.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Most small teams don't realise their hiring process is broken until it's too late. Here are three warning signs.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Sign 1: Inconsistent Pipeline Volume",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Some months you have 20 candidates, other months zero. This signals you're relying on luck, not a repeatable system. Fix: Set up consistent outreach and social posting schedules.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Sign 2: Response Time Over 48 Hours",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "If candidates wait more than two days for a response, you're losing good people to faster competitors. Fix: Implement auto-replies and set SLAs for stage transitions.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Sign 3: High Candidate Ghosting Rate",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "If more than 30% of candidates stop responding after initial contact, your process is too slow or unclear. Fix: Shorten time to first interview and set clear expectations upfront.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "How to write a role intake brief that actually works",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Define success criteria, must-haves vs. nice-to-haves, and interview focus areas.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "A good role intake brief is the foundation of effective hiring. Here's how to write one that guides your entire process.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Define Success in 90 Days",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "What does success look like three months after hire? Be specific about deliverables, not vague about attributes.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Separate Must-Haves from Nice-to-Haves",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Most teams list 15 requirements when only three truly matter. Force yourself to identify the 3-5 non-negotiables.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Map Interview Focus Areas",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "For each must-have criterion, define which interview stage will assess it and what evidence you're looking for.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "Why posting jobs on LinkedIn isn't enough",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Active outreach, social distribution, and referral networks drive better candidate quality.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Posting a job and waiting for applications is a passive strategy. The best candidates aren't actively looking.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "The Problem with Job Boards",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Job boards attract active job seekers, who are often less qualified or more desperate than passive candidates who are happy in their current role.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Active Outreach Wins",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Email outreach to passive candidates in adjacent roles yields higher quality and better cultural fit. It takes more work, but the ROI is worth it.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Social Distribution Matters",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Posting on Twitter, in niche Slack communities, and on founder networks gets your role in front of people who aren't checking LinkedIn.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    },
+    {
+      "title": "How to run a 30-minute pre-screen interview",
+      "memberId": "abce5218-72ad-4ab3-9b93-2ee0c0649248",
+      "richContent": {
+        "nodes": [
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Question framework, scorecard alignment, and what to look for in senior candidates.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "A tight 30-minute pre-screen filters out weak candidates before you invest in longer interviews. Here's the structure.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "First 5 Minutes: Context Setting",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Briefly explain the role, company stage, and what success looks like. This gives candidates context for their answers.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Next 20 Minutes: Scorecard Questions",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Ask two to three questions per scorecard criterion. Listen for specificity, ownership, and outcomes. Take notes using your rating scale.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          },
+          {
+            "type": "HEADING",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Final 5 Minutes: Candidate Questions",
+                "decorations": []
+              }
+            }],
+            "headingData": {
+              "level": 2
+            }
+          },
+          {
+            "type": "PARAGRAPH",
+            "nodes": [{
+              "type": "TEXT",
+              "textData": {
+                "text": "Let them ask questions. The quality of their questions reveals how much they've thought about the role.",
+                "decorations": []
+              }
+            }],
+            "paragraphData": {}
+          }
+        ]
+      },
+      "categoryIds": [],
+      "tagIds": []
+    }
+  ],
+  "returnEntity": true
+}

@@ -1,0 +1,415 @@
+{
+  "name": "Exprs Smartlead Push",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WORKFLOW 4: exprs-smartlead-push\n\n**TRIGGER:** Schedule (hourly)\n**COST:** Free (Smartlead API, already on Pro plan)\n\n### FLOW\nSchedule → Supabase: Get Ready →\n  Check Empty → Build Payload →\n  Route by Score (switch) →\n    ├─ 🥇 Golden → Campaign: Full 3-bullet ideas (Format A)\n    │   Sequence: p1 (ideas) → p2 (Pillar A) → p3 (Pillar B) → p4 (CIPD) → e1\n    ├─ 💪 Strong → Campaign: One-liner ideas (Format B)\n    │   Sequence: p1 (one-liner) → p2 (pillar) → e1\n    └─ ✅ Must-Have → Campaign: Standard PP-Email\n        Sequence: p1 → p4 → e1\n  → Merge → Parse Response → Mark Sent in Supabase\n\n### QUERY FILTER\n`qualified = true AND creative_ideas IS NOT NULL AND sent_at IS NULL`\n\n### CUSTOM VARIABLES (in Smartlead templates)\n`{{creative_idea_1}}`, `{{creative_idea_2}}`, `{{creative_idea_3}}`\n`{{one_liner}}`, `{{lead_pillar}}`, `{{score}}`, `{{signal_summary}}`\n\n### ENV VARS\n`SMARTLEAD_API_KEY`\n`SMARTLEAD_CAMPAIGN_GOLDEN`\n`SMARTLEAD_CAMPAIGN_STRONG`\n`SMARTLEAD_CAMPAIGN_MUSTHAVE`",
+        "height": 520,
+        "width": 420,
+        "color": 3
+      },
+      "id": "node-sticky-overview",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [20, 60]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 1
+            }
+          ]
+        }
+      },
+      "id": "node-schedule-trigger",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 400],
+      "notes": "Runs hourly to check for prospects ready to push. Can also be triggered manually."
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "prospects",
+        "returnAll": true,
+        "filterType": "string",
+        "filterString": "qualified=eq.true&creative_ideas=not.is.null&sent_at=is.null",
+        "options": {}
+      },
+      "id": "node-fetch-ready",
+      "name": "Supabase: Get Ready Prospects",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [480, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Exprs"
+        }
+      },
+      "notes": "Fetches prospects that are qualified, have creative ideas generated, and haven't been sent yet."
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Check for Empty Results\n// ============================================================\n\nconst items = $input.all();\nif (!items || items.length === 0 || !items[0].json.id) {\n  return [];\n}\nreturn items;"
+      },
+      "id": "node-check-empty",
+      "name": "Check Empty",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Build Smartlead Payload\n// Assembles the lead payload with custom fields for each\n// prospect, including creative ideas and signal data.\n// ============================================================\n\nconst p = $input.item.json;\nconst ideas = p.creative_ideas || {};\n\n// Parse name into first/last\nconst nameParts = (p.contact_name || '').trim().split(' ');\nconst firstName = nameParts[0] || '';\nconst lastName = nameParts.slice(1).join(' ') || '';\n\n// Build signal summary for email template variable\nconst signals = p.signals || {};\nconst activeSignals = Object.entries(signals)\n  .filter(([key, val]) => val && val.detected)\n  .map(([key]) => key.replace(/_/g, ' '))\n  .join(', ');\n\nreturn {\n  json: {\n    prospect_id: p.id,\n    score: p.score || 'must_have',\n    lead_payload: {\n      email: p.contact_email,\n      first_name: firstName,\n      last_name: lastName,\n      company_name: p.company_name,\n      custom_fields: {\n        creative_idea_1: ideas.idea_1 || '',\n        creative_idea_2: ideas.idea_2 || '',\n        creative_idea_3: ideas.idea_3 || '',\n        one_liner: ideas.one_liner || '',\n        lead_pillar: p.lead_pillar || 'C',\n        score: p.score || 'must_have',\n        signal_summary: activeSignals || 'No signals detected',\n        employee_count: String(p.employee_count || ''),\n        industry: p.industry || '',\n        funding_stage: p.funding_stage || ''\n      }\n    }\n  }\n};"
+      },
+      "id": "node-build-payload",
+      "name": "Build Smartlead Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Route by Score\n// Replaces Switch node for maximum compatibility.\n// Output 0 = Golden, Output 1 = Strong, Output 2 = Must-Have\n// ============================================================\n\nconst item = $input.item;\nconst score = (item.json.score || 'must_have').toLowerCase();\n\nif (score === 'golden') {\n  return [item, [], []];\n} else if (score === 'strong') {\n  return [[], item, []];\n} else {\n  return [[], [], item];\n}"
+      },
+      "id": "node-route-by-score",
+      "name": "Route by Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1160, 400],
+      "outputs": ["main", "main", "main"],
+      "outputNames": ["Golden", "Strong", "Must Have"],
+      "notes": "Routes prospects to the correct Smartlead campaign based on their score tier. Uses Code node instead of Switch for import compatibility."
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://server.smartlead.ai/api/v1/campaigns/{{ $env.SMARTLEAD_CAMPAIGN_GOLDEN }}/leads?api_key={{ $env.SMARTLEAD_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"lead_list\": [\n    {{ JSON.stringify($json.lead_payload) }}\n  ]\n}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-smartlead-golden",
+      "name": "Smartlead: Golden Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1420, 200],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "notes": "Campaign: 'Exprs Golden - Full Ideas'\nTemplate: 3-bullet creative ideas email (Format A)\nSequence: p1 (ideas) → p2 (Pillar A) → p3 (Pillar B) → p4 (CIPD data) → e1 (exit)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://server.smartlead.ai/api/v1/campaigns/{{ $env.SMARTLEAD_CAMPAIGN_STRONG }}/leads?api_key={{ $env.SMARTLEAD_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"lead_list\": [\n    {{ JSON.stringify($json.lead_payload) }}\n  ]\n}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-smartlead-strong",
+      "name": "Smartlead: Strong Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1420, 400],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "notes": "Campaign: 'Exprs Strong - One-Liner Ideas'\nTemplate: One-liner creative ideas email (Format B)\nSequence: p1 (one-liner) → p2 (relevant pillar) → e1 (exit)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://server.smartlead.ai/api/v1/campaigns/{{ $env.SMARTLEAD_CAMPAIGN_MUSTHAVE }}/leads?api_key={{ $env.SMARTLEAD_API_KEY }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"lead_list\": [\n    {{ JSON.stringify($json.lead_payload) }}\n  ]\n}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-smartlead-musthave",
+      "name": "Smartlead: Must-Have Campaign",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1420, 600],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 2000,
+      "notes": "Campaign: 'Exprs Must-Have - Standard'\nTemplate: Standard PP-Email sequence\nSequence: p1 → p4 → e1"
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "node-merge-results",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1680, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Parse Smartlead Response & Prepare Update\n// Extracts the campaign_id and status from Smartlead's response,\n// then prepares the Supabase update payload.\n// ============================================================\n\nconst input = $input.item.json;\n\n// Smartlead API returns different structures — handle gracefully\nconst smartleadResponse = input;\nconst prospectId = $('Build Smartlead Payload').item.json.prospect_id;\nconst score = $('Build Smartlead Payload').item.json.score;\n\nlet campaignId = '';\nlet pushStatus = 'unknown';\n\nif (smartleadResponse.ok || smartleadResponse.status === 'success' || smartleadResponse.id) {\n  pushStatus = 'sent';\n  campaignId = smartleadResponse.campaign_id || smartleadResponse.id || '';\n} else if (smartleadResponse.error || smartleadResponse.message) {\n  pushStatus = 'failed';\n  campaignId = '';\n}\n\nreturn {\n  json: {\n    prospect_id: prospectId,\n    smartlead_campaign_id: String(campaignId),\n    sent_at: pushStatus === 'sent' ? new Date().toISOString() : null,\n    push_status: pushStatus,\n    push_error: pushStatus === 'failed' ? (smartleadResponse.error || smartleadResponse.message || 'Unknown error') : null\n  }\n};"
+      },
+      "id": "node-parse-smartlead",
+      "name": "Parse Smartlead Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1900, 400]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "prospects",
+        "filterType": "string",
+        "filterString": "=id=eq.{{ $json.prospect_id }}",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "smartlead_campaign_id",
+              "fieldValue": "={{ $json.smartlead_campaign_id }}"
+            },
+            {
+              "fieldName": "sent_at",
+              "fieldValue": "={{ $json.sent_at }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-update-sent",
+      "name": "Supabase: Mark as Sent",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2120, 400],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Exprs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Push Summary\n// Aggregates push results for monitoring/logging.\n// ============================================================\n\nconst items = $('Parse Smartlead Response').all();\nconst sent = items.filter(i => i.json.push_status === 'sent').length;\nconst failed = items.filter(i => i.json.push_status === 'failed').length;\n\nconst byScore = {};\nfor (const item of items) {\n  const score = $('Build Smartlead Payload').all()\n    .find(p => p.json.prospect_id === item.json.prospect_id)?.json.score || 'unknown';\n  byScore[score] = (byScore[score] || 0) + 1;\n}\n\nreturn {\n  json: {\n    summary: {\n      total: items.length,\n      sent,\n      failed,\n      by_score: byScore,\n      timestamp: new Date().toISOString()\n    }\n  }\n};"
+      },
+      "id": "node-summary",
+      "name": "Push Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2340, 400]
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Get Ready Prospects",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Get Ready Prospects": {
+      "main": [
+        [
+          {
+            "node": "Check Empty",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Empty": {
+      "main": [
+        [
+          {
+            "node": "Build Smartlead Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Smartlead Payload": {
+      "main": [
+        [
+          {
+            "node": "Route by Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Score": {
+      "main": [
+        [
+          {
+            "node": "Smartlead: Golden Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Smartlead: Strong Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Smartlead: Must-Have Campaign",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smartlead: Golden Campaign": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smartlead: Strong Campaign": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Smartlead: Must-Have Campaign": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Parse Smartlead Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Smartlead Response": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Mark as Sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Mark as Sent": {
+      "main": [
+        [
+          {
+            "node": "Push Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "exprs",
+      "id": "tag-exprs"
+    },
+    {
+      "name": "phase-1",
+      "id": "tag-phase-1"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0"
+}

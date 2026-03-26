@@ -1,74 +1,79 @@
-// @crumb content-decompose-trigger
-// API | job-orchestration | workflow-trigger
-// why: Initiates content decomposition pipeline; validates content state before queueing async job to pg-boss with inline fallback
-// in:[contentId:string, authUser] out:[JobId|status:processing] err:[node-not-found, invalid-state, queue-failure]
-// hazard: No ID format validation on contentId parameter; accepts any string without UUID/slug validation
-// hazard: Status transition rule (draft|ready->processing) embedded in handler; no domain-layer state machine; transitions could be inconsistent
-// hazard: Queue failure triggers silent inline processing without retry mechanism; job loses durability, errors swallowed in fire-and-forget pattern
-// hazard: Inline decompose fallback has no timeout; long-running decomposition blocks request indefinitely
-// hazard: Job data doesn't include retryCount, priority, or deadletter routing; failed jobs disappear
-// edge:../../services/decomposition.service.ts -> USES
-// edge:../../infrastructure/queue/pg-boss.ts -> ENQUEUES
-// edge:../../../domain/content.ts -> REFERENCES
-// prompt: Add ID format validation; move status transitions to domain ContentNode state machine; implement queue retry policy with exponential backoff; add timeout to inline fallback; include job metadata (retryCount, priority); validate content before enqueue
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import type { MediaJobType } from '@/domain';
 
-import { NextResponse } from 'next/server';
-import { withApiHandler } from '@/lib/api-handler';
-import { createServiceClient } from '@/infrastructure/supabase/client';
-import { getServices } from '@/services/container';
-import { NotFoundError } from '@/lib/errors';
-import { getQueue, QUEUES } from '@/infrastructure/queue/pg-boss';
-import type { ContentDecomposeJob } from '@/infrastructure/queue/pg-boss';
+type Params = { params: Promise<{ id: string }> };
 
-// POST /api/content/[id]/process — Trigger content decomposition
-export const POST = withApiHandler(async (ctx) => {
-  const { params } = ctx;
-  const id = params.id;
-  const supabase = createServiceClient();
-  const { contentNodeRepo } = getServices(supabase);
+// POST /api/content/[id]/process — trigger a media processing job
+export async function POST(req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-  // Verify node exists
-  const node = await contentNodeRepo.findById(id);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  if (node.status !== 'draft' && node.status !== 'ready') {
+  const { data: node, error: nodeError } = await supabase
+    .from('content_nodes')
+    .select('id, media_url')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (nodeError || !node) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  if (!node.media_url) {
+    return NextResponse.json({ error: 'Content node has no media_url' }, { status: 422 });
+  }
+
+  const body = await req.json();
+  const { job_type, params: jobParams } = body as {
+    job_type: MediaJobType;
+    params?: Record<string, unknown>;
+  };
+
+  const validJobTypes: MediaJobType[] = [
+    'normalize', 'trim', 'add_intro_outro', 'extract_clip',
+    'generate_waveform', 'transcribe', 'extract_chapters',
+    'generate_audiogram', 'convert_format',
+  ];
+
+  if (!validJobTypes.includes(job_type)) {
     return NextResponse.json(
-      { error: `Cannot process node in '${node.status}' state` },
-      { status: 400 },
+      { error: `Invalid job_type. Must be one of: ${validJobTypes.join(', ')}` },
+      { status: 400 }
     );
   }
 
-  // Validate there's content to process
-  if (!node.bodyText && !node.bodyHtml && !node.sourceUrl) {
-    return NextResponse.json(
-      { error: 'Node has no content to process (no text, HTML, or source file)' },
-      { status: 400 },
-    );
+  const { data, error } = await supabase
+    .from('media_processing_jobs')
+    .insert({
+      user_id: user.id,
+      content_node_id: id,
+      job_type,
+      input_url: node.media_url,
+      params: jobParams ?? {},
+      status: 'pending',
+      progress: 0,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Update status to processing
-  await contentNodeRepo.update(id, { status: 'processing' });
+  // Update content node status to processing
+  await supabase
+    .from('content_nodes')
+    .update({ status: 'processing' })
+    .eq('id', id);
 
-  // Enqueue decomposition job
-  try {
-    const queue = await getQueue();
-    const jobData: ContentDecomposeJob = {
-      nodeId: id,
-      userId: node.userId,
-    };
-    await queue.send(QUEUES.CONTENT_DECOMPOSE, jobData);
-  } catch (queueError) {
-    // If queue isn't available (no DB URL), run inline as fallback
-    console.warn('[process] Queue unavailable, will process inline:', queueError);
-    const { handleInlineDecompose } = await import('@/services/inline-decompose');
-    // Fire-and-forget — don't block the response
-    handleInlineDecompose(id).catch((err) => {
-      console.error('[process] Inline decomposition failed:', err);
-    });
-  }
-
-  return NextResponse.json({
-    nodeId: id,
-    status: 'processing',
-    message: 'Decomposition queued',
-  });
-});
+  return NextResponse.json({ data }, { status: 201 });
+}

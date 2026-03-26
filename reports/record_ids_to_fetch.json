@@ -1,0 +1,41 @@
+{
+  "list_id": "c828998b-71a5-49be-b3e4-7eb62414f3ee",
+  "list_name": "Broad AI Security people prospects",
+  "fetch_status": "IN_PROGRESS",
+  "timestamp": "2026-02-03T22:20:11.838697",
+  "expected_total_records": 2400,
+  "stages": {
+    "stage_1_fetch_entries": {
+      "status": "READY",
+      "description": "Fetch all list entries with pagination (100 per batch)",
+      "batch_size": 100,
+      "expected_batches": 24,
+      "rate_limit": "1 second between batches"
+    },
+    "stage_2_fetch_person_records": {
+      "status": "PENDING",
+      "description": "Fetch individual person records to extract emails",
+      "rate_limit": "0.5 seconds between records",
+      "extraction_fields": [
+        "name",
+        "email_addresses"
+      ]
+    },
+    "stage_3_validate_emails": {
+      "status": "PENDING",
+      "description": "Validate emails using LeadMagic API",
+      "api_key": "607c46332f4a70e3b72521ae3badc39a",
+      "expected_credits": 120,
+      "available_credits": 30299
+    },
+    "stage_4_generate_reports": {
+      "status": "PENDING",
+      "description": "Generate JSON, CSV, and Markdown reports",
+      "output_formats": [
+        "json",
+        "csv",
+        "markdown"
+      ]
+    }
+  }
+}

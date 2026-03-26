@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "jobtrackr",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd '/Users/robertpeacock/Desktop/Claude code/jobtrackr' && bun run dev"],
+      "port": 3000
+    },
+    {
+      "name": "content-os",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd '/Users/robertpeacock/Desktop/Claude code/content platform/.claude/worktrees/naughty-taussig/apps/content-os' && bun run dev --port 3001"],
+      "port": 3001
+    }
+  ]
+}

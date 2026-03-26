@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "timestamp": "2026-02-03T21:47:23.866591",
+    "total_records": 1,
+    "total_credits": 0.0,
+    "dry_run": false
+  },
+  "stats": {
+    "total_records": 1,
+    "successful": 0,
+    "failed": 0,
+    "skipped": 1,
+    "people_enriched": 0,
+    "companies_enriched": 0
+  },
+  "enrichments": [
+    {
+      "record_id": "cf951b25-427e-5ab2-a95a-eaefc8971ed4",
+      "record_type": "person",
+      "success": false,
+      "enrichments_applied": [],
+      "credits_used": 0.0,
+      "errors": [],
+      "data": {},
+      "timestamp": "2026-02-03T21:47:23.866562"
+    }
+  ]
+}

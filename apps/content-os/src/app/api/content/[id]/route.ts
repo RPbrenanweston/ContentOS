@@ -1,59 +1,107 @@
-// @crumb content-detail-crud
-// API | route-handler | single-record-operations
-// why: Handles GET/PATCH/DELETE for individual content nodes; orchestrates segment loading for detail view and cascading deletes for data integrity
-// in:[/api/content/[id]] out:[JSON-node-with-segments|204-success] err:[404-not-found|validation-error|delete-cascade-failure]
-// hazard: No validation on node ID format; malformed UUIDs silently pass to repo layer
-// hazard: DELETE cascades without checking reference counts; orphaned assets possible if external systems reference deleted content
-// hazard: PATCH validation delegates entirely to schema; no business logic checks for conflicting status transitions (e.g., published -> draft)
-// hazard: GET segments loaded without pagination; large documents with thousands of segments cause memory spike
-// hazard: Error responses expose internal schema validation details that could inform attack strategies
-// edge:../../services/container.ts -> USES (getServices, dependency injection)
-// edge:../../infrastructure/supabase/client.ts -> USES (createServiceClient)
-// edge:../../lib/validation.ts -> USES (updateContentNodeSchema)
-// edge:../../lib/errors.ts -> USES (NotFoundError)
-// edge:../route.ts -> RELATED (sibling GET/POST list endpoint)
-// prompt: Add ID format validation before repo calls; check reference counts before DELETE cascade; implement segment pagination with maxResults limit; reduce error details in 4xx responses
-// prompt: Consider optimistic locking for PATCH to prevent concurrent edit conflicts; add audit logging for DELETE operations
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { withApiHandler } from '@/lib/api-handler';
-import { createServiceClient } from '@/infrastructure/supabase/client';
-import { getServices } from '@/services/container';
-import { updateContentNodeSchema } from '@/lib/validation';
-import { NotFoundError } from '@/lib/errors';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
-// GET /api/content/[id] — Get content node with segments
-export const GET = withApiHandler(async (ctx) => {
-  const { params } = ctx;
-  const id = params.id;
-  const supabase = createServiceClient();
-  const { contentNodeRepo, segmentRepo } = getServices(supabase);
+type Params = { params: Promise<{ id: string }> };
 
-  const node = await contentNodeRepo.findById(id);
-  const segments = await segmentRepo.findByNodeId(id);
+// GET /api/content/[id]
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-  return NextResponse.json({ ...node, segments });
-});
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-// PATCH /api/content/[id] — Update content node
-export const PATCH = withApiHandler<z.infer<typeof updateContentNodeSchema>>(async (ctx) => {
-  const { params, body } = ctx;
-  const id = params.id;
+  const { data, error } = await supabase
+    .from('content_nodes')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
 
-  const supabase = createServiceClient();
-  const { contentNodeRepo } = getServices(supabase);
+  if (error) {
+    const status = error.code === 'PGRST116' ? 404 : 500;
+    return NextResponse.json({ error: error.message }, { status });
+  }
 
-  const node = await contentNodeRepo.update(id, body);
-  return NextResponse.json(node);
-}, { schema: updateContentNodeSchema });
+  return NextResponse.json({ data });
+}
 
-// DELETE /api/content/[id] — Delete content node (cascades)
-export const DELETE = withApiHandler(async (ctx) => {
-  const { params } = ctx;
-  const id = params.id;
-  const supabase = createServiceClient();
-  const { contentNodeRepo } = getServices(supabase);
+// PUT /api/content/[id]
+export async function PUT(req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-  await contentNodeRepo.delete(id);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+
+  // Whitelist updatable fields
+  const allowed = [
+    'title', 'description', 'body', 'status', 'tags', 'slug',
+    'media_url', 'thumbnail_url', 'canonical_url', 'og_image_url',
+    'show_notes', 'episode_number', 'season_number', 'episode_type', 'explicit',
+    'transcript', 'chapters', 'published_at', 'metadata',
+  ] as const;
+
+  type AllowedKey = typeof allowed[number];
+  const updates: Partial<Record<AllowedKey, unknown>> = {};
+  for (const key of allowed) {
+    if (key in body) updates[key] = body[key];
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return NextResponse.json({ error: 'No valid fields to update' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('content_nodes')
+    .update(updates)
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .select()
+    .single();
+
+  if (error) {
+    const status = error.code === 'PGRST116' ? 404 : 500;
+    return NextResponse.json({ error: error.message }, { status });
+  }
+
+  return NextResponse.json({ data });
+}
+
+// DELETE /api/content/[id]
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { error } = await supabase
+    .from('content_nodes')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
   return new NextResponse(null, { status: 204 });
-});
+}

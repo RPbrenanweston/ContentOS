@@ -1,0 +1,120 @@
+{
+  "timestamp": "2026-02-03T16:20:02.997279",
+  "total_connections": 240,
+  "completed": 8,
+  "remaining": 232,
+  "progress_percentage": 3.3333333333333335,
+  "completed_names": [
+    "Sofia Knauer",
+    "Gal Nakash",
+    "Kim Greenia",
+    "Nick Guldin",
+    "Ophir Dror",
+    "Jenn Castner",
+    "Omer Ashkenazi",
+    "Reut Tiger Zur"
+  ],
+  "status": "in_progress",
+  "next_batch": [
+    {
+      "name": "Nick Rickards",
+      "first_name": "Nick",
+      "last_name": "Rickards",
+      "title": null,
+      "company": null,
+      "persona": "People/TA",
+      "headline": "I used to train humans to be better recruiters. Now I train AI to make recruiters unstoppable.",
+      "connected_on": "2026-02-02"
+    },
+    {
+      "name": "J\u00e9r\u00f4me Robert",
+      "first_name": "J\u00e9r\u00f4me",
+      "last_name": "Robert",
+      "title": "CEO & Co-Founder",
+      "company": "Symbiotic Security",
+      "persona": "Security/Risk",
+      "headline": "CEO & Co-Founder @ Symbiotic Security | Securing AI coding",
+      "connected_on": "2026-01-31"
+    },
+    {
+      "name": "Mark Tribe",
+      "first_name": "Mark",
+      "last_name": "Tribe",
+      "title": "UK Deployment Strategist",
+      "company": "Duality Technologies",
+      "persona": "Other",
+      "headline": "UK Deployment Strategist at Duality Technologies",
+      "connected_on": "2026-01-30"
+    },
+    {
+      "name": "Meghan Carpenter",
+      "first_name": "Meghan",
+      "last_name": "Carpenter",
+      "title": "Talent Acquisition",
+      "company": "Wiz",
+      "persona": "People/TA",
+      "headline": "Talent Acquisition @ Wiz",
+      "connected_on": "2026-01-30"
+    },
+    {
+      "name": "Ilan Asseo",
+      "first_name": "Ilan",
+      "last_name": "Asseo",
+      "title": null,
+      "company": null,
+      "persona": "Other",
+      "headline": "Let our AI Agents prospect, qualify & book meetings for you",
+      "connected_on": "2026-01-30"
+    },
+    {
+      "name": "Rui Qian",
+      "first_name": "Rui",
+      "last_name": "Qian",
+      "title": "Senior Software Engineer",
+      "company": "Bloomberg",
+      "persona": "Product/Engineering",
+      "headline": "Senior Software Engineer at Bloomberg",
+      "connected_on": "2026-01-30"
+    },
+    {
+      "name": "Wes van den Berg",
+      "first_name": "Wes",
+      "last_name": "van den Berg",
+      "title": null,
+      "company": null,
+      "persona": "GTM/Sales",
+      "headline": "Senior Vice President & Managing Director, EMEA - Revenue, team and culture builder",
+      "connected_on": "2026-01-29"
+    },
+    {
+      "name": "Maarten Stolk",
+      "first_name": "Maarten",
+      "last_name": "Stolk",
+      "title": null,
+      "company": null,
+      "persona": "Founder/Exec",
+      "headline": "Co-Founder & CEO Deeploy | Co-founder Enjins",
+      "connected_on": "2026-01-29"
+    },
+    {
+      "name": "Jason Mueller",
+      "first_name": "Jason",
+      "last_name": "Mueller",
+      "title": "Vice President of Sales",
+      "company": "Opaque",
+      "persona": "GTM/Sales",
+      "headline": "Vice President of Sales at Opaque",
+      "connected_on": "2026-01-29"
+    },
+    {
+      "name": "Tim Kleinloog",
+      "first_name": "Tim",
+      "last_name": "Kleinloog",
+      "title": "CTO / Co-Founder",
+      "company": "Deeploy",
+      "persona": "Product/Engineering",
+      "headline": "CTO / Co-Founder at Deeploy | Deploy AI with confidence",
+      "connected_on": "2026-01-29"
+    }
+  ]
+}

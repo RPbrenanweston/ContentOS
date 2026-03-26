@@ -1,55 +1,126 @@
-// @crumb distribution-publish-orchestration
-// API | workflow-orchestration | multi-platform-posting
-// why: Orchestrate asset posting to multiple platforms simultaneously; creates distribution jobs, enqueues async delivery, returns job statuses for tracking
-// in:[assetId, accountIds[], scheduledAt?] out:[DistributionJob[]] err:[asset-not-found, invalid-accounts, publish-failed]
-// hazard: Promise.all on accountRepo.findById could fail silently on missing account; partial account load leaves orphaned jobs
-// hazard: No auth check on accountIds; user can post to accounts owned by other users if they guess the ID
-// hazard: distributionService.publish doesn't validate that selected accounts support the asset type (e.g., video to text-only platform)
-// hazard: scheduledAt validation missing; accepts any date string including past dates, causing immediate or erratic scheduling
-// hazard: mediaUrl fallback to [asset.mediaUrl] could pass null/undefined to adapters expecting valid URLs; platform adapters crash on null media
-// edge:../../../infrastructure/supabase/repositories/derived-asset.repo.ts -> LOADS
-// edge:../../../infrastructure/supabase/repositories/distribution-account.repo.ts -> LOADS
-// edge:../../../services/distribution.service.ts -> ENQUEUES
-// edge:../jobs/route.ts -> RELATED (status query)
-// edge:../accounts/route.ts -> REFERENCES
-// prompt: Add auth ownership check on accounts; validate account+asset type compatibility; validate scheduledAt is future; validate mediaUrl not null before passing to adapters; sanitize error responses
-//
 import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { withApiHandler } from '@/lib/api-handler';
-import { createServiceClient } from '@/infrastructure/supabase/client';
-import { getServices } from '@/services/container';
-import { publishAssetSchema } from '@/lib/validation';
-import { ForbiddenError } from '@/lib/errors';
+import { createClient } from '@/lib/supabase/server';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { publish } from '@/lib/distribution/publisher';
+import type { PublishRequest } from '@/lib/distribution/publisher';
+import type { UniversalMedia } from '@/lib/platforms/types';
 
-// POST /api/distribution/publish — Publish or schedule an asset
-export const POST = withApiHandler<z.infer<typeof publishAssetSchema>>(async (ctx) => {
-  const { body, userId } = ctx;
+// ─── Request Body Schema ────────────────────────────────
 
-  const supabase = createServiceClient();
-  const { assetRepo, accountRepo, distributionService } = getServices(supabase);
+interface PublishRequestBody {
+  contentNodeId?: string;
+  derivedAssetId?: string;
+  accountIds: string[];
+  text: string;
+  media?: Array<{
+    type: 'image' | 'video';
+    source: { kind: 'storage'; storagePath: string } | { kind: 'url'; url: string };
+    altText?: string;
+  }>;
+  scheduledAt?: string;
+}
 
-  // Load the asset
-  const asset = await assetRepo.findById(body.assetId);
+// ─── POST /api/distribution/publish ─────────────────────
 
-  // Load the selected accounts
-  const allAccounts = await Promise.all(
-    body.accountIds.map((id: string) => accountRepo.findById(id)),
-  );
+export async function POST(request: Request) {
+  // 1. Authenticate user
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
 
-  // Verify the caller owns every requested distribution account
-  const unauthorizedAccounts = allAccounts.filter((account) => account.userId !== userId);
-  if (unauthorizedAccounts.length > 0) {
-    throw new ForbiddenError('You do not have permission to publish to one or more of the selected accounts');
+  if (authError || !user) {
+    return NextResponse.json(
+      { error: 'Unauthorized' },
+      { status: 401 },
+    );
   }
 
-  // Publish via distribution service
-  const jobs = await distributionService.publish({
-    asset,
-    accounts: allAccounts,
-    scheduledAt: body.scheduledAt ? new Date(body.scheduledAt) : undefined,
-    mediaUrls: asset.mediaUrl ? [asset.mediaUrl] : undefined,
-  });
+  // 2. Parse and validate request body
+  let body: PublishRequestBody;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid JSON body' },
+      { status: 400 },
+    );
+  }
 
-  return NextResponse.json({ jobs }, { status: 201 });
-}, { schema: publishAssetSchema });
+  if (!body.accountIds || body.accountIds.length === 0) {
+    return NextResponse.json(
+      { error: 'accountIds must be a non-empty array' },
+      { status: 400 },
+    );
+  }
+
+  if (!body.text || body.text.trim().length === 0) {
+    return NextResponse.json(
+      { error: 'text must be a non-empty string' },
+      { status: 400 },
+    );
+  }
+
+  // 3. Verify all accountIds belong to this user
+  const adminClient = createServiceClient();
+  const { data: ownedAccounts, error: ownershipError } = await adminClient
+    .from('distribution_accounts')
+    .select('id')
+    .eq('user_id', user.id)
+    .in('id', body.accountIds);
+
+  if (ownershipError) {
+    return NextResponse.json(
+      { error: 'Failed to verify account ownership' },
+      { status: 500 },
+    );
+  }
+
+  const ownedIds = new Set((ownedAccounts ?? []).map((a) => a.id as string));
+  const unauthorizedIds = body.accountIds.filter((id) => !ownedIds.has(id));
+
+  if (unauthorizedIds.length > 0) {
+    return NextResponse.json(
+      {
+        error: `Accounts not found or not owned by you: ${unauthorizedIds.join(', ')}`,
+      },
+      { status: 403 },
+    );
+  }
+
+  // 4. Build publish request
+  const media: UniversalMedia[] | undefined = body.media?.map((m) => ({
+    type: m.type,
+    source: m.source,
+    altText: m.altText,
+  }));
+
+  const publishRequest: PublishRequest = {
+    contentNodeId: body.contentNodeId,
+    derivedAssetId: body.derivedAssetId,
+    targets: body.accountIds.map((accountId) => ({
+      accountId,
+      scheduledAt: body.scheduledAt,
+    })),
+    text: body.text,
+    media,
+  };
+
+  // 5. Execute fan-out publish
+  const response = await publish(publishRequest, user.id);
+
+  // 6. Build IETF rate limit headers
+  const rateLimitLimit = 100;
+  const rateLimitRemaining = Math.max(0, rateLimitLimit - response.results.length);
+  const rateLimitReset = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
+
+  return NextResponse.json(response, {
+    status: 200,
+    headers: {
+      'RateLimit-Limit': String(rateLimitLimit),
+      'RateLimit-Remaining': String(rateLimitRemaining),
+      'RateLimit-Reset': String(rateLimitReset),
+    },
+  });
+}

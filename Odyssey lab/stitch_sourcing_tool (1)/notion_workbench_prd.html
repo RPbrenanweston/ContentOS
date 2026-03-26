@@ -1,0 +1,259 @@
+# Notion Workbench
+
+## Product Overview
+
+**The Pitch:** A recruiting sourcing interface that treats candidate search queries as a living document rather than a form. By aggregating signals from CodeSignal and ExecSignal into a modular "workbench," recruiters can construct complex geographic and experience-based queries with the clarity of writing a memo.
+
+**For:** Technical recruiters and sourcers who need high-fidelity candidate matching without the cognitive overload of messy boolean strings or cluttered dashboards.
+
+**Device:** Desktop
+
+**Design Direction:** "Document-Native Utility." A calm, structured environment where UI elements feel like drag-and-drop content blocks. Soft shadows, paper-like surfaces, and a focus on typography over iconography.
+
+**Inspired by:** Notion (block structure), Linear (refined utility), Raycast (command-line efficiency).
+
+---
+
+## Screens
+
+- **Workbench (Primary):** The main document interface containing the query builder blocks and live results stream.
+- **X-Ray Editor:** A focused, monospaced environment for raw boolean string manipulation and Google CSE tuning.
+- **Candidate Detail Modal:** A slide-over panel presenting deep-dive aggregation data (CodeSignal scores, ExecSignal history).
+- **Saved Queries Library:** A gallery view of past "search documents" for quick cloning and reuse.
+
+---
+
+## Key Flows
+
+**Constructing a Sourcing Document:**
+
+1.  User lands on **Workbench** -> sees an empty page with a blinking cursor at the "Untitled Query" header.
+2.  User types "Sr. React Engineers in Austin" -> Title updates.
+3.  User clicks the **Location Block** -> Types "Austin, TX" (radius defaults to 25mi).
+4.  User drags **YoE Slider** -> Sets range to 5-8 years.
+5.  User pastes JD into **Technical Context Block** -> System extracts keywords (React, TypeScript, Node).
+6.  **Results Stream** automatically populates below the blocks.
+
+**Switching to Power User Mode:**
+
+1.  User is unsatisfied with visual builder results.
+2.  User clicks **"X-Ray Source"** tab toggle.
+3.  Visual blocks vanish -> Replaced by a raw, syntax-highlighted editor showing the generated boolean string.
+4.  User manually edits `(site:linkedin.com/in) AND "React"` -> Results update in real-time.
+
+---
+
+<details>
+<summary>Design System</summary>
+
+## Color Palette
+
+- **Primary:** `#37352F` - Main text, active states (Notion Black)
+- **Background:** `#FFFFFF` - Page background
+- **Surface:** `#F7F6F3` - Sidebar, input blocks, secondary backgrounds
+- **Surface Hover:** `#EFEFED` - Interactive elements hover state
+- **Text:** `#37352F` - Primary content
+- **Muted:** `#9B9A97` - Labels, placeholder text, secondary meta
+- **Border:** `#E9E9E7` - Subtle dividers
+- **Accent:** `#EB5757` - "Delete" actions or critical alerts (Soft Red)
+- **Selection:** `#D9E8F5` - Text selection / Active highlight blue
+
+## Typography
+
+**Font Family:** *Lyon Display* (Headings) + *Inter* (UI/Body) + *JetBrains Mono* (Code). This mix evokes a high-quality editorial feel paired with utilitarian precision.
+
+- **Doc Title:** *Lyon Display*, 700, 32px (Letter-spacing -0.5px)
+- **Block Label:** *Inter*, 600, 11px (All Caps, Letter-spacing 0.04em, Color `#9B9A97`)
+- **Body:** *Inter*, 400, 15px (Line-height 1.5)
+- **Data/Tags:** *Inter*, 500, 13px
+- **Code:** *JetBrains Mono*, 400, 13px (Color `#EB5757` for operators)
+
+**Style Notes:**
+- **Shadows:** Minimal. `box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.06)` on cards.
+- **Borders:** 1px solid `#E9E9E7`.
+- **Radius:** 4px everywhere. No pills, no circles (except avatars). Keeps the blocky, document feel.
+
+## Design Tokens
+
+```css
+:root {
+  --color-primary: #37352F;
+  --color-bg: #FFFFFF;
+  --color-surface: #F7F6F3;
+  --color-border: #E9E9E7;
+  --color-muted: #9B9A97;
+  --font-serif: 'Lyon Display', serif;
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --radius-sm: 4px;
+  --spacing-unit: 8px;
+}
+```
+
+</details>
+
+---
+
+<details>
+<summary>Screen Specifications</summary>
+
+### Workbench (Primary)
+
+**Purpose:** The central workspace where the query is constructed and results are viewed.
+
+**Layout:**
+- **Sidebar (Left, 240px):** Navigation and history.
+- **Main Canvas (Center, max-width 900px):** The "Page" containing query blocks.
+- **Results Feed (Below Canvas):** Infinite scroll of candidate cards.
+
+**Key Elements:**
+
+1.  **Document Header:**
+    -   `h1` Editable Title ("Untitled Query").
+    -   `span` Last edited timestamp (Muted).
+    -   **Action Bar (Top Right):** [Share], [Export CSV], [Save Template].
+
+2.  **Query Block Group (The "Builder"):**
+    -   *Container:* `#FFFFFF`, 1px Border `#E9E9E7`, Padding 24px.
+    -   **Location Block:**
+        -   Icon: 📍 (16px, Muted).
+        -   Input: "Add location..." (Auto-complete Google Places).
+        -   Radius Modifier: Dropdown [Exact, +10mi, +25mi, +50mi].
+    -   **Experience Block:**
+        -   Label: "YEARS OF EXPERIENCE".
+        -   UI: Dual-handle range slider. Track `#E9E9E7`, Active `#37352F`.
+        -   Display: "3 – 7 Years" dynamic text above slider.
+    -   **Technical Context Block:**
+        -   Label: "KEYWORDS & SKILLS".
+        -   UI: Textarea (min-height 80px). Looks like a paragraph.
+        -   Interaction: As user types "Java", it highlights in faint blue background (`#E3F2FD`) indicating tokenization.
+
+3.  **Search Mode Tabs:**
+    -   Located directly under the Query Block Group.
+    -   Style: Text-only tabs. [**Visual Builder**] | [X-Ray Editor].
+    -   Active tab has `border-bottom: 2px solid #37352F`.
+
+4.  **Results Stream:**
+    -   Header: "Found 42 Candidates".
+    -   **Sort:** [Relevance] v. [Recent] v. [Signal Strength].
+
+**States:**
+-   **Empty:** "Start typing above to surface candidates." (Gray text, centered).
+-   **Loading:** Skeleton pulses on result cards. Query blocks remain interactive.
+
+---
+
+### X-Ray Editor (Tab View)
+
+**Purpose:** Power-user mode for direct boolean manipulation.
+
+**Layout:** Replaces the **Query Block Group** in the Main Canvas.
+
+**Key Elements:**
+
+1.  **Boolean Editor:**
+    -   *Container:* `#F7F6F3` background (Monospaced environment).
+    -   *Content:* Syntax-highlighted text area.
+    -   `site:linkedin.com/in` (Gray) `AND` (Bold Black) `"Product Designer"` (Blue).
+    -   Line numbers on left gutter.
+
+2.  **Operator Helper:**
+    -   Row of small buttons below editor: `AND` `OR` `NOT` `( )` `site:`.
+    -   Click inserts operator at cursor.
+
+3.  **Source Toggles:**
+    -   Checkboxes: [x] LinkedIn, [x] GitHub, [ ] StackOverflow, [ ] Dribbble.
+
+**Interactions:**
+-   **Sync Warning:** If user edits the boolean string to something the Visual Builder can't represent, show toast: "Switching back to Visual Builder will reset these custom edits."
+
+---
+
+### Candidate Card Component
+
+**Purpose:** Display single result within the stream.
+
+**Layout:** Horizontal Stack. 180px height fixed.
+
+**Key Elements:**
+-   **Avatar (Left):** 48x48px square with 4px radius.
+-   **Primary Info (Top Left):**
+    -   **Name:** `h3` Inter 600, 16px. Link to LinkedIn.
+    -   **Current Role:** "Senior Engineer @ Stripe".
+    -   **Location:** "Austin, TX (Remote)".
+-   **Signal Block (Top Right):**
+    -   **CodeSignal:** Badge "GCA 780" (Green text if >700).
+    -   **ExecSignal:** "Startup Exit 2021".
+-   **Context Snippet (Middle):**
+    -   2 lines of text extracted from profile matching keywords.
+    -   Matches bolded.
+-   **Actions (Bottom):**
+    -   [Email] (Icon only).
+    -   [Save to List] (Icon only).
+    -   **Status:** "Not Contacted" (Pill, gray background).
+
+---
+
+### Candidate Detail Modal
+
+**Purpose:** Deep dive without leaving the search context.
+
+**Layout:** Slide-over panel from right. Width: 600px.
+
+**Key Elements:**
+
+1.  **Header:** Sticky top. Name + "View Original Source" button (External Link).
+2.  **Timeline Block:** Vertical line showing career progression.
+    -   *Node:* 2020-Present · Stripe · Staff Engineer.
+    -   *Node:* 2018-2020 · Uber · Senior Engineer.
+3.  **Signals Section:**
+    -   Grid of 2 columns.
+    -   **Col 1: Technical:** GitHub repos, Language breakdown (Python 40%, Go 60%).
+    -   **Col 2: Leadership:** Team size managed, speaking engagements.
+4.  **Notes:** Private text area for recruiter to log thoughts.
+
+**Interactions:**
+-   **Close:** Click backdrop or 'Esc' key. Panel slides right.
+
+</details>
+
+---
+
+<details>
+<summary>Build Guide</summary>
+
+**Stack:** HTML + Tailwind CSS v3
+
+**Build Order:**
+
+1.  **Workbench Layout + Typography:** Establish the "Notion" feel. Get the fonts (Lyon/Inter) loading correctly and set the sidebar/canvas grid.
+2.  **Query Blocks:** Build the independent input components (Location, Slider, Rich Text). Focus on the hover states and focus rings (minimalist).
+3.  **Candidate Card:** Build the result display component. Ensure it looks good repeated 10x.
+4.  **X-Ray Toggle:** Implement the tab switching logic and the monospaced editor view.
+5.  **Detail Modal:** Add the slide-over functionality.
+
+**Tailwind Config Highlights:**
+
+```javascript
+module.exports = {
+  theme: {
+    fontFamily: {
+      serif: ['Lyon Display', 'serif'],
+      sans: ['Inter', 'sans-serif'],
+      mono: ['JetBrains Mono', 'monospace'],
+    },
+    extend: {
+      colors: {
+        notion: {
+          bg: '#FFFFFF',
+          sidebar: '#F7F6F3',
+          text: '#37352F',
+          border: '#E9E9E7',
+        }
+      }
+    }
+  }
+}
+```
+
+</details>

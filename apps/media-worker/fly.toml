@@ -1,0 +1,27 @@
+app = "content-os-media-worker"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  # Set secrets via: fly secrets set SUPABASE_URL=... SUPABASE_SERVICE_ROLE_KEY=... OPENAI_API_KEY=...
+  NODE_ENV = "production"
+
+[[vm]]
+  # 2 shared CPUs + 512 MB RAM is enough for FFmpeg normalization.
+  # Upgrade to performance-1x (dedicated) if transcription queues pile up.
+  size = "shared-cpu-2x"
+  memory = "512mb"
+
+[http_service]
+  # The worker has no HTTP surface — disable the health-check listener.
+  # Fly will keep it running as a background process.
+  internal_port = 0
+  force_https = false
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[checks]
+  # No HTTP health checks — process is healthy if it doesn't exit.

@@ -1,73 +1,95 @@
-// @crumb content-crud-api
-// API | route-handler | data-persistence
-// why: Handles creation and listing of content nodes; primary write/read endpoint for editorial content with validation and error handling
-// in:[request-body-json, query-params] out:[json-response] err:[validation-error, db-error, auth-error]
-// hazard: safeParse succeeds but doesn't guarantee schema match for complex nested types; downstream code may receive unexpected shapes
-// hazard: No rate limiting on POST; attacker could spam content creation without throttling
-// edge:../../infrastructure/supabase/client.ts -> USES
-// edge:../../services/container.ts -> USES
-// edge:../../lib/validation.ts -> USES
-// edge:../../lib/pagination.ts -> USES
-// edge:../../domain/content-node.ts -> RESPONSE-TYPE
-// prompt: Add rate limiting middleware; validate schema completeness
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import type { ContentType, ContentStatus } from '@/domain';
 
-import { NextResponse } from 'next/server';
-import { z } from 'zod';
-import { withApiHandler } from '@/lib/api-handler';
-import { createServiceClient } from '@/infrastructure/supabase/client';
-import { getServices } from '@/services/container';
-import { createContentNodeSchema, listContentNodesSchema } from '@/lib/validation';
-import { parsePagination } from '@/lib/pagination';
+// GET /api/content — list content nodes
+export async function GET(req: NextRequest) {
+  const supabase = await createClient();
 
-// POST /api/content — Create a content node
-export const POST = withApiHandler<z.infer<typeof createContentNodeSchema>>(async (ctx) => {
-  const { userId, body } = ctx;
-
-  const supabase = createServiceClient();
-  const { contentNodeRepo } = getServices(supabase);
-
-  const node = await contentNodeRepo.create({
-    userId,
-    title: body.title,
-    contentType: body.contentType,
-    status: body.status ?? 'draft',
-    bodyText: body.bodyText,
-    bodyHtml: body.bodyHtml,
-    tags: body.tags,
-  });
-
-  return NextResponse.json(node, { status: 201 });
-}, { schema: createContentNodeSchema });
-
-// GET /api/content — List content nodes
-export const GET = withApiHandler(async (ctx) => {
-  const { userId, request } = ctx;
-  const searchParams = request.nextUrl.searchParams;
-  const queryParams = Object.fromEntries(searchParams);
-  const parsed = listContentNodesSchema.safeParse(queryParams);
-
-  if (!parsed.success) {
-    return NextResponse.json(
-      { error: 'Bad Request', message: 'Invalid query parameters' },
-      { status: 400 },
-    );
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const { limit, offset } = parsePagination(searchParams);
-  const supabase = createServiceClient();
-  const { contentNodeRepo } = getServices(supabase);
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get('status') as ContentStatus | null;
+  const type = searchParams.get('type') as ContentType | null;
+  const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+  const pageSize = Math.min(50, Math.max(1, parseInt(searchParams.get('pageSize') ?? '20', 10)));
 
-  const result = await contentNodeRepo.list({
-    userId,
-    status: parsed.data.status,
-    type: parsed.data.type,
-    page: parsed.data.page,
-    limit,
-    offset,
+  let query = supabase
+    .from('content_nodes')
+    .select('*', { count: 'exact' })
+    .eq('user_id', user.id)
+    .order('updated_at', { ascending: false })
+    .range((page - 1) * pageSize, page * pageSize - 1);
+
+  if (status) query = query.eq('status', status);
+  if (type) query = query.eq('content_type', type);
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    data,
+    meta: { total: count ?? 0, page, pageSize },
   });
+}
 
-  const total = result.total ?? (Array.isArray(result) ? result.length : 0);
-  const headers = new Headers();
-  headers.set('x-total-count', String(total));
-  return NextResponse.json(result, { headers });
-});
+// POST /api/content — create content node
+export async function POST(req: NextRequest) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const body = await req.json();
+  const { title, content_type, description, body: contentBody, tags, show_id } = body;
+
+  if (!title?.trim()) {
+    return NextResponse.json({ error: 'title is required' }, { status: 400 });
+  }
+  if (!content_type) {
+    return NextResponse.json({ error: 'content_type is required' }, { status: 400 });
+  }
+
+  const slug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .slice(0, 100);
+
+  const { data, error } = await supabase
+    .from('content_nodes')
+    .insert({
+      user_id: user.id,
+      title: title.trim(),
+      content_type,
+      status: 'draft',
+      description: description ?? null,
+      body: contentBody ?? null,
+      tags: tags ?? [],
+      show_id: show_id ?? null,
+      slug,
+      metadata: {},
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data }, { status: 201 });
+}

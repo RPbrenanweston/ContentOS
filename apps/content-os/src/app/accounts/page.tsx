@@ -1,564 +1,351 @@
-// @crumb distribution-accounts
-// UI | account-manager | platform-connector
-// why: Displays connected distribution channels and enables creators to add new accounts for multi-platform publishing
-// in:[/api/distribution/accounts] out:[JSX-account-grid] err:[fetch-failure, post-failure]
-// hazard: No error recovery UI for failed connect request; user gets no feedback if POST fails
-// hazard: platforms.find() can return undefined; accessing platform.logo without null check in connected accounts section crashes
-// edge:/api/distribution/accounts -> API-ENDPOINT
-// prompt: Show toast/error UI on connect failures; validate platform exists before accessing logo
-'use client';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
+import type { DistributionAccount, PlatformType } from '@/domain';
 
-import { useEffect, useState } from 'react';
-import type { DistributionAccount, Platform } from '@/domain';
+// ─── Platform metadata ────────────────────────────────────
 
-/* ─── Platform metadata with real brand colors ─── */
-const platforms: {
-  id: Platform;
-  name: string;
+interface PlatformMeta {
+  id: PlatformType;
+  label: string;
+  icon: string;
+  color: string;
   description: string;
-  brandColor: string;
-  logo: React.FC<{ className?: string }>;
-}[] = [
-  {
-    id: 'linkedin',
-    name: 'LinkedIn',
-    description: 'Professional network posts & articles',
-    brandColor: '#0A66C2',
-    logo: LinkedInLogo,
-  },
-  {
-    id: 'x',
-    name: 'X / Twitter',
-    description: 'Short-form posts & threads',
-    brandColor: '#000000',
-    logo: XLogo,
-  },
-  {
-    id: 'youtube',
-    name: 'YouTube',
-    description: 'Video content & Shorts',
-    brandColor: '#FF0000',
-    logo: YouTubeLogo,
-  },
-  {
-    id: 'tiktok',
-    name: 'TikTok',
-    description: 'Short-form video content',
-    brandColor: '#000000',
-    logo: TikTokLogo,
-  },
-  {
-    id: 'instagram',
-    name: 'Instagram',
-    description: 'Photos, Stories & Reels',
-    brandColor: '#E4405F',
-    logo: InstagramLogo,
-  },
-  {
-    id: 'newsletter',
-    name: 'Newsletter',
-    description: 'Email subscribers & campaigns',
-    brandColor: '#6B7067',
-    logo: NewsletterLogo,
-  },
+  oauthUrl: string | null;
+}
+
+const PLATFORMS: PlatformMeta[] = [
+  { id: 'twitter',   label: 'X / Twitter',  icon: '\uD835\uDD4F', color: '#000000', description: 'Short-form posts & threads',        oauthUrl: '/api/oauth/twitter/authorize' },
+  { id: 'linkedin',  label: 'LinkedIn',      icon: 'in',           color: '#0077B5', description: 'Professional network posts',         oauthUrl: '/api/oauth/linkedin/authorize' },
+  { id: 'instagram', label: 'Instagram',     icon: '\u25FB',       color: '#E1306C', description: 'Photos, Stories & Reels',            oauthUrl: null },
+  { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: null },
+  { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
+  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
+  { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
+  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
 ];
 
-/* ─── Connect Modal ─── */
+// ─── Page ─────────────────────────────────────────────────
 
-interface ConnectModalProps {
-  platform: (typeof platforms)[number] | null;
-  onCancel: () => void;
-  onSubmit: (accountName: string) => Promise<void>;
-}
+export default async function AccountsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const supabase = await createClient();
 
-function ConnectModal({ platform, onCancel, onSubmit }: ConnectModalProps) {
-  const [accountName, setAccountName] = useState('');
-  const [error, setError] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (!platform) return null;
+  const { data: accounts } = user
+    ? await supabase
+        .from('distribution_accounts')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+    : { data: null };
 
-  const Logo = platform.logo;
+  const connectedAccounts: DistributionAccount[] = accounts ?? [];
+  const connectedPlatforms = new Set(connectedAccounts.map((a) => a.platform));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const trimmed = accountName.trim();
-    if (!trimmed) {
-      setError('Account name is required.');
-      return;
-    }
-    if (trimmed.length < 2) {
-      setError('Account name must be at least 2 characters.');
-      return;
-    }
-
-    setError('');
-    setSubmitting(true);
-    try {
-      await onSubmit(trimmed);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleCancel = () => {
-    if (!submitting) onCancel();
-  };
-
-  return (
-    /* Backdrop */
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="connect-modal-title"
-      onClick={handleCancel}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 50,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      }}
-    >
-      {/* Panel */}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          backgroundColor: 'var(--theme-card-bg)',
-          border: '1px solid var(--theme-card-border)',
-          borderRadius: '12px',
-          padding: '24px',
-          width: '100%',
-          maxWidth: '400px',
-          margin: '0 16px',
-        }}
-      >
-        {/* Modal header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px' }}>
-          <div
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: `${platform.brandColor}15`,
-              flexShrink: 0,
-            }}
-          >
-            <Logo className="w-5 h-5" />
-          </div>
-          <div>
-            <h2
-              id="connect-modal-title"
-              style={{
-                fontSize: '15px',
-                fontWeight: 600,
-                color: 'var(--theme-foreground)',
-                margin: 0,
-              }}
-            >
-              Connect {platform.name}
-            </h2>
-            <p style={{ fontSize: '13px', color: 'var(--theme-muted)', margin: 0 }}>
-              {platform.description}
-            </p>
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '16px' }}>
-            <label
-              htmlFor="account-name"
-              style={{
-                display: 'block',
-                fontSize: '13px',
-                fontWeight: 500,
-                color: 'var(--theme-foreground)',
-                marginBottom: '6px',
-              }}
-            >
-              Account name
-            </label>
-            <input
-              id="account-name"
-              type="text"
-              value={accountName}
-              onChange={(e) => {
-                setAccountName(e.target.value);
-                if (error) setError('');
-              }}
-              placeholder={`Your ${platform.name} handle or display name`}
-              disabled={submitting}
-              autoFocus
-              style={{
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: error
-                  ? '1px solid var(--theme-danger, #ef4444)'
-                  : '1px solid var(--theme-card-border)',
-                backgroundColor: 'var(--theme-surface, var(--theme-card-bg))',
-                color: 'var(--theme-foreground)',
-                fontSize: '14px',
-                outline: 'none',
-              }}
-            />
-            {error && (
-              <p
-                role="alert"
-                style={{
-                  fontSize: '12px',
-                  color: 'var(--theme-danger, #ef4444)',
-                  marginTop: '4px',
-                  margin: '4px 0 0 0',
-                }}
-              >
-                {error}
-              </p>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={handleCancel}
-              disabled={submitting}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: '1px solid var(--theme-card-border)',
-                backgroundColor: 'transparent',
-                color: 'var(--theme-foreground)',
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                opacity: submitting ? 0.5 : 1,
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding: '8px 16px',
-                borderRadius: '6px',
-                border: 'none',
-                backgroundColor: platform.brandColor,
-                color: '#ffffff',
-                fontSize: '13px',
-                fontWeight: 500,
-                cursor: submitting ? 'not-allowed' : 'pointer',
-                opacity: submitting ? 0.7 : 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              {submitting ? (
-                <>
-                  <span
-                    style={{
-                      display: 'inline-block',
-                      width: '12px',
-                      height: '12px',
-                      border: '2px solid rgba(255,255,255,0.4)',
-                      borderTopColor: '#ffffff',
-                      borderRadius: '50%',
-                      animation: 'spin 0.6s linear infinite',
-                    }}
-                  />
-                  Connecting…
-                </>
-              ) : (
-                'Connect'
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Keyframe animation injected once */}
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
-}
-
-/* ─── Page ─── */
-
-export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<DistributionAccount[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [activePlatform, setActivePlatform] = useState<(typeof platforms)[number] | null>(null);
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const res = await fetch('/api/distribution/accounts');
-        const data = await res.json();
-        setAccounts(data.accounts ?? []);
-      } catch (e) {
-        console.error('Failed to load accounts:', e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    load();
-  }, []);
-
-  const handleConnect = (platformId: Platform) => {
-    const platform = platforms.find((p) => p.id === platformId);
-    if (platform) setActivePlatform(platform);
-  };
-
-  const handleModalCancel = () => {
-    setActivePlatform(null);
-  };
-
-  const handleModalSubmit = async (accountName: string) => {
-    if (!activePlatform) return;
-
-    const res = await fetch('/api/distribution/accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        platform: activePlatform.id,
-        accountName,
-        externalAccountId: `manual-${Date.now()}`,
-        metadata: { connectionType: 'manual' },
-      }),
-    });
-
-    if (!res.ok) throw new Error('Failed to connect');
-    const account = await res.json();
-    setAccounts((prev) => [...prev, account]);
-    setActivePlatform(null);
-  };
-
-  const connectedPlatforms = new Set(accounts.map((a) => a.platform));
+  const params = await searchParams;
+  const connected = typeof params.connected === 'string' ? params.connected : null;
+  const disconnected = params.disconnected === 'true';
+  const errorParam = typeof params.error === 'string' ? params.error : null;
 
   return (
     <div className="h-full flex flex-col">
-      {/* Connect modal */}
-      {activePlatform && (
-        <ConnectModal
-          platform={activePlatform}
-          onCancel={handleModalCancel}
-          onSubmit={handleModalSubmit}
-        />
-      )}
-
       {/* Header */}
       <div
-        className="h-14 flex items-center justify-between px-6"
-        style={{ borderBottom: '1px solid var(--theme-border)' }}
+        className="h-14 flex items-center justify-between px-6 shrink-0"
+        style={{ borderBottom: '1px solid var(--border)' }}
       >
         <div className="flex items-center gap-4">
-          <h1 className="text-lg font-semibold" style={{ color: 'var(--theme-foreground)' }}>
+          <h1
+            className="text-lg font-semibold"
+            style={{ color: 'var(--foreground)' }}
+          >
             Channels
           </h1>
-          <span className="text-ui-sm">
-            {accounts.length} connected
+          <span
+            className="text-xs"
+            style={{ color: 'var(--muted)' }}
+          >
+            {connectedAccounts.length} connected
           </span>
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {loading ? (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-sm" style={{ color: 'var(--theme-muted)' }}>Loading channels...</p>
-          </div>
-        ) : (
-          <div className="max-w-3xl mx-auto py-8 px-6">
-            {/* Connected accounts */}
-            {accounts.length > 0 && (
-              <div className="mb-10">
-                <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--theme-foreground)' }}>
-                  Connected
-                </h2>
-                <div className="space-y-3">
-                  {accounts.map((account) => {
-                    const platform = platforms.find((p) => p.id === account.platform);
-                    if (!platform) return null;
-                    const Logo = platform.logo;
+        <div className="max-w-3xl mx-auto py-8 px-6">
+          {/* Success banner */}
+          {connected && (
+            <div
+              className="mb-6 px-4 py-3 rounded-lg text-sm font-medium"
+              style={{
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                color: 'var(--success)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+              }}
+            >
+              {connected.charAt(0).toUpperCase() + connected.slice(1)} connected
+              successfully!
+            </div>
+          )}
 
-                    return (
-                      <div
-                        key={account.id}
-                        className="flex items-center justify-between p-4 rounded-lg"
-                        style={{
-                          backgroundColor: 'var(--theme-card-bg)',
-                          border: '1px solid var(--theme-card-border)',
-                        }}
-                      >
-                        <div className="flex items-center gap-4">
-                          <div
-                            className="w-10 h-10 rounded-lg flex items-center justify-center"
-                            style={{ backgroundColor: `${platform.brandColor}15` }}
-                          >
-                            <Logo className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium" style={{ color: 'var(--theme-foreground)' }}>
-                              {account.accountName}
-                            </p>
-                            <p className="text-ui-sm">{platform.name}</p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
-                            style={{
-                              backgroundColor: account.isActive
-                                ? 'rgba(16, 185, 129, 0.1)'
-                                : 'var(--theme-surface)',
-                              color: account.isActive
-                                ? 'var(--theme-success)'
-                                : 'var(--theme-muted)',
-                            }}
-                          >
-                            <span
-                              className="w-1.5 h-1.5 rounded-full"
-                              style={{
-                                backgroundColor: account.isActive
-                                  ? 'var(--theme-success)'
-                                  : 'var(--theme-muted)',
-                              }}
-                            />
-                            {account.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                          <button
-                            className="text-ui-sm hover:opacity-70 transition-opacity"
-                          >
-                            Manage
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+          {disconnected && (
+            <div
+              className="mb-6 px-4 py-3 rounded-lg text-sm font-medium"
+              style={{
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                color: 'var(--success)',
+                border: '1px solid rgba(16, 185, 129, 0.2)',
+              }}
+            >
+              Account disconnected.
+            </div>
+          )}
 
-            {/* Available platforms */}
-            <div>
-              <h2 className="text-sm font-semibold mb-4" style={{ color: 'var(--theme-foreground)' }}>
-                {accounts.length > 0 ? 'Add channel' : 'Connect your first channel'}
+          {/* Error banner */}
+          {errorParam && (
+            <div
+              className="mb-6 px-4 py-3 rounded-lg text-sm font-medium"
+              style={{
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                color: 'var(--error)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+              }}
+            >
+              {errorParam}
+            </div>
+          )}
+
+          {/* ── Connected Accounts ── */}
+          {connectedAccounts.length > 0 && (
+            <div className="mb-10">
+              <h2
+                className="text-sm font-semibold mb-4"
+                style={{ color: 'var(--foreground)' }}
+              >
+                Connected
               </h2>
-              {accounts.length === 0 && (
-                <p className="text-sm mb-6" style={{ color: 'var(--theme-muted)' }}>
-                  Connect where your audience lives. Write once here, and distribute everywhere.
-                </p>
-              )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {platforms.map((platform) => {
-                  const isConnected = connectedPlatforms.has(platform.id);
-                  const Logo = platform.logo;
+              <div className="space-y-3">
+                {connectedAccounts.map((account) => {
+                  const meta = PLATFORMS.find((p) => p.id === account.platform);
+                  const healthy = account.consecutive_failures === 0;
 
                   return (
-                    <button
-                      key={platform.id}
-                      onClick={() => !isConnected && handleConnect(platform.id)}
-                      disabled={isConnected}
-                      className="text-left p-4 rounded-lg transition-all group"
+                    <div
+                      key={account.id}
+                      className="flex items-center justify-between p-4 rounded-lg"
                       style={{
-                        backgroundColor: 'var(--theme-card-bg)',
-                        border: '1px solid var(--theme-card-border)',
-                        opacity: isConnected ? 0.5 : 1,
-                        cursor: isConnected ? 'default' : 'pointer',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isConnected) {
-                          e.currentTarget.style.borderColor = 'var(--theme-card-hover-border)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.borderColor = 'var(--theme-card-border)';
+                        backgroundColor: 'var(--card)',
+                        border: '1px solid var(--card-border)',
                       }}
                     >
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-center gap-4">
+                        {/* Platform icon */}
                         <div
-                          className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                          style={{ backgroundColor: `${platform.brandColor}15` }}
+                          className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
+                          style={{
+                            backgroundColor: meta
+                              ? `${meta.color}15`
+                              : 'var(--card)',
+                            color: meta?.color ?? 'var(--foreground)',
+                          }}
                         >
-                          <Logo className="w-5 h-5" />
+                          {account.platform_avatar_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={account.platform_avatar_url}
+                              alt=""
+                              className="w-10 h-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            meta?.icon ?? account.platform.charAt(0).toUpperCase()
+                          )}
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium" style={{ color: 'var(--theme-foreground)' }}>
-                            {platform.name}
+
+                        <div>
+                          <p
+                            className="text-sm font-medium"
+                            style={{ color: 'var(--foreground)' }}
+                          >
+                            {account.platform_display_name ??
+                              account.platform_username ??
+                              account.platform}
                           </p>
-                          <p className="text-ui-sm mt-0.5 leading-snug">
-                            {isConnected ? 'Already connected' : platform.description}
+                          {account.platform_username && (
+                            <p
+                              className="text-xs mt-0.5"
+                              style={{ color: 'var(--muted)' }}
+                            >
+                              @{account.platform_username}
+                            </p>
+                          )}
+                          <p
+                            className="text-xs mt-0.5"
+                            style={{ color: 'var(--muted)' }}
+                          >
+                            Connected{' '}
+                            {new Date(account.created_at).toLocaleDateString(
+                              'en-US',
+                              { month: 'short', day: 'numeric', year: 'numeric' },
+                            )}
                           </p>
                         </div>
                       </div>
-                    </button>
+
+                      <div className="flex items-center gap-3">
+                        {/* Health indicator */}
+                        <span
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium"
+                          style={{
+                            backgroundColor: healthy
+                              ? 'rgba(16, 185, 129, 0.1)'
+                              : 'rgba(239, 68, 68, 0.1)',
+                            color: healthy
+                              ? 'var(--success)'
+                              : 'var(--error)',
+                          }}
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{
+                              backgroundColor: healthy
+                                ? 'var(--success)'
+                                : 'var(--error)',
+                            }}
+                          />
+                          {healthy ? 'Active' : 'Failing'}
+                        </span>
+
+                        {/* Disconnect */}
+                        <form
+                          action={`/accounts/disconnect/${account.id}`}
+                          method="POST"
+                        >
+                          <button
+                            type="submit"
+                            className="text-xs px-2.5 py-1 rounded-md transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+                            style={{ color: 'var(--muted)' }}
+                          >
+                            Disconnect
+                          </button>
+                        </form>
+                      </div>
+                    </div>
                   );
                 })}
               </div>
             </div>
+          )}
+
+          {/* ── Connect Platform Grid ── */}
+          <div>
+            <h2
+              className="text-sm font-semibold mb-4"
+              style={{ color: 'var(--foreground)' }}
+            >
+              {connectedAccounts.length > 0
+                ? 'Add channel'
+                : 'Connect your first channel'}
+            </h2>
+            {connectedAccounts.length === 0 && (
+              <p
+                className="text-sm mb-6"
+                style={{ color: 'var(--muted)' }}
+              >
+                Connect where your audience lives. Write once here, and
+                distribute everywhere.
+              </p>
+            )}
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              {PLATFORMS.map((platform) => {
+                const alreadyConnected = connectedPlatforms.has(platform.id);
+                const comingSoon = !platform.oauthUrl;
+                const disabled = alreadyConnected || comingSoon;
+
+                return (
+                  <div
+                    key={platform.id}
+                    className="rounded-lg p-4 flex flex-col gap-3"
+                    style={{
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--card-border)',
+                      opacity: disabled ? 0.45 : 1,
+                    }}
+                  >
+                    {/* Icon + name */}
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold shrink-0"
+                        style={{
+                          backgroundColor: `${platform.color}15`,
+                          color: platform.color,
+                        }}
+                      >
+                        {platform.icon}
+                      </div>
+                      <div className="min-w-0">
+                        <p
+                          className="text-sm font-medium truncate"
+                          style={{ color: 'var(--foreground)' }}
+                        >
+                          {platform.label}
+                        </p>
+                        <p
+                          className="text-xs truncate"
+                          style={{ color: 'var(--muted)' }}
+                        >
+                          {platform.description}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Action */}
+                    {alreadyConnected ? (
+                      <span
+                        className="text-xs font-medium text-center py-1.5 rounded-md"
+                        style={{
+                          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                          color: 'var(--success)',
+                        }}
+                      >
+                        Connected
+                      </span>
+                    ) : comingSoon ? (
+                      <span
+                        className="text-xs font-medium text-center py-1.5 rounded-md"
+                        style={{
+                          backgroundColor: 'var(--card)',
+                          color: 'var(--muted)',
+                          border: '1px solid var(--border)',
+                        }}
+                      >
+                        Coming soon
+                      </span>
+                    ) : (
+                      <a
+                        href={platform.oauthUrl!}
+                        className="text-xs font-semibold text-center py-1.5 rounded-md transition-opacity hover:opacity-90"
+                        style={{
+                          backgroundColor: '#CBFF53',
+                          color: '#000000',
+                        }}
+                      >
+                        Connect
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
-  );
-}
-
-/* ─── Brand SVG Logos ─── */
-
-function LinkedInLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="#0A66C2">
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
-  );
-}
-
-function XLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" style={{ color: 'var(--theme-foreground)' }} fill="currentColor">
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
-  );
-}
-
-function YouTubeLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="#FF0000">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  );
-}
-
-function TikTokLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" style={{ color: 'var(--theme-foreground)' }} fill="currentColor">
-      <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
-    </svg>
-  );
-}
-
-function InstagramLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="#E4405F">
-      <path d="M12 0C8.74 0 8.333.015 7.053.072 5.775.132 4.905.333 4.14.63c-.789.306-1.459.717-2.126 1.384S.935 3.35.63 4.14C.333 4.905.131 5.775.072 7.053.012 8.333 0 8.74 0 12s.015 3.667.072 4.947c.06 1.277.261 2.148.558 2.913.306.788.717 1.459 1.384 2.126.667.666 1.336 1.079 2.126 1.384.766.296 1.636.499 2.913.558C8.333 23.988 8.74 24 12 24s3.667-.015 4.947-.072c1.277-.06 2.148-.262 2.913-.558.788-.306 1.459-.718 2.126-1.384.666-.667 1.079-1.335 1.384-2.126.296-.765.499-1.636.558-2.913.06-1.28.072-1.687.072-4.947s-.015-3.667-.072-4.947c-.06-1.277-.262-2.149-.558-2.913-.306-.789-.718-1.459-1.384-2.126C21.319 1.347 20.651.935 19.86.63c-.765-.297-1.636-.499-2.913-.558C15.667.012 15.26 0 12 0zm0 2.16c3.203 0 3.585.016 4.85.071 1.17.055 1.805.249 2.227.415.562.217.96.477 1.382.896.419.42.679.819.896 1.381.164.422.36 1.057.413 2.227.057 1.266.07 1.646.07 4.85s-.015 3.585-.074 4.85c-.061 1.17-.256 1.805-.421 2.227-.224.562-.479.96-.899 1.382-.419.419-.824.679-1.38.896-.42.164-1.065.36-2.235.413-1.274.057-1.649.07-4.859.07-3.211 0-3.586-.015-4.859-.074-1.171-.061-1.816-.256-2.236-.421-.569-.224-.96-.479-1.379-.899-.421-.419-.69-.824-.9-1.38-.165-.42-.359-1.065-.42-2.235-.045-1.26-.061-1.649-.061-4.844 0-3.196.016-3.586.061-4.861.061-1.17.255-1.814.42-2.234.21-.57.479-.96.9-1.381.419-.419.81-.689 1.379-.898.42-.166 1.051-.361 2.221-.421 1.275-.045 1.65-.06 4.859-.06l.045.03zm0 3.678a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 1 0 0-12.324zM12 16c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm7.846-10.405a1.441 1.441 0 0 1-2.88 0 1.44 1.44 0 0 1 2.88 0z" />
-    </svg>
-  );
-}
-
-function NewsletterLogo({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: 'var(--theme-muted)' }}>
-      <rect x="2" y="4" width="20" height="16" rx="2" />
-      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
-    </svg>
   );
 }

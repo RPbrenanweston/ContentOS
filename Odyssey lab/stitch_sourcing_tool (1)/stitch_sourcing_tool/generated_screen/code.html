@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Odysseylab.io | Product Requirements Document</title>
+<!-- Tailwind CSS v3 CDN -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Google Fonts for Inter and JetBrains Mono -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&amp;family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind Configuration for Lyon Display fallback and custom colors -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'odyssey-navy': '#001A33',
+            'odyssey-orange': '#FF5722',
+            'notion-gray': '#F7F6F3',
+            'notion-border': '#E9E9E7',
+          },
+          fontFamily: {
+            'serif': ['Lyon Display', 'Georgia', 'serif'],
+            'sans': ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+            'mono': ['JetBrains Mono', 'monospace'],
+          },
+        }
+      }
+    }
+  </script>
+<style data-purpose="typography">
+    /* Mocking Lyon Display characteristic if not available locally */
+    h1, h2, h3 {
+      font-family: 'Lyon Display', Georgia, serif;
+      letter-spacing: -0.02em;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      -webkit-font-smoothing: antialiased;
+      color: #37352F;
+    }
+    code, .data-font {
+      font-family: 'JetBrains Mono', monospace;
+    }
+  </style>
+<style data-purpose="notion-ui-elements">/* Sidebar specific styling */
+.sidebar-link {
+    @apply flex items-center px-3 py-1 text-sm text-gray-600 hover: bg-gray-200 rounded cursor-pointer transition-colors;
+    }
+.active-link {
+    @apply bg-gray-200 text-gray-900 font-medium;
+    }
+/* Document elements */
+.notion-callout {
+    @apply p-4 rounded-md border flex gap-3 my-4;
+    background-color: #F1F1EF;
+    border-color: #E9E9E7
+    }
+.topographical-bg {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuANSj8ZWUtQmxCY-SoiF06moqX5tyaE2r9CocTBdr-RemDkWi2wabEp48o28HePiiF7nV16YGYO5pRNSh2Vv5OT6H9GgmbSp3qVu4DEyIYHsSFIBosDD8uqfxAnSLcXbkdUdNwrMVIQkycZi988fY2hXVwmt0-04CLIG3egMQGCWw3d_Fyx5Em9sMzwy1Uye39bAlUzxz46KAiaLzd5YLvmM2Cwlo2yhaT0EITXCob_Z14wwnrnoXTWk4iL8SgnfIi8EtyGnVnTAhuc);
+    background-size: cover;
+    height: 240px
+    }</style>
+</head>
+<body class="bg-white flex min-h-screen">
+<!-- BEGIN: Sidebar -->
+<aside class="w-64 bg-notion-gray border-r border-notion-border hidden md:flex flex-col sticky top-0 h-screen p-4" data-purpose="navigation-sidebar">
+<div class="flex items-center gap-2 mb-8 px-2">
+<div class="w-6 h-6 bg-odyssey-navy rounded flex items-center justify-center text-[10px] text-white font-bold">O</div>
+<span class="font-semibold text-sm tracking-tight text-odyssey-navy">Odysseylab Workspace</span>
+</div>
+<nav class="space-y-1">
+<div class="sidebar-link active-link">
+<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        PRD: Precision Navigation
+      </div>
+<div class="sidebar-link">
+<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+        Design Assets
+      </div>
+<div class="sidebar-link">
+<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        Timeline
+      </div>
+</nav>
+<div class="mt-auto px-2 py-4 text-xs text-gray-400">
+      v1.0.4 Published
+    </div>
+</aside>
+<!-- END: Sidebar -->
+<!-- BEGIN: Main Document Content -->
+<main class="flex-1 overflow-y-auto">
+<!-- Header Image -->
+<div class="topographical-bg w-full"></div>
+<div class="max-w-4xl mx-auto px-8 md:px-16 py-12">
+<!-- BEGIN: Title Section -->
+<section class="mb-12" id="header-section">
+<div class="flex items-center gap-4 mb-4">
+<span class="bg-orange-100 text-odyssey-orange px-2 py-0.5 rounded text-xs font-bold uppercase tracking-widest">Internal / Draft</span>
+<span class="text-gray-400 text-sm italic">Last edited 4 mins ago</span>
+</div>
+<h1 class="text-5xl font-serif text-odyssey-navy mb-6">Odysseylab.io: The Precision Navigation Suite</h1>
+<p class="text-xl text-gray-500 font-light leading-relaxed">
+          The definitive workbench for senior sourcing agents, designed for high-fidelity talent discovery and deep-market analysis.
+        </p>
+</section>
+<!-- END: Title Section -->
+<hr class="border-notion-border mb-12"/>
+<!-- BEGIN: Product Overview -->
+<section class="mb-16" id="product-overview">
+<h2 class="text-3xl font-serif text-odyssey-navy mb-6">1. Product Overview</h2>
+<div class="prose prose-slate max-w-none">
+<p class="mb-4">
+            In an era of talent noise, Odysseylab.io introduces the concept of <strong>Precision Navigation</strong>. Current sourcing tools prioritize volume over accuracy; Odyssey reverses this paradigm.
+          </p>
+<div class="notion-callout">
+<span class="text-2xl">🎯</span>
+<div>
+<p class="font-medium text-gray-900">Target Audience</p>
+<p class="text-sm text-gray-600">Senior Sourcing Agents and Talent Researchers who require surgical precision in their boolean operations and market mapping.</p>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Product Overview -->
+<!-- BEGIN: Design System -->
+<section class="mb-16" id="design-system">
+<h2 class="text-3xl font-serif text-odyssey-navy mb-6">2. Design System</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+<!-- Typography -->
+<div class="border border-notion-border p-6 rounded-lg" data-purpose="design-card">
+<h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Typography</h3>
+<div class="space-y-4">
+<div>
+<p class="text-xs text-gray-400 mb-1">Heading / Editorial</p>
+<p class="text-2xl font-serif">Lyon Display</p>
+</div>
+<div>
+<p class="text-xs text-gray-400 mb-1">Body / UI Components</p>
+<p class="text-lg font-sans">Inter UI</p>
+</div>
+<div>
+<p class="text-xs text-gray-400 mb-1">Data / Boolean Logic</p>
+<p class="text-sm font-mono bg-gray-100 p-1 inline-block">JetBrains Mono</p>
+</div>
+</div>
+</div>
+<!-- Color Palette -->
+<div class="border border-notion-border p-6 rounded-lg" data-purpose="design-card">
+<h3 class="text-sm font-bold text-gray-400 uppercase tracking-widest mb-4">Color Palette</h3>
+<div class="flex gap-4">
+<div class="text-center">
+<div class="w-12 h-12 bg-odyssey-navy rounded-full border border-gray-200 mb-2"></div>
+<p class="text-[10px] font-mono">#001A33</p>
+</div>
+<div class="text-center">
+<div class="w-12 h-12 bg-odyssey-orange rounded-full border border-gray-200 mb-2"></div>
+<p class="text-[10px] font-mono">#FF5722</p>
+</div>
+<div class="text-center">
+<div class="w-12 h-12 bg-gray-400 rounded-full border border-gray-200 mb-2"></div>
+<p class="text-[10px] font-mono">#9CA3AF</p>
+</div>
+<div class="text-center">
+<div class="w-12 h-12 bg-notion-gray rounded-full border border-gray-200 mb-2"></div>
+<p class="text-[10px] font-mono">#F7F6F3</p>
+</div>
+</div>
+</div>
+</div>
+<p class="text-sm text-gray-600 leading-relaxed italic border-l-2 border-odyssey-navy pl-4">
+          "The aesthetic is document-native. We are not building a dashboard; we are building a high-end editorial workbench. Use abstract topographical imagery to represent the 'talent landscape'—never human stock photography."
+        </p>
+</section>
+<!-- END: Design System -->
+<!-- BEGIN: Core Features -->
+<section class="mb-16" id="core-features">
+<h2 class="text-3xl font-serif text-odyssey-navy mb-8">3. Core Features</h2>
+<div class="space-y-12">
+<!-- Feature 1 -->
+<div class="group">
+<h3 class="text-xl font-bold flex items-center mb-3">
+<span class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-sm">01</span>
+              The Sourcing Workbench
+            </h3>
+<div class="ml-11">
+<p class="text-gray-600 mb-4">A visual canvas where users drop "Query Blocks" to build complex search logic without syntax errors.</p>
+<div class="bg-gray-50 border border-notion-border rounded-lg p-4 flex gap-2">
+<span class="bg-white border px-3 py-1 rounded shadow-sm text-xs font-mono">TITLE: "Staff Engineer"</span>
+<span class="text-gray-300 self-center">AND</span>
+<span class="bg-white border px-3 py-1 rounded shadow-sm text-xs font-mono">SKILL: "Rust"</span>
+</div>
+</div>
+</div>
+<!-- Feature 2 -->
+<div class="group">
+<h3 class="text-xl font-bold flex items-center mb-3">
+<span class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-sm">02</span>
+              The X-Ray Editor
+            </h3>
+<div class="ml-11">
+<p class="text-gray-600 mb-4">For the power user. A distraction-free Boolean code editor with syntax highlighting and real-time result count forecasting.</p>
+<div class="bg-odyssey-navy text-white p-4 rounded-lg font-mono text-sm">
+<span class="text-orange-400">site:</span>linkedin.com/in <span class="text-blue-300">"Security"</span> AND (<span class="text-blue-300">"CISO"</span> OR <span class="text-blue-300">"VP"</span>)
+              </div>
+</div>
+</div>
+<!-- Feature 3 -->
+<div class="group">
+<h3 class="text-xl font-bold flex items-center mb-3">
+<span class="w-8 h-8 rounded bg-gray-100 flex items-center justify-center mr-3 text-sm">03</span>
+              Candidate Intelligence Cards
+            </h3>
+<div class="ml-11">
+<p class="text-gray-600 mb-4">Signal-focused cards that highlight "Why this person?" instead of a standard CV dump.</p>
+<div class="border border-notion-border rounded-xl p-6 shadow-sm">
+<div class="flex justify-between items-start mb-4">
+<div>
+<h4 class="font-bold text-lg">Alex Rivera</h4>
+<p class="text-sm text-gray-500">Lead Systems Architect @ CloudScale</p>
+</div>
+<div class="bg-green-50 text-green-700 text-[10px] px-2 py-1 rounded font-bold">HIGH SIGNAL</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<div class="bg-notion-gray p-2 rounded text-center">
+<p class="text-[10px] text-gray-400 uppercase">Tenure</p>
+<p class="text-xs font-bold">4.2 yrs</p>
+</div>
+<div class="bg-notion-gray p-2 rounded text-center">
+<p class="text-[10px] text-gray-400 uppercase">Growth</p>
+<p class="text-xs font-bold">+200%</p>
+</div>
+<div class="bg-notion-gray p-2 rounded text-center">
+<p class="text-[10px] text-gray-400 uppercase">Patents</p>
+<p class="text-xs font-bold">3</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- END: Core Features -->
+<!-- BEGIN: UX Principles -->
+<section class="mb-16" id="ux-principles">
+<h2 class="text-3xl font-serif text-odyssey-navy mb-8">4. UX Principles</h2>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<div class="p-6 border border-notion-border rounded-lg bg-white">
+<h4 class="font-bold mb-2">Progressive Disclosure</h4>
+<p class="text-sm text-gray-600">Start with a clean search bar. Reveal power tools only as the user dives deeper into the query.</p>
+</div>
+<div class="p-6 border border-notion-border rounded-lg bg-white">
+<h4 class="font-bold mb-2">Frictionless Search</h4>
+<p class="text-sm text-gray-600">Zero loading states between keystrokes. Instantaneous feedback is the baseline expectation.</p>
+</div>
+<div class="p-6 border border-notion-border rounded-lg bg-white">
+<h4 class="font-bold mb-2">Recognition over Recall</h4>
+<p class="text-sm text-gray-600">Auto-suggesting company competitors and similar job titles to expand the search radius naturally.</p>
+</div>
+</div>
+</section>
+<!-- END: UX Principles -->
+<!-- BEGIN: Footer -->
+<footer class="mt-20 pt-8 border-t border-notion-border flex justify-between items-center text-gray-400 text-sm">
+<p>© 2024 Odysseylab Project Team</p>
+<div class="flex gap-4">
+<button class="hover:text-gray-600">Export PDF</button>
+<button class="hover:text-gray-600">Share Link</button>
+</div>
+</footer>
+<!-- END: Footer -->
+</div>
+</main>
+<!-- END: Main Document Content -->
+</body></html>

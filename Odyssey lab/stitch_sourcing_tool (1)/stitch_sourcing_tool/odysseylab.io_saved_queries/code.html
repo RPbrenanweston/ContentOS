@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Odysseylab.io - Library</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400;1,700;1,900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#f05a1b",
+                        "background-dark": "#0b1221",
+                        "surface": "#151f32",
+                        "surface-hover": "#1e293b",
+                        "border-subtle": "rgba(255, 255, 255, 0.1)",
+                        "text-main": "#ffffff",
+                        "text-muted": "#94a3b8",
+                    },
+                    fontFamily: {
+                        "display": ["Merriweather", "serif"],
+                        "sans": ["Inter", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "8px",
+                        "sm": "4px",
+                        "md": "8px",
+                        "lg": "12px",
+                        "xl": "16px",
+                    },
+                    boxShadow: {
+                        "card": "0px 4px 20px rgba(0, 0, 0, 0.3)",
+                        "card-hover": "0px 8px 30px rgba(240, 90, 27, 0.15)",
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            color: #37352F;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Merriweather', serif;
+        }
+        .material-symbols-outlined {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+        .icon-filled {
+            font-variation-settings:
+            'FILL' 1,
+            'wght' 400,
+            'GRAD' 0,
+            'opsz' 24
+        }
+    </style>
+</head>
+<body class="bg-background-dark min-h-screen flex text-text-main overflow-hidden">
+<!-- Sidebar -->
+<aside class="w-[240px] bg-background-dark/50 border-r border-border-subtle flex flex-col h-screen shrink-0 group/sidebar">
+<!-- User/Org Header -->
+<div class="p-3 mb-2">
+<div class="flex items-center gap-3 p-2 rounded-md hover:bg-surface-hover cursor-pointer transition-colors">
+<div class="size-6 bg-primary/10 rounded flex items-center justify-center text-primary font-bold text-xs">
+                    R
+                </div>
+<div class="flex flex-col overflow-hidden">
+<span class="text-sm font-medium truncate text-text-main">Odysseylab.io</span>
+<span class="text-xs text-text-muted truncate">Global Intelligence</span>
+</div>
+<span class="material-symbols-outlined ml-auto text-text-muted text-[16px]">unfold_more</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 px-2 space-y-0.5 overflow-y-auto">
+<a class="flex items-center gap-2 px-3 py-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-md group" href="#">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-text-main">search</span>
+<span class="text-sm font-medium">Intelligence Engine</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-1.5 bg-surface-hover text-text-main rounded-md" href="#">
+<span class="material-symbols-outlined icon-filled text-[20px]">library_books</span>
+<span class="text-sm font-medium">Library</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-md group" href="#">
+<span class="material-symbols-outlined text-[20px] text-text-muted group-hover:text-text-main">group</span>
+<span class="text-sm font-medium">Precision Networks</span>
+</a>
+<div class="mt-6 px-3">
+<span class="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Favorites</span>
+</div>
+<a class="flex items-center gap-2 px-3 py-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-md mt-1 group" href="#">
+<span class="material-symbols-outlined text-[16px] text-text-muted">description</span>
+<span class="text-sm truncate">Staff Backend - FinTech</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-md group" href="#">
+<span class="material-symbols-outlined text-[16px] text-text-muted">description</span>
+<span class="text-sm truncate">VP Engineering Search</span>
+</a>
+</nav>
+<!-- Footer / Settings -->
+<div class="p-2 border-t border-border-subtle mt-auto">
+<a class="flex items-center gap-2 px-3 py-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-md group" href="#">
+<span class="material-symbols-outlined text-[20px]">settings</span>
+<span class="text-sm font-medium">Settings</span>
+</a>
+<a class="flex items-center gap-2 px-3 py-1.5 text-text-muted hover:bg-surface-hover hover:text-text-main rounded-md group" href="#">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+<span class="text-sm font-medium">New Page</span>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 flex flex-col h-screen overflow-hidden relative bg-background-dark">
+<!-- Header -->
+<header class="flex items-center justify-between px-10 pt-10 pb-6 shrink-0 z-10 bg-background-dark">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-2 text-text-muted text-sm mb-1">
+<span class="material-symbols-outlined text-[16px]">home</span>
+<span>/</span>
+<span>Library</span>
+</div>
+<h1 class="text-4xl font-bold text-text-main tracking-tight">Library</h1>
+<p class="text-text-muted mt-1 font-sans text-base">Chart your path to the world's most elusive talent.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-text-muted text-[18px]">search</span>
+<input class="pl-9 pr-4 py-1.5 bg-surface border border-border-subtle rounded text-sm w-64 focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary placeholder:text-text-muted shadow-sm transition-all text-white" placeholder="Filter saved queries..." type="text"/>
+</div>
+<button class="flex items-center gap-1 px-3 py-1.5 bg-primary text-white text-sm font-medium rounded hover:bg-red-600 transition-colors shadow-sm"><span class="material-symbols-outlined text-[18px]">add</span> Begin Sourcing</button>
+</div>
+</header>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-10 pb-20 scrollbar-hide">
+<!-- Favorites Section -->
+<section class="mb-10">
+<div class="flex items-center gap-2 mb-4 border-b border-border-subtle pb-2">
+<h2 class="text-sm font-semibold text-text-muted uppercase tracking-wider font-sans">Favorites</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+<!-- New Query Placeholder Card -->
+<div class="border-2 border-dashed border-border-subtle rounded-md p-5 flex flex-col items-center justify-center text-center cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all group h-[180px]">
+<div class="size-10 rounded-full bg-surface group-hover:bg-white flex items-center justify-center mb-3 shadow-sm border border-border-subtle transition-colors">
+<span class="material-symbols-outlined text-text-muted group-hover:text-primary transition-colors">add</span>
+</div>
+<h3 class="text-sm font-medium text-text-main mb-1">Create new query</h3>
+<p class="text-xs text-text-muted">Start a fresh search document</p>
+</div>
+<!-- Card 1 -->
+<div class="bg-surface border border-border-subtle rounded-md p-4 shadow-card hover:shadow-card-hover hover:border-primary/50 transition-all cursor-pointer h-[180px] flex flex-col justify-between group relative">
+<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface rounded text-text-muted hover:text-text-main">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<div>
+<div class="flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-[20px] text-primary mt-0.5 icon-filled">star</span>
+<h3 class="text-lg font-serif font-bold leading-tight text-text-main line-clamp-2">Staff Backend - FinTech</h3>
+</div>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">Python</span>
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">NYC + 25mi</span>
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">L6+</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-subtle/50 mt-auto">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">person_search</span>
+<span>32 candidates</span>
+</div>
+<span class="text-xs text-text-muted">Edited 2h ago</span>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface border border-border-subtle rounded-md p-4 shadow-card hover:shadow-card-hover hover:border-primary/50 transition-all cursor-pointer h-[180px] flex flex-col justify-between group relative">
+<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface rounded text-text-muted hover:text-text-main">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<div>
+<div class="flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-[20px] text-primary mt-0.5 icon-filled">star</span>
+<h3 class="text-lg font-serif font-bold leading-tight text-text-main line-clamp-2">VP Engineering Search</h3>
+</div>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">Leadership</span>
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">Series B</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-subtle/50 mt-auto">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">person_search</span>
+<span>12 candidates</span>
+</div>
+<span class="text-xs text-text-muted">Edited 1d ago</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Recent Section -->
+<section class="mb-10">
+<div class="flex items-center gap-2 mb-4 border-b border-border-subtle pb-2 justify-between">
+<h2 class="text-sm font-semibold text-text-muted uppercase tracking-wider font-sans">Recent</h2>
+<div class="flex items-center gap-2">
+<button class="p-1 text-text-muted hover:text-text-main transition-colors">
+<span class="material-symbols-outlined text-[18px]">view_module</span>
+</button>
+<button class="p-1 text-text-muted hover:text-text-main transition-colors">
+<span class="material-symbols-outlined text-[18px]">view_list</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+<!-- Card 3 -->
+<div class="bg-surface border border-border-subtle rounded-md p-4 shadow-card hover:shadow-card-hover hover:border-primary/50 transition-all cursor-pointer h-[180px] flex flex-col justify-between group relative">
+<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface rounded text-text-muted hover:text-text-main">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<div>
+<div class="flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-[20px] text-text-muted mt-0.5">description</span>
+<h3 class="text-lg font-serif font-bold leading-tight text-text-main line-clamp-2">React Native Contract</h3>
+</div>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">Remote</span>
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">Urgent</span>
+<span class="px-1.5 py-0.5 bg-red-50 border border-red-100 text-red-700 rounded text-xs font-mono">Q3 Priority</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-subtle/50 mt-auto">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">person_search</span>
+<span>8 candidates</span>
+</div>
+<span class="text-xs text-text-muted">Edited 4h ago</span>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="bg-surface border border-border-subtle rounded-md p-4 shadow-card hover:shadow-card-hover hover:border-primary/50 transition-all cursor-pointer h-[180px] flex flex-col justify-between group relative">
+<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface rounded text-text-muted hover:text-text-main">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<div>
+<div class="flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-[20px] text-text-muted mt-0.5">description</span>
+<h3 class="text-lg font-serif font-bold leading-tight text-text-main line-clamp-2">Data Scientist II</h3>
+</div>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">PyTorch</span>
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">SF Only</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-subtle/50 mt-auto">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">person_search</span>
+<span>145 candidates</span>
+</div>
+<span class="text-xs text-text-muted">Edited yesterday</span>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="bg-surface border border-border-subtle rounded-md p-4 shadow-card hover:shadow-card-hover hover:border-primary/50 transition-all cursor-pointer h-[180px] flex flex-col justify-between group relative">
+<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface rounded text-text-muted hover:text-text-main">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<div>
+<div class="flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-[20px] text-text-muted mt-0.5">draft</span>
+<h3 class="text-lg font-serif font-bold leading-tight text-text-muted italic line-clamp-2">Untitled Query 03</h3>
+</div>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="text-xs text-text-muted italic">No filters applied yet</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-subtle/50 mt-auto">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">remove</span>
+<span>--</span>
+</div>
+<span class="text-xs text-text-muted">Created just now</span>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="bg-surface border border-border-subtle rounded-md p-4 shadow-card hover:shadow-card-hover hover:border-primary/50 transition-all cursor-pointer h-[180px] flex flex-col justify-between group relative">
+<div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 hover:bg-surface rounded text-text-muted hover:text-text-main">
+<span class="material-symbols-outlined text-[18px]">more_horiz</span>
+</button>
+</div>
+<div>
+<div class="flex items-start gap-2 mb-3">
+<span class="material-symbols-outlined text-[20px] text-text-muted mt-0.5">archive</span>
+<h3 class="text-lg font-serif font-bold leading-tight text-text-main line-clamp-2">Q2 Product Manager</h3>
+</div>
+<div class="flex flex-wrap gap-2 mb-3">
+<span class="px-1.5 py-0.5 bg-background-dark border border-border-subtle rounded text-xs font-mono text-text-muted">Closed</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 border-t border-border-subtle/50 mt-auto">
+<div class="flex items-center gap-1.5 text-xs text-text-muted">
+<span class="material-symbols-outlined text-[14px]">person_search</span>
+<span>12 candidates</span>
+</div>
+<span class="text-xs text-text-muted">Archived 3d ago</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Background texture/noise for paper feel -->
+
+</body></html>

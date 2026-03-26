@@ -1,34 +1,97 @@
-// @crumb content-segments-list
-// API | route-handler | filtered-listing
-// why: List content segments by parent node with optional type filtering; supports detail view population and segment UI with sorting and filtering
-// in:[nodeId, type query param, limit, offset] out:[ContentSegment[] ordered by sortOrder] err:[404-not-found|invalid-type-filter]
-// hazard: Type filter passed directly as string; invalid enum values silently cast or return empty result instead of 400 error
-// edge:../route.ts -> RELATES (content detail)
-// edge:../../infrastructure/supabase/repositories/content-segment.repo.ts -> CALLS
-// edge:../../../../lib/pagination.ts -> USES
-// prompt: Validate type enum before repo call; add 400 response for invalid type filter
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
-import { NextResponse } from 'next/server';
-import { withApiHandler } from '@/lib/api-handler';
-import { createServiceClient } from '@/infrastructure/supabase/client';
-import { getServices } from '@/services/container';
-import { parsePagination } from '@/lib/pagination';
-import type { SegmentType } from '@/domain';
+type Params = { params: Promise<{ id: string }> };
 
-// GET /api/content/[id]/segments — List segments for a content node
-export const GET = withApiHandler(async (ctx) => {
-  const { params, request } = ctx;
-  const id = params.id;
-  const searchParams = request.nextUrl.searchParams;
-  const type = searchParams.get('type') as SegmentType | null;
-  const { limit, offset } = parsePagination(searchParams);
+// GET /api/content/[id]/segments — list segments for a content node
+export async function GET(_req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const supabase = await createClient();
 
-  const supabase = createServiceClient();
-  const { segmentRepo } = getServices(supabase);
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
 
-  const segments = await segmentRepo.findByNodeId(id, type ?? undefined, { limit, offset });
-  const total = Array.isArray(segments) ? segments.length : 0;
-  const headers = new Headers();
-  headers.set('x-total-count', String(total));
-  return NextResponse.json(segments, { headers });
-});
+  // Verify ownership via content_nodes join
+  const { data: node, error: nodeError } = await supabase
+    .from('content_nodes')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (nodeError || !node) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const { data, error } = await supabase
+    .from('content_segments')
+    .select('*')
+    .eq('content_node_id', id)
+    .order('start_seconds', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data });
+}
+
+// POST /api/content/[id]/segments — create a manual segment
+export async function POST(req: NextRequest, { params }: Params) {
+  const { id } = await params;
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { data: node, error: nodeError } = await supabase
+    .from('content_nodes')
+    .select('id')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single();
+
+  if (nodeError || !node) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  const body = await req.json();
+  const { segment_type, body: segmentBody, title, start_seconds, end_seconds } = body;
+
+  if (!segment_type || !segmentBody) {
+    return NextResponse.json({ error: 'segment_type and body are required' }, { status: 400 });
+  }
+
+  const { data, error } = await supabase
+    .from('content_segments')
+    .insert({
+      content_node_id: id,
+      segment_type,
+      body: segmentBody,
+      title: title ?? null,
+      start_seconds: start_seconds ?? null,
+      end_seconds: end_seconds ?? null,
+      is_manual: true,
+      is_approved: false,
+      metadata: {},
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ data }, { status: 201 });
+}

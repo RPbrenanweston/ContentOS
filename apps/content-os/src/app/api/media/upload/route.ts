@@ -1,81 +1,57 @@
-// @crumb media-upload-handler
-// API | file-storage | upload-endpoint
-// why: Accept multipart file uploads (video, audio, image) to Supabase Storage; validates MIME type and size constraints before persistence, returns signed public URL
-// in:[FormData:file] out:[{url,path,size,contentType,filename}] err:[no-file, unsupported-type, size-exceeded, upload-failed]
-// hazard: File extension extracted from name (split('.')​.pop()) is user-controlled and untrusted; malicious .exe or .zip masquerading as .mp4 could bypass MIME check if extension used downstream
-// hazard: No auth check; any client can upload files and exhaust storage quota without ownership verification or rate limiting
-// hazard: Supabase storage bucket name hardcoded ('content-os'); no isolation for multi-tenant deployments or environments
-// hazard: getPublicUrl returns unconditional public access; no expiration or signed URL generation for sensitive media
-// edge:../../infrastructure/supabase/client.ts -> USES
-// edge:../clip/route.ts -> CONSUMES (uses uploaded path)
-// prompt: Add cryptographic path generation (uuid or blake3); implement auth checks with ownership tracking; add rate limiting by userId; use signed URLs with expiration for sensitive media; validate FormData schema; configure storage bucket RLS policies
-//
-import { NextResponse } from 'next/server';
-import { withApiHandler } from '@/lib/api-handler';
-import { createServiceClient } from '@/infrastructure/supabase/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
 
-// POST /api/media/upload — Upload file to Supabase Storage
-export const POST = withApiHandler(async (ctx) => {
-  const { request } = ctx;
-  const formData = await request.formData();
-  const file = formData.get('file') as File | null;
+// POST /api/media/upload — generate a Supabase Storage signed upload URL
+// NOTE: The 'podcast-audio' bucket must be created manually in the Supabase dashboard.
+//   1. Go to Supabase Dashboard > Storage
+//   2. Create bucket named 'podcast-audio'
+//   3. Set it as a public bucket (so media_url is publicly accessible)
+//   4. Add policy: allow authenticated users to upload to their own paths
+export async function POST(req: NextRequest) {
+  const supabase = await createClient();
 
-  if (!file) {
-    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const allowedTypes = [
-    'video/mp4', 'video/webm', 'video/quicktime',
-    'audio/mpeg', 'audio/wav', 'audio/ogg', 'audio/mp4',
-    'image/jpeg', 'image/png', 'image/webp', 'image/gif',
-  ];
+  const body = await req.json();
+  const { filename, contentType, showId } = body;
 
-  if (!allowedTypes.includes(file.type)) {
+  if (!filename || !contentType) {
     return NextResponse.json(
-      { error: `Unsupported file type: ${file.type}` },
+      { error: 'filename and contentType are required' },
       { status: 400 },
     );
   }
 
-  const maxSize = 500 * 1024 * 1024; // 500MB
-  if (file.size > maxSize) {
-    return NextResponse.json(
-      { error: 'File exceeds 500MB limit' },
-      { status: 400 },
-    );
-  }
+  // Sanitize filename
+  const sanitized = filename
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 200);
 
-  const supabase = createServiceClient();
-  const ext = file.name.split('.').pop() ?? 'bin';
-  const timestamp = Date.now();
-  const path = `uploads/${timestamp}-${crypto.randomUUID()}.${ext}`;
+  const storagePath = `podcasts/${showId ?? 'uploads'}/${Date.now()}-${sanitized}`;
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const { error } = await supabase.storage
-    .from('content-os')
-    .upload(path, buffer, {
-      contentType: file.type,
-      upsert: false,
-    });
+  const { data, error } = await supabase.storage
+    .from('podcast-audio')
+    .createSignedUploadUrl(storagePath);
 
   if (error) {
-    console.error('Storage upload error:', error);
-    return NextResponse.json(
-      { error: 'Failed to upload file' },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  const { data: urlData } = supabase.storage
-    .from('content-os')
-    .getPublicUrl(path);
+  // Build the public URL for later use
+  const { data: publicUrlData } = supabase.storage
+    .from('podcast-audio')
+    .getPublicUrl(storagePath);
 
   return NextResponse.json({
-    url: urlData.publicUrl,
-    path,
-    size: file.size,
-    contentType: file.type,
-    filename: file.name,
-  }, { status: 201 });
-});
+    uploadUrl: data.signedUrl,
+    token: data.token,
+    storagePath,
+    publicUrl: publicUrlData.publicUrl,
+  });
+}

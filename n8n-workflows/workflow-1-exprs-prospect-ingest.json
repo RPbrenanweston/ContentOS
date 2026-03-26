@@ -1,0 +1,473 @@
+{
+  "name": "Exprs Prospect Ingest",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WORKFLOW 1: exprs-prospect-ingest\n\n**TRIGGER:** Webhook POST or Manual CSV upload\n**COST:** ~3 LeadMagic credits per prospect (Company + Email + Funding)\n\n### FLOW\nWebhook/CSV → Validate → Batch (1/sec) →\n  ├─ LeadMagic Company Search  (`/v1/companies/company-search`)\n  ├─ LeadMagic Email Finder    (`/v1/people/email-finder`)\n  └─ LeadMagic Funding         (`/v1/companies/company-funding`)\n→ Merge → Classify B2B/B2C → Qualify (ICP filter) →\n  ├─ ✅ Qualified (20–200 emp, B2B) → Supabase\n  └─ ❌ Disqualified → Supabase (for analytics)\n\n### ICP RULES\n- ✅ **Must-have:** 20–200 employees AND B2B/B2B2C\n- ❌ Too small: < 20 employees\n- ❌ Too large: > 200 employees\n- ❌ Wrong type: B2C only\n- 🔍 Review: employee count unknown\n\n### ENV VARS\n`LEADMAGIC_API_KEY`\n\n### SWAP TO AI ARK\nReplace 3 LeadMagic nodes with:\n- `POST api.ai-ark.com/.../v1/companies` (X-TOKEN header)\n- `POST api.ai-ark.com/.../v1/people` (X-TOKEN header)\nUpdate field mappings in \"Merge Enrichment\" node",
+        "height": 580,
+        "width": 420,
+        "color": 4
+      },
+      "id": "node-sticky-overview",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [20, 60]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "exprs-prospect-ingest",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-trigger-webhook",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "exprs-prospect-ingest"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "options": {
+          "fileName": "prospects.csv"
+        }
+      },
+      "id": "node-trigger-csv",
+      "name": "CSV Upload Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 520]
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "id": "node-parse-csv",
+      "name": "Parse CSV",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [460, 520]
+    },
+    {
+      "parameters": {
+        "mode": "append",
+        "options": {}
+      },
+      "id": "node-merge-triggers",
+      "name": "Merge Triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Validate & Normalize Input\n// Ensures all inbound prospects have the minimum required fields\n// before we spend credits on enrichment.\n// ============================================================\n\nconst items = $input.all();\nconst validated = [];\nconst rejected = [];\n\nfor (const item of items) {\n  const d = item.json;\n\n  // --- Minimum required fields ---\n  const companyName = (d.company_name || d.companyName || d.Company || '').trim();\n  const contactEmail = (d.contact_email || d.email || d.Email || '').trim();\n  const contactName  = (d.contact_name || d.name || d.Name || d.full_name || '').trim();\n  const contactTitle = (d.contact_title || d.title || d.Title || d.job_title || '').trim();\n  const domain       = (d.domain || d.website || d.Website || '').trim();\n\n  // Derive domain from email if not provided\n  const derivedDomain = domain || (contactEmail.includes('@') ? contactEmail.split('@')[1] : '');\n\n  if (!companyName && !derivedDomain) {\n    rejected.push({\n      json: { ...d, _reject_reason: 'Missing both company_name and domain — cannot enrich' }\n    });\n    continue;\n  }\n\n  validated.push({\n    json: {\n      company_name: companyName,\n      contact_name: contactName,\n      contact_title: contactTitle,\n      contact_email: contactEmail,\n      domain: derivedDomain,\n      country: (d.country || d.Country || '').trim(),\n      // Pass through any extra fields under _raw\n      _raw: d\n    }\n  });\n}\n\n// Output 0 = validated prospects, Output 1 = rejected\nreturn [validated, rejected];"
+      },
+      "id": "node-validate-input",
+      "name": "Validate & Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400],
+      "outputs": ["main", "main"],
+      "outputNames": ["Validated", "Rejected"]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.leadmagic.io/v1/companies/company-search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.LEADMAGIC_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"company_domain\": \"{{ $json.domain }}\",\n  \"company_name\": \"{{ $json.company_name }}\"\n}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-enrich-company",
+      "name": "LeadMagic: Company Enrich",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1140, 240],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.leadmagic.io/v1/people/email-finder",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.LEADMAGIC_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"first_name\": \"{{ $json.contact_name.split(' ')[0] }}\",\n  \"last_name\": \"{{ $json.contact_name.split(' ').slice(1).join(' ') }}\",\n  \"domain\": \"{{ $json.domain }}\"\n}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-enrich-email",
+      "name": "LeadMagic: Email Find",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1140, 460],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.leadmagic.io/v1/companies/company-funding",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-API-Key",
+              "value": "={{ $env.LEADMAGIC_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "body": "={\n  \"company_domain\": \"{{ $json.domain }}\",\n  \"company_name\": \"{{ $json.company_name }}\"\n}",
+        "options": {
+          "timeout": 15000,
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "node-enrich-funding",
+      "name": "LeadMagic: Funding Data",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1140, 680],
+      "retryOnFail": true,
+      "maxTries": 2,
+      "waitBetweenTries": 1000
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Merge Enrichment Results\n// Combines the parallel enrichment API responses back into\n// a single unified prospect record.\n//\n// VERIFIED FIELD MAPPINGS (from LeadMagic docs 2026-03-17):\n//   Company Search → companyName, employeeCount, industry,\n//     description, tagline, websiteUrl, headquarter, revenue,\n//     revenue_formatted, employee_range, total_funding,\n//     last_funding_round, last_funding_amount, last_funding_date,\n//     b2b_profile_url, competitors\n//   Email Finder → email, status, employment_verified,\n//     mx_provider, company_name, company_industry, company_size\n//   Company Funding → (separate detailed funding endpoint)\n// ============================================================\n\nconst original   = $('Validate & Normalize').item.json;\nconst company    = $('LeadMagic: Company Enrich').item.json;\nconst emailData  = $('LeadMagic: Email Find').item.json;\nconst funding    = $('LeadMagic: Funding Data').item.json;\n\n// --- Safely extract company enrichment fields ---\nconst enriched = {\n  // Original fields\n  company_name:      original.company_name || company.companyName || '',\n  contact_name:      original.contact_name,\n  contact_title:     original.contact_title,\n  domain:            original.domain,\n  country:           original.country || (company.headquarter ? company.headquarter.country : '') || '',\n\n  // Email enrichment (verified field names from LeadMagic Email Finder)\n  contact_email:     emailData.email || original.contact_email || '',\n  email_status:      emailData.status || null,\n  email_verified:    emailData.employment_verified || false,\n  mx_provider:       emailData.mx_provider || null,\n\n  // Company enrichment (verified field names from LeadMagic Company Search)\n  company_description: company.description || company.tagline || '',\n  employee_count:      company.employeeCount || null,\n  employee_range:      company.employee_range || (company.employeeCountRange ? `${company.employeeCountRange.start}-${company.employeeCountRange.end}` : '') || '',\n  industry:            company.industry || emailData.company_industry || '',\n  subindustry:         '',\n  estimated_revenue:   company.revenue_formatted || (company.revenue ? String(company.revenue) : '') || '',\n  linkedin_url:        company.b2b_profile_url ? `https://linkedin.com/company/${company.b2b_profile_url}` : '',\n  website:             company.websiteUrl || original.domain,\n  ownership_status:    company.ownership_status || '',\n  founded_year:        company.founded_year || (company.foundedOn ? company.foundedOn.year : null) || null,\n  competitors:         company.competitors || [],\n\n  // Funding (from Company Search + dedicated Funding endpoint)\n  total_funding:       company.total_funding || funding.total_funding || null,\n  last_funding_date:   company.last_funding_date || funding.last_funding_date || null,\n  last_funding_amount: company.last_funding_amount || funding.last_funding_amount || null,\n  funding_stage:       company.last_funding_round || funding.last_funding_round || '',\n  funding_rounds:      company.funding_rounds || funding.funding_rounds || null,\n\n  // Business type — will be classified in next node\n  business_type: null,\n\n  // Metadata\n  enriched_at:        new Date().toISOString(),\n  enrichment_source:  'leadmagic',\n  enrichment_status:  company.message === 'Company found' ? 'complete' : 'partial',\n  credits_consumed:   (company.credits_consumed || 0) + (emailData.credits_consumed || 0) + (funding.credits_consumed || 0)\n};\n\nreturn { json: enriched };"
+      },
+      "id": "node-merge-enrichment",
+      "name": "Merge Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1400, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Classify B2B / B2C\n// If LeadMagic didn't return business_type, use a simple\n// heuristic. For production, swap this for an LLM call.\n// ============================================================\n\nconst p = $input.item.json;\n\nlet businessType = p.business_type;\n\nif (!businessType) {\n  // Heuristic classification based on industry + description\n  const desc = (p.company_description || '').toLowerCase();\n  const industry = (p.industry || '').toLowerCase();\n\n  const b2bSignals = [\n    'enterprise', 'saas', 'b2b', 'platform', 'api', 'infrastructure',\n    'software', 'solutions', 'services', 'consulting', 'analytics',\n    'automation', 'workforce', 'compliance', 'fintech', 'devops',\n    'cybersecurity', 'data', 'cloud', 'procurement'\n  ];\n\n  const b2cSignals = [\n    'consumer', 'b2c', 'retail', 'ecommerce', 'e-commerce',\n    'marketplace', 'app', 'gaming', 'entertainment', 'food',\n    'fashion', 'fitness', 'health', 'beauty', 'travel'\n  ];\n\n  const text = `${desc} ${industry}`;\n  const b2bScore = b2bSignals.filter(s => text.includes(s)).length;\n  const b2cScore = b2cSignals.filter(s => text.includes(s)).length;\n\n  if (b2bScore > b2cScore) businessType = 'B2B';\n  else if (b2cScore > b2bScore) businessType = 'B2C';\n  else businessType = 'B2B2C'; // ambiguous — flag for manual review\n}\n\nreturn {\n  json: {\n    ...p,\n    business_type: businessType\n  }\n};"
+      },
+      "id": "node-classify-b2b",
+      "name": "Classify B2B/B2C",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1620, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ============================================================\n// NODE: Qualify Prospect\n// Applies Exprs ICP must-have and disqualifier rules.\n// Output 0 = Qualified, Output 1 = Disqualified\n// ============================================================\n\nconst p = $input.item.json;\n\n// --- ICP Must-Haves ---\nconst empCount = parseInt(p.employee_count) || 0;\nconst employeeQualified = empCount >= 20 && empCount <= 200;\nconst isB2B = ['B2B', 'B2B2C'].includes(p.business_type);\n\n// --- Disqualifiers ---\nconst tooSmall = empCount > 0 && empCount < 20;\nconst tooLarge = empCount > 200;\nconst noData   = empCount === 0; // enrichment returned nothing\n\nlet qualification = 'disqualified';\nlet disqualify_reason = null;\n\nif (noData) {\n  disqualify_reason = 'Employee count unknown — enrichment incomplete';\n  qualification = 'review'; // send to manual review, don't auto-disqualify\n} else if (tooSmall) {\n  disqualify_reason = 'Under 20 employees — too early for recruitment infrastructure';\n} else if (tooLarge) {\n  disqualify_reason = 'Over 200 employees — likely has internal TA function';\n} else if (!isB2B) {\n  disqualify_reason = `Business type is ${p.business_type} — ICP requires B2B`;\n} else if (employeeQualified && isB2B) {\n  qualification = 'must_have';\n}\n\nconst result = {\n  json: {\n    ...p,\n    qualified: qualification === 'must_have',\n    qualification,\n    disqualify_reason,\n    // Default fields for later pipeline stages\n    signals: {},\n    score: qualification === 'must_have' ? 'must_have' : null,\n    message_route: null,\n    creative_ideas: null,\n    smartlead_campaign_id: null,\n    sent_at: null\n  }\n};\n\nif (qualification === 'must_have') {\n  return [result, []];\n} else {\n  return [[], result];\n}"
+      },
+      "id": "node-qualify",
+      "name": "Qualify Prospect",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1840, 400],
+      "outputs": ["main", "main"],
+      "outputNames": ["Qualified", "Disqualified"]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "tableId": "prospects",
+        "conflictColumns": "contact_email",
+        "options": {}
+      },
+      "id": "node-store-qualified",
+      "name": "Supabase: Store Qualified",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2100, 300],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Exprs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "tableId": "prospects",
+        "conflictColumns": "contact_email",
+        "options": {}
+      },
+      "id": "node-store-disqualified",
+      "name": "Supabase: Store Disqualified",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [2100, 540],
+      "credentials": {
+        "supabaseApi": {
+          "id": "SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Exprs"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"complete\",\n  \"processed\": {{ $('Validate & Normalize').all().length }},\n  \"qualified\": {{ $('Supabase: Store Qualified').all().length }},\n  \"disqualified\": {{ $('Supabase: Store Disqualified').all().length }}\n}"
+      },
+      "id": "node-respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2340, 300]
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {
+          "reset": false
+        }
+      },
+      "id": "node-batch-enrichment",
+      "name": "Batch (Rate Limit)",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [1020, 300]
+    },
+    {
+      "parameters": {
+        "amount": 0.3
+      },
+      "id": "node-wait-ratelimit",
+      "name": "Wait 300ms",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1020, 600]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CSV Upload Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse CSV": {
+      "main": [
+        [
+          {
+            "node": "Merge Triggers",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Triggers": {
+      "main": [
+        [
+          {
+            "node": "Validate & Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Normalize": {
+      "main": [
+        [
+          {
+            "node": "Batch (Rate Limit)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Batch (Rate Limit)": {
+      "main": [
+        [
+          {
+            "node": "LeadMagic: Company Enrich",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LeadMagic: Email Find",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "LeadMagic: Funding Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LeadMagic: Company Enrich": {
+      "main": [
+        [
+          {
+            "node": "Merge Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LeadMagic: Email Find": {
+      "main": [
+        [
+          {
+            "node": "Merge Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LeadMagic: Funding Data": {
+      "main": [
+        [
+          {
+            "node": "Merge Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Classify B2B/B2C",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify B2B/B2C": {
+      "main": [
+        [
+          {
+            "node": "Qualify Prospect",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Qualify Prospect": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Store Qualified",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase: Store Disqualified",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Store Qualified": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "exprs",
+      "id": "tag-exprs"
+    },
+    {
+      "name": "phase-1",
+      "id": "tag-phase-1"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0"
+}
