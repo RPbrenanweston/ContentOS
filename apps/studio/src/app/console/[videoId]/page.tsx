@@ -18,9 +18,10 @@ import { VideoViewport } from '@/components/console/VideoViewport';
 import { MasterTimecode } from '@/components/console/MasterTimecode';
 import { CaptureButton } from '@/components/console/CaptureButton';
 import { WaveformTimeline } from '@/components/console/WaveformTimeline';
+import { VideoPlayer } from '@/components/video-player';
 import { useBreadcrumbs } from '@/lib/hooks/useBreadcrumbs';
 import { useKeyboardCapture } from '@/lib/hooks/useKeyboardCapture';
-import type { Video } from '@/lib/types/domain';
+import type { Video, Breadcrumb } from '@/lib/types/domain';
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json()).then((d) => d.data);
 
@@ -82,7 +83,7 @@ export default function ConsoleVideoPage() {
   }, []);
 
   // Click marker to seek
-  const handleMarkerClick = useCallback((bc: { timestampSeconds: number }) => {
+  const handleMarkerClick = useCallback((bc: Breadcrumb) => {
     handleSeek(bc.timestampSeconds);
   }, [handleSeek]);
 
@@ -99,6 +100,30 @@ export default function ConsoleVideoPage() {
     );
   }
 
+  // Uploaded videos: use the new self-contained VideoPlayer with integrated
+  // timeline scrubber and breadcrumb markers.
+  if (video.sourceType === 'upload' && video.fileUrl) {
+    return (
+      <div className="h-screen flex flex-col bg-background">
+        <NavBar videoId={videoId} />
+        <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+          <VideoPlayer
+            src={video.fileUrl}
+            breadcrumbs={breadcrumbs}
+            onTimeUpdate={setCurrentTime}
+            onDurationChange={setDuration}
+            onMarkerClick={handleMarkerClick}
+            seekTo={seekTarget}
+          />
+          <div className="flex justify-center py-4">
+            <CaptureButton onCapture={handleCapture} disabled={false} />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // YouTube (and any future source type): keep the existing ConsoleLayout.
   return (
     <div className="h-screen flex flex-col bg-background">
       <NavBar videoId={videoId} />

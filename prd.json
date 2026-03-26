@@ -6,7 +6,7 @@
     {
       "id": "BUG-001",
       "title": "Fix voice recording not delivering text to TipTap editor",
-      "description": "Voice recording captures speech (visible in header as interim text) but transcribed text never appears in the TipTap editor canvas. Root cause: (1) TipTapEditor component doesn't support forwardRef/useImperativeHandle so editorRef.current?.insertText() silently fails. (2) setBodyText() updates React state but TipTap is uncontrolled after init \u2014 content prop only used at mount. Fix: Add forwardRef to TipTapEditor exposing insertText method that calls editor.chain().focus().insertContent(text).run(). In content/new/page.tsx, pass ref={editorRef} to TipTapEditor. Remove the setBodyText fallback since TipTap onChange already syncs to bodyText.",
+      "description": "Voice recording captures speech (visible in header as interim text) but transcribed text never appears in the TipTap editor canvas. Root cause: (1) TipTapEditor component doesn't support forwardRef/useImperativeHandle so editorRef.current?.insertText() silently fails. (2) setBodyText() updates React state but TipTap is uncontrolled after init — content prop only used at mount. Fix: Add forwardRef to TipTapEditor exposing insertText method that calls editor.chain().focus().insertContent(text).run(). In content/new/page.tsx, pass ref={editorRef} to TipTapEditor. Remove the setBodyText fallback since TipTap onChange already syncs to bodyText.",
       "acceptanceCriteria": [
         "TipTapEditor wrapped in forwardRef with useImperativeHandle exposing insertText(text)",
         "insertText uses editor.chain().focus().insertContent(text).run()",
@@ -17,7 +17,7 @@
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug \u2014 voice recording UI works but text never reaches editor."
+      "notes": "Model: sonnet. Fix 2 files: tiptap-editor.tsx (add forwardRef) + content/new/page.tsx (pass ref). CRITICAL: This is a user-visible bug — voice recording UI works but text never reaches editor."
     },
     {
       "id": "SEC-001",
@@ -136,7 +136,7 @@
       ],
       "priority": 8,
       "passes": true,
-      "notes": "Model: sonnet. Follow existing adapter pattern (see linkedin.adapter.ts). COMPLETED: SubstackAdapter in substack.adapter.ts \u2014 API token auth, createPost to /api/v1/drafts, getMetrics stub, validateCredentials via GET /api/v1/publications. Platform=substack added to enums.ts. Registered via registerAdapter() in platforms/index.ts. Typecheck passes with zero errors in changed files."
+      "notes": "Model: sonnet. Follow existing adapter pattern (see linkedin.adapter.ts). COMPLETED: SubstackAdapter in substack.adapter.ts — API token auth, createPost to /api/v1/drafts, getMetrics stub, validateCredentials via GET /api/v1/publications. Platform=substack added to enums.ts. Registered via registerAdapter() in platforms/index.ts. Typecheck passes with zero errors in changed files."
     },
     {
       "id": "PUB-002",
@@ -396,8 +396,8 @@
         "Typecheck passes"
       ],
       "priority": 24,
-      "passes": false,
-      "notes": "Model: opus. Foundation for video editing."
+      "passes": true,
+      "notes": "Model: opus. Foundation for video editing. COMPLETED: VideoPlayer component at apps/studio/src/components/video-player.tsx. HTML5 video with ref, custom controls bar (play/pause SVG button, mm:ss/mm:ss time display), timeline scrubber (clickable+draggable bar with document-level mousemove for smooth drag-seeking), breadcrumb markers as colored dots at their timestamp positions. /console/[videoId]/page.tsx updated to render VideoPlayer for upload-sourced videos. Typecheck passes."
     },
     {
       "id": "STUDIO-002",
