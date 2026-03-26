@@ -39,6 +39,7 @@ export interface CreateContentNodeParams {
   userId: string;
   title: string;
   contentType: ContentNodeType;
+  status?: ContentNodeStatus;
   bodyText?: string;
   bodyHtml?: string;
   sourceUrl?: string;

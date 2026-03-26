@@ -30,6 +30,7 @@ export const POST = withApiHandler<z.infer<typeof createContentNodeSchema>>(asyn
     userId,
     title: body.title,
     contentType: body.contentType,
+    status: body.status ?? 'draft',
     bodyText: body.bodyText,
     bodyHtml: body.bodyHtml,
     tags: body.tags,

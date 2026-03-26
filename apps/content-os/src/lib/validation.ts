@@ -20,6 +20,7 @@ import { z } from 'zod';
 export const createContentNodeSchema = z.object({
   title: z.string().min(1).max(500),
   contentType: z.enum(['blog', 'video', 'audio']),
+  status: z.enum(['draft', 'processing', 'ready', 'published', 'archived']).optional().default('draft'),
   bodyText: z.string().optional(),
   bodyHtml: z.string().optional(),
   tags: z.array(z.string()).optional(),

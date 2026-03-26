@@ -1,36 +1,33 @@
 // @crumb drafts-review
 // UI | review-panel | workflow-gate
-// why: Surfaces AI-generated variants awaiting approval; gates publication to ensure content quality before distribution
-// in:[/api/assets?status=draft] out:[JSX-review-ui] err:[fetch-failure]
+// why: Surfaces content saved as drafts from the Write page; lets users review and continue editing before publishing
+// in:[/api/content?status=draft] out:[JSX-review-ui] err:[fetch-failure]
 // hazard: No error handling on loadDrafts failures; API errors silently fail and UI remains in loading state indefinitely
-// hazard: openEditor/saveEdit don't validate editingDraft state; accessing nested properties without null checks risks runtime errors
-// hazard: TipTapEditor onChange receives HTML but component only uses text—potential mismatch if HTML parsing behavior changes
 // edge:../../components/editor/tiptap-editor.tsx -> USES
-// edge:/api/assets -> API-ENDPOINT
-// prompt: Add error boundary for failed asset loads; validate editingDraft before access; reconcile HTML/text handling in editor callback
+// edge:/api/content -> API-ENDPOINT
+// edge:../content/[id]/page.tsx -> NAVIGATES-TO
+// prompt: Add error boundary for failed content loads; handle empty state gracefully
 
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { TipTapEditor } from '@/components/editor/tiptap-editor';
-import type { DerivedAsset } from '@/domain';
+import { useRouter } from 'next/navigation';
+import type { ContentNode } from '@/domain';
 
 export default function DraftsPage() {
-  const [drafts, setDrafts] = useState<DerivedAsset[]>([]);
+  const router = useRouter();
+  const [drafts, setDrafts] = useState<ContentNode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'social_post' | 'thread' | 'email_draft' | 'blog_summary'>('all');
-  const [editingDraft, setEditingDraft] = useState<DerivedAsset | null>(null);
-  const [editBody, setEditBody] = useState('');
-  const [editBodyText, setEditBodyText] = useState('');
+  const [filter, setFilter] = useState<'all' | 'blog' | 'video' | 'audio'>('all');
 
   const loadDrafts = useCallback(async () => {
     try {
       const params = new URLSearchParams({ status: 'draft' });
-      if (filter !== 'all') params.set('assetType', filter);
+      if (filter !== 'all') params.set('type', filter);
 
-      const res = await fetch(`/api/assets?${params}`);
+      const res = await fetch(`/api/content?${params}`);
       const data = await res.json();
-      setDrafts(data.assets ?? []);
+      setDrafts(data.nodes ?? []);
     } catch (e) {
       console.error('Failed to load drafts:', e);
     } finally {
@@ -39,51 +36,6 @@ export default function DraftsPage() {
   }, [filter]);
 
   useEffect(() => { loadDrafts(); }, [loadDrafts]);
-
-  const handleApprove = async (id: string) => {
-    try {
-      await fetch(`/api/assets/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'approved' }),
-      });
-      setDrafts((prev) => prev.filter((d) => d.id !== id));
-    } catch (e) {
-      console.error('Approve failed:', e);
-    }
-  };
-
-  const handleReject = async (id: string) => {
-    try {
-      await fetch(`/api/assets/${id}`, { method: 'DELETE' });
-      setDrafts((prev) => prev.filter((d) => d.id !== id));
-    } catch (e) {
-      console.error('Delete failed:', e);
-    }
-  };
-
-  const openEditor = (draft: DerivedAsset) => {
-    setEditingDraft(draft);
-    setEditBody(draft.body);
-    setEditBodyText(draft.body);
-  };
-
-  const saveEdit = async () => {
-    if (!editingDraft) return;
-    try {
-      await fetch(`/api/assets/${editingDraft.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ body: editBodyText }),
-      });
-      setDrafts((prev) =>
-        prev.map((d) => d.id === editingDraft.id ? { ...d, body: editBodyText } : d)
-      );
-      setEditingDraft(null);
-    } catch (e) {
-      console.error('Save edit failed:', e);
-    }
-  };
 
   if (loading) {
     return (
@@ -100,13 +52,13 @@ export default function DraftsPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-semibold" style={{ color: 'var(--theme-foreground)' }}>Drafts</h1>
           <span className="text-ui-sm">
-            {drafts.length} {drafts.length === 1 ? 'piece' : 'pieces'} awaiting review
+            {drafts.length} {drafts.length === 1 ? 'draft' : 'drafts'}
           </span>
         </div>
 
         {/* Filter pills */}
         <div className="flex items-center rounded-lg p-0.5" style={{ backgroundColor: 'var(--theme-surface)' }}>
-          {(['all', 'social_post', 'thread', 'email_draft', 'blog_summary'] as const).map((f) => (
+          {(['all', 'blog', 'video', 'audio'] as const).map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
@@ -116,7 +68,7 @@ export default function DraftsPage() {
                 color: filter === f ? 'var(--theme-pill-active-text)' : 'var(--theme-pill-inactive-text)',
               }}
             >
-              {f === 'all' ? 'All' : f.replace('_', ' ')}
+              {f === 'all' ? 'All' : f}
             </button>
           ))}
         </div>
@@ -133,10 +85,17 @@ export default function DraftsPage() {
                   <polyline points="14 2 14 8 20 8" />
                 </svg>
               </div>
-              <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-foreground)' }}>No drafts to review</h2>
+              <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--theme-foreground)' }}>No drafts yet</h2>
               <p className="text-sm" style={{ color: 'var(--theme-muted)' }}>
-                When you adapt a piece for different platforms, the variants will appear here for your review and perfecting.
+                Start writing and save your content as a draft — it will appear here.
               </p>
+              <button
+                onClick={() => router.push('/content/new')}
+                className="mt-4 px-4 py-2 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: 'var(--theme-btn-primary-bg)', color: 'var(--theme-btn-primary-text)' }}
+              >
+                Start writing
+              </button>
             </div>
           </div>
         ) : (
@@ -144,79 +103,59 @@ export default function DraftsPage() {
             {drafts.map((draft) => (
               <div
                 key={draft.id}
-                className="rounded-lg p-5 transition-colors"
+                className="rounded-lg p-5 transition-colors cursor-pointer hover:opacity-90"
                 style={{
                   backgroundColor: 'var(--theme-card-bg)',
                   border: '1px solid var(--theme-card-border)',
                 }}
+                onClick={() => router.push(`/content/${draft.id}`)}
               >
                 {/* Header */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    {draft.platformHint && (
-                      <span
-                        className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium capitalize"
-                        style={{
-                          backgroundColor: 'var(--theme-tag-bg)',
-                          color: 'var(--theme-tag-text)',
-                          border: '1px solid var(--theme-tag-border)',
-                        }}
-                      >
-                        {draft.platformHint}
-                      </span>
-                    )}
-                    <span className="text-ui-sm capitalize">
-                      {draft.assetType.replace('_', ' ')}
+                    <span
+                      className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium capitalize"
+                      style={{
+                        backgroundColor: 'var(--theme-tag-bg)',
+                        color: 'var(--theme-tag-text)',
+                        border: '1px solid var(--theme-tag-border)',
+                      }}
+                    >
+                      {draft.contentType}
                     </span>
+                    {draft.wordCount != null && draft.wordCount > 0 && (
+                      <span className="text-ui-sm">{draft.wordCount.toLocaleString()} words</span>
+                    )}
                   </div>
                   <span className="text-ui-sm">
-                    {new Date(draft.createdAt).toLocaleDateString('en-GB', {
+                    {new Date(draft.updatedAt).toLocaleDateString('en-GB', {
                       day: 'numeric',
                       month: 'short',
+                      year: 'numeric',
                     })}
                   </span>
                 </div>
 
-                {/* Content */}
-                <div className="text-sm leading-relaxed whitespace-pre-wrap mb-4" style={{ color: 'var(--theme-foreground)' }}>
-                  {draft.body.length > 500 ? `${draft.body.slice(0, 500)}...` : draft.body}
-                </div>
+                {/* Title */}
+                <h3 className="text-base font-semibold mb-2 leading-snug" style={{ color: 'var(--theme-foreground)' }}>
+                  {draft.title}
+                </h3>
 
-                {draft.title && (
-                  <p className="text-ui-sm mb-4">
-                    From: <span className="font-medium" style={{ color: 'var(--theme-foreground)' }}>{draft.title}</span>
+                {/* Body preview */}
+                {draft.bodyText && (
+                  <p className="text-sm leading-relaxed" style={{ color: 'var(--theme-muted)' }}>
+                    {draft.bodyText.length > 200 ? `${draft.bodyText.slice(0, 200)}...` : draft.bodyText}
                   </p>
                 )}
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 pt-3" style={{ borderTop: '1px solid var(--theme-border)' }}>
+                <div className="flex items-center gap-2 pt-3 mt-3" style={{ borderTop: '1px solid var(--theme-border)' }}>
                   <button
-                    onClick={() => handleApprove(draft.id)}
+                    onClick={(e) => { e.stopPropagation(); router.push(`/content/${draft.id}`); }}
                     className="px-4 py-1.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
                     style={{ backgroundColor: 'var(--theme-btn-primary-bg)', color: 'var(--theme-btn-primary-text)' }}
                   >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => openEditor(draft)}
-                    className="px-4 py-1.5 text-sm font-medium rounded-lg transition-colors"
-                    style={{ border: '1px solid var(--theme-border)', color: 'var(--theme-foreground)' }}
-                  >
-                    Edit &amp; Perfect
-                  </button>
-                  <button
-                    onClick={() => handleReject(draft.id)}
-                    className="px-4 py-1.5 text-sm font-medium transition-colors"
-                    style={{ color: 'var(--theme-muted)' }}
-                  >
-                    Discard
-                  </button>
-                  <div className="flex-1" />
-                  <button
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg transition-colors"
-                    style={{ color: 'var(--theme-muted)', border: '1px solid var(--theme-border)' }}
-                  >
-                    Regenerate
+                    Continue editing
                   </button>
                 </div>
               </div>
@@ -224,81 +163,6 @@ export default function DraftsPage() {
           </div>
         )}
       </div>
-
-      {/* ─── Edit panel (slide-over) ─── */}
-      {editingDraft && (
-        <div className="absolute inset-0 z-50 flex">
-          {/* Backdrop */}
-          <div
-            className="absolute inset-0"
-            style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-            onClick={() => setEditingDraft(null)}
-          />
-
-          {/* Editor panel */}
-          <div
-            className="relative ml-auto w-full max-w-3xl h-full flex flex-col"
-            style={{ backgroundColor: 'var(--theme-background)' }}
-          >
-            {/* Panel header */}
-            <div className="h-14 flex items-center justify-between px-6" style={{ borderBottom: '1px solid var(--theme-border)' }}>
-              <div className="flex items-center gap-3">
-                <h2 className="text-sm font-semibold" style={{ color: 'var(--theme-foreground)' }}>
-                  Edit &amp; Perfect
-                </h2>
-                {editingDraft.platformHint && (
-                  <span
-                    className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium capitalize"
-                    style={{
-                      backgroundColor: 'var(--theme-tag-bg)',
-                      color: 'var(--theme-tag-text)',
-                      border: '1px solid var(--theme-tag-border)',
-                    }}
-                  >
-                    {editingDraft.platformHint}
-                  </span>
-                )}
-                <span className="text-ui-sm capitalize">
-                  {editingDraft.assetType.replace('_', ' ')}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <span className="text-ui-sm">
-                  {editBodyText.split(/\s+/).filter(Boolean).length} words
-                </span>
-                <button
-                  onClick={saveEdit}
-                  className="px-4 py-1.5 text-sm font-medium rounded-lg hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: 'var(--theme-btn-primary-bg)', color: 'var(--theme-btn-primary-text)' }}
-                >
-                  Save changes
-                </button>
-                <button
-                  onClick={() => setEditingDraft(null)}
-                  className="p-1.5 rounded-md transition-colors"
-                  style={{ color: 'var(--theme-muted)' }}
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Full editor with formatting tools */}
-            <div className="flex-1 overflow-hidden">
-              <TipTapEditor
-                content={editBody}
-                onChange={(_html, text) => setEditBodyText(text)}
-                placeholder="Perfect your content..."
-                mode="edit"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
