@@ -1,4 +1,6 @@
 export { ImageEditorCanvas } from './ImageEditorCanvas';
+export { TemplatePicker } from './TemplatePicker';
+export type { SelectedTemplate, TemplateDefinition } from './TemplatePicker';
 export { LayerPanel } from './LayerPanel';
 export { FiltersPanel } from './FiltersPanel';
 export { ImageEditorToolbar } from './ImageEditorToolbar';

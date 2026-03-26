@@ -6,6 +6,10 @@ import { SHAPE_DEFS } from './useImageEditor';
 
 interface ImageEditorToolbarProps {
   editor: UseImageEditorReturn;
+  /** Name of the active template (e.g. "Instagram Post") */
+  templateName?: string;
+  /** Called when the user clicks "Back to templates" */
+  onBackToTemplates?: () => void;
 }
 
 const SHAPE_TOOL_IDS = new Set<EditorTool>([
@@ -125,7 +129,7 @@ function ShapesDropdown({ editor }: { editor: UseImageEditorReturn }) {
   );
 }
 
-export function ImageEditorToolbar({ editor }: ImageEditorToolbarProps) {
+export function ImageEditorToolbar({ editor, templateName, onBackToTemplates }: ImageEditorToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -145,12 +149,40 @@ export function ImageEditorToolbar({ editor }: ImageEditorToolbarProps) {
         backgroundColor: 'var(--theme-surface)',
       }}
     >
-      <span
-        className="text-xs font-semibold mr-3 tracking-tight"
-        style={{ color: 'var(--theme-foreground)' }}
-      >
-        Image Editor
-      </span>
+      {/* Back to templates link */}
+      {onBackToTemplates && (
+        <button
+          onClick={onBackToTemplates}
+          className="flex items-center gap-1.5 px-2 py-1.5 rounded text-xs font-medium transition-all mr-1 hover:opacity-80"
+          style={{ color: 'var(--theme-muted)' }}
+          title="Back to templates"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <polyline points="15 18 9 12 15 6" />
+          </svg>
+          <span>Templates</span>
+        </button>
+      )}
+
+      {/* Template name + dimensions context */}
+      {templateName ? (
+        <span
+          className="text-xs font-semibold mr-3 tracking-tight"
+          style={{ color: 'var(--theme-foreground)' }}
+        >
+          {templateName}
+          <span className="ml-1.5 font-normal" style={{ color: 'var(--theme-muted)' }}>
+            {editor.canvasWidth} x {editor.canvasHeight}
+          </span>
+        </span>
+      ) : (
+        <span
+          className="text-xs font-semibold mr-3 tracking-tight"
+          style={{ color: 'var(--theme-foreground)' }}
+        >
+          Image Editor
+        </span>
+      )}
 
       <Divider />
 
