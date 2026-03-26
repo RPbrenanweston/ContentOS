@@ -1,6 +1,6 @@
 // ─── Content Types ──────────────────────────────────────
 
-export type ContentType = 'blog' | 'video' | 'audio' | 'podcast_episode';
+export type ContentType = 'blog' | 'image' | 'video' | 'audio' | 'podcast_episode';
 export type ContentStatus = 'draft' | 'processing' | 'ready' | 'published' | 'archived';
 export type EpisodeType = 'full' | 'trailer' | 'bonus';
 export type ShowType = 'episodic' | 'serial';
