@@ -22,6 +22,7 @@ import type { MediaJob } from './db';
 import { normalize } from './jobs/normalize';
 import { transcribe } from './jobs/transcribe';
 import { generateWaveform } from './jobs/waveform';
+import { generateAudiogram } from './jobs/audiogram';
 
 // ─── Config ──────────────────────────────────────────────
 
@@ -81,12 +82,24 @@ async function processJob(job: MediaJob): Promise<void> {
         break;
       }
 
+      case 'generate_audiogram': {
+        const videoBuffer = await generateAudiogram(job);
+        const outputPath = `${job.user_id}/${job.id}/audiogram.mp4`;
+        const url = await uploadToStorage(
+          OUTPUT_BUCKET,
+          outputPath,
+          videoBuffer,
+          'video/mp4',
+        );
+        await completeJob(job.id, url);
+        break;
+      }
+
       // ── Stubbed job types ───────────────────────────────
       case 'trim':
       case 'add_intro_outro':
       case 'extract_clip':
       case 'extract_chapters':
-      case 'generate_audiogram':
       case 'convert_format':
         await failJob(job.id, `Job type '${job.job_type}' is not yet implemented`);
         break;
