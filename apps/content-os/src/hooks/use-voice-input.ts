@@ -60,10 +60,11 @@ export function useVoiceInput({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
 
-  // Check browser support
-  const isSupported = typeof window !== 'undefined' && (
-    'SpeechRecognition' in window || 'webkitSpeechRecognition' in window
-  );
+  // Initialize false to match SSR — updated after hydration to avoid mismatch
+  const [isSupported, setIsSupported] = useState(false);
+  useEffect(() => {
+    setIsSupported('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+  }, []);
 
   const start = useCallback(() => {
     if (!isSupported || isRecording) return;

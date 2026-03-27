@@ -11,11 +11,11 @@
 
 'use client';
 
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
-import { useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useCallback, forwardRef, useImperativeHandle, useEffect, useRef, useState } from 'react';
 
 interface TipTapEditorProps {
   content?: string;
@@ -38,6 +38,7 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(fu
   mode = 'write',
 }, ref) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: mode === 'edit' ? { levels: [1, 2, 3] } : false,
@@ -88,73 +89,53 @@ export const TipTapEditor = forwardRef<TipTapEditorHandle, TipTapEditorProps>(fu
     }
   }, [editor]);
 
+  // Floating toolbar for edit mode — replaces removed BubbleMenu React component
+  const toolbarRef = useRef<HTMLDivElement>(null);
+  const [toolbarVisible, setToolbarVisible] = useState(false);
+  const [toolbarPos, setToolbarPos] = useState({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!editor || mode !== 'edit') return;
+    const update = () => {
+      const { from, to, empty } = editor.state.selection;
+      if (empty) { setToolbarVisible(false); return; }
+      const start = editor.view.coordsAtPos(from);
+      const end = editor.view.coordsAtPos(to);
+      const midX = (start.left + end.left) / 2;
+      const editorEl = editor.view.dom.getBoundingClientRect();
+      setToolbarPos({ top: start.top - editorEl.top - 44, left: midX - editorEl.left - 120 });
+      setToolbarVisible(true);
+    };
+    editor.on('selectionUpdate', update);
+    editor.on('blur', () => setToolbarVisible(false));
+    return () => { editor.off('selectionUpdate', update); };
+  }, [editor, mode]);
+
   if (!editor) return null;
 
   return (
     <div className="flex flex-col h-full">
-      {/* Bubble menu — only in edit mode */}
-      {mode === 'edit' && (
-        <BubbleMenu
-          editor={editor}
-          tippyOptions={{ duration: 150 }}
-          className="flex items-center gap-0.5 rounded-lg shadow-lg px-1 py-1"
-          style={{ backgroundColor: 'var(--theme-bubble-bg)' }}
+      {/* Floating toolbar — edit mode only, shown on text selection */}
+      {mode === 'edit' && toolbarVisible && (
+        <div
+          ref={toolbarRef}
+          className="absolute z-50 flex items-center gap-0.5 rounded-lg shadow-lg px-1 py-1 pointer-events-auto"
+          style={{ backgroundColor: 'var(--theme-bubble-bg)', top: toolbarPos.top, left: toolbarPos.left }}
+          onMouseDown={(e) => e.preventDefault()}
         >
-          <BubbleButton
-            active={editor.isActive('bold')}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-          >
-            <strong>B</strong>
-          </BubbleButton>
-          <BubbleButton
-            active={editor.isActive('italic')}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-          >
-            <em>I</em>
-          </BubbleButton>
-          <BubbleButton
-            active={editor.isActive('strike')}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-          >
-            <s>S</s>
-          </BubbleButton>
+          <BubbleButton active={editor.isActive('bold')} onClick={() => editor.chain().focus().toggleBold().run()}><strong>B</strong></BubbleButton>
+          <BubbleButton active={editor.isActive('italic')} onClick={() => editor.chain().focus().toggleItalic().run()}><em>I</em></BubbleButton>
+          <BubbleButton active={editor.isActive('strike')} onClick={() => editor.chain().focus().toggleStrike().run()}><s>S</s></BubbleButton>
           <BubbleDivider />
-          <BubbleButton
-            active={editor.isActive('heading', { level: 2 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-          >
-            H2
-          </BubbleButton>
-          <BubbleButton
-            active={editor.isActive('heading', { level: 3 })}
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          >
-            H3
-          </BubbleButton>
+          <BubbleButton active={editor.isActive('heading', { level: 2 })} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}>H2</BubbleButton>
+          <BubbleButton active={editor.isActive('heading', { level: 3 })} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}>H3</BubbleButton>
           <BubbleDivider />
-          <BubbleButton
-            active={editor.isActive('blockquote')}
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-          >
-            &ldquo;
-          </BubbleButton>
-          <BubbleButton
-            active={editor.isActive('bulletList')}
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-          >
-            &bull;
-          </BubbleButton>
-          <BubbleButton
-            active={editor.isActive('codeBlock')}
-            onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-          >
-            {'<>'}
-          </BubbleButton>
+          <BubbleButton active={editor.isActive('blockquote')} onClick={() => editor.chain().focus().toggleBlockquote().run()}>&ldquo;</BubbleButton>
+          <BubbleButton active={editor.isActive('bulletList')} onClick={() => editor.chain().focus().toggleBulletList().run()}>&bull;</BubbleButton>
+          <BubbleButton active={editor.isActive('codeBlock')} onClick={() => editor.chain().focus().toggleCodeBlock().run()}>{'<>'}</BubbleButton>
           <BubbleDivider />
-          <BubbleButton active={false} onClick={addImage}>
-            Img
-          </BubbleButton>
-        </BubbleMenu>
+          <BubbleButton active={false} onClick={addImage}>Img</BubbleButton>
+        </div>
       )}
 
       {/* Editor area — clean, centered */}
