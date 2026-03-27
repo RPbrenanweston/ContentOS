@@ -16,45 +16,25 @@ import { NextResponse } from 'next/server';
 import { withApiHandler } from '@/lib/api-handler';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';
+import { batchSyncAnalytics } from '@/lib/jobs/analytics-sync.job';
 
 // POST /api/analytics/sync — Trigger metrics sync for published jobs
-// In production, this would be called by a pg-boss cron job
+// In production, this runs automatically via a pg-boss cron job (every 30 min).
+// This endpoint remains available for manual/on-demand triggers.
 export const POST = withApiHandler(async (ctx) => {
   const { request } = ctx;
   const body = await request.json().catch(() => ({}));
   const jobId = body.jobId as string | undefined;
 
-  const supabase = createServiceClient();
-  const { distributionService } = getServices(supabase);
-
+  // Single-job sync: fetch metrics for a specific job by ID
   if (jobId) {
+    const supabase = createServiceClient();
+    const { distributionService } = getServices(supabase);
     const metrics = await distributionService.fetchMetrics(jobId);
     return NextResponse.json({ synced: 1, metrics });
   }
 
-  // Batch sync: fetch metrics for all published jobs with an externalPostId
-  const { data: publishedRows, error: queryError } = await supabase
-    .from('distribution_jobs')
-    .select('id, external_post_id')
-    .eq('status', 'published')
-    .not('external_post_id', 'is', null);
-
-  if (queryError) {
-    return NextResponse.json({ error: 'Failed to query published jobs' }, { status: 500 });
-  }
-
-  let synced = 0;
-  let errors = 0;
-  const total = publishedRows?.length ?? 0;
-
-  for (const row of publishedRows ?? []) {
-    try {
-      await distributionService.fetchMetrics(row.id);
-      synced++;
-    } catch {
-      errors++;
-    }
-  }
-
-  return NextResponse.json({ synced, errors, total });
+  // Batch sync: delegate to shared function (also used by pg-boss worker)
+  const result = await batchSyncAnalytics();
+  return NextResponse.json(result);
 });

@@ -16,6 +16,10 @@ const envSchema = z.object({
   SUPABASE_SERVICE_KEY: z.string().min(1).optional(),
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   OPENAI_API_KEY: z.string().min(1).optional(),
+  // Required for pg-boss cron jobs (analytics-sync, etc.).
+  // Should be the full PostgreSQL connection string for the Supabase DB,
+  // e.g. postgresql://user:pass@host:5432/postgres
+  DATABASE_URL: z.string().url().optional(),
 })
 
 function validateEnv() {
