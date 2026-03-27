@@ -60,13 +60,13 @@ export class TwitterAdapter implements PlatformAdapter {
   private readonly redirectUri: string;
 
   constructor() {
-    const clientId = process.env.TWITTER_CLIENT_ID;
-    const clientSecret = process.env.TWITTER_CLIENT_SECRET;
-    const redirectUri = process.env.TWITTER_REDIRECT_URI;
+    const clientId = process.env.TWITTER_CLIENT_ID ?? process.env.X_CLIENT_ID;
+    const clientSecret = process.env.TWITTER_CLIENT_SECRET ?? process.env.X_CLIENT_SECRET;
+    const redirectUri = process.env.TWITTER_REDIRECT_URI ?? process.env.X_REDIRECT_URI;
 
     if (!clientId || !clientSecret || !redirectUri) {
       throw new Error(
-        'Missing required Twitter env vars: TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET, TWITTER_REDIRECT_URI',
+        'Missing required X/Twitter env vars: TWITTER_CLIENT_ID (or X_CLIENT_ID), TWITTER_CLIENT_SECRET (or X_CLIENT_SECRET), TWITTER_REDIRECT_URI (or X_REDIRECT_URI)',
       );
     }
 
