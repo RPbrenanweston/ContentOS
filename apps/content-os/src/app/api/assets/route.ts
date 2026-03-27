@@ -41,16 +41,34 @@ export const POST = withApiHandler<z.infer<typeof createDerivedAssetSchema>>(asy
     );
   }
 
-  // Generate the asset via AI
-  const generated = await assetGeneratorService.generate({
-    contentNodeId: body.contentNodeId,
-    assetType: body.assetType,
-    sourceSegments: segments,
-    platform: body.platform,
-    tone: body.tone,
-    maxLength: body.maxLength,
-    userId,
+  // Dedup check: if a completed asset with same content_node_id + asset_type exists, return it
+  const existingAssets = await assetRepo.findByNodeId(body.contentNodeId, {
+    type: body.assetType as Parameters<typeof assetRepo.findByNodeId>[1] extends { type?: infer T } ? T : never,
+    status: 'completed' as Parameters<typeof assetRepo.findByNodeId>[1] extends { status?: infer T } ? T : never,
   });
+
+  if (existingAssets.length > 0) {
+    return NextResponse.json(existingAssets[0], { status: 200 });
+  }
+
+  // Generate the asset via AI with 30-second timeout
+  const LLM_TIMEOUT_MS = 30_000;
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error('Asset generation timed out after 30 seconds')), LLM_TIMEOUT_MS),
+  );
+
+  const generated = await Promise.race([
+    assetGeneratorService.generate({
+      contentNodeId: body.contentNodeId,
+      assetType: body.assetType,
+      sourceSegments: segments,
+      platform: body.platform,
+      tone: body.tone,
+      maxLength: body.maxLength,
+      userId,
+    }),
+    timeoutPromise,
+  ]);
 
   // Persist
   const asset = await assetRepo.create({

@@ -30,10 +30,10 @@ export const POST = withApiHandler<z.infer<typeof clipExtractionSchema>>(async (
     );
   }
 
-  const urlCheck = validateExternalUrl(body.sourceUrl);
+  const urlCheck = await validateExternalUrl(body.sourceUrl);
   if (!urlCheck.valid) {
     return NextResponse.json(
-      { error: `Invalid source URL: ${urlCheck.reason}` },
+      { error: 'Invalid media URL' },
       { status: 400 },
     );
   }

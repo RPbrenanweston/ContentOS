@@ -11,9 +11,17 @@
 // prompt: Validate platform against adapter registry; check for duplicate connections before create; validate metadata schema
 //
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
 import { withApiHandler } from '@/lib/api-handler';
 import { createServiceClient } from '@/infrastructure/supabase/client';
 import { getServices } from '@/services/container';
+
+const createAccountSchema = z.object({
+  platform: z.enum(['linkedin', 'twitter', 'bluesky', 'threads']),
+  accountName: z.string().min(1),
+  externalAccountId: z.string().min(1),
+  metadata: z.record(z.unknown()).optional(),
+});
 
 // GET /api/distribution/accounts — List connected accounts
 export const GET = withApiHandler(async (ctx) => {
@@ -27,28 +35,19 @@ export const GET = withApiHandler(async (ctx) => {
 });
 
 // POST /api/distribution/accounts — Connect a new account
-export const POST = withApiHandler(async (ctx) => {
-  const { userId, request } = ctx;
-  const body = await request.json();
-  const { platform, accountName, externalAccountId, metadata } = body;
-
-  if (!platform || !accountName || !externalAccountId) {
-    return NextResponse.json(
-      { error: 'platform, accountName, and externalAccountId are required' },
-      { status: 400 },
-    );
-  }
+export const POST = withApiHandler<z.infer<typeof createAccountSchema>>(async (ctx) => {
+  const { userId, body } = ctx;
 
   const supabase = createServiceClient();
   const { accountRepo } = getServices(supabase);
 
   const account = await accountRepo.create({
     userId,
-    platform,
-    accountName,
-    externalAccountId,
-    metadata,
+    platform: body.platform,
+    accountName: body.accountName,
+    externalAccountId: body.externalAccountId,
+    metadata: body.metadata,
   });
 
   return NextResponse.json(account, { status: 201 });
-});
+}, { schema: createAccountSchema });

@@ -39,11 +39,12 @@ function isPrivateIp(hostname: string): boolean {
  *
  * Rules:
  *   1. Must be a valid URL (parseable by the WHATWG URL API)
- *   2. Must use the HTTPS scheme
+ *   2. Must use the HTTP or HTTPS scheme (blocks file://, ftp://, etc.)
  *   3. Hostname must not resolve to a private/loopback/link-local address
  *   4. Hostname must not be the cloud metadata IP (169.254.169.254)
+ *   5. DNS resolution check: resolved IP must not be in a private range (DNS rebinding defence)
  */
-export function validateExternalUrl(url: string): { valid: boolean; reason?: string } {
+export async function validateExternalUrl(url: string): Promise<{ valid: boolean; reason?: string }> {
   let parsed: URL;
 
   try {
@@ -52,8 +53,8 @@ export function validateExternalUrl(url: string): { valid: boolean; reason?: str
     return { valid: false, reason: 'Invalid URL format' };
   }
 
-  if (parsed.protocol !== 'https:') {
-    return { valid: false, reason: 'Only HTTPS URLs are allowed' };
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    return { valid: false, reason: 'Only HTTP and HTTPS URLs are allowed' };
   }
 
   const hostname = parsed.hostname;
@@ -64,6 +65,23 @@ export function validateExternalUrl(url: string): { valid: boolean; reason?: str
 
   if (isPrivateIp(hostname)) {
     return { valid: false, reason: 'Private and loopback addresses are not allowed' };
+  }
+
+  // DNS resolution check — defend against DNS rebinding attacks
+  try {
+    const { resolve4 } = await import('node:dns/promises');
+    const addresses = await resolve4(hostname);
+    for (const ip of addresses) {
+      if (isPrivateIp(ip)) {
+        return { valid: false, reason: 'Resolved IP address is in a private range' };
+      }
+      if (ip === CLOUD_METADATA_IP) {
+        return { valid: false, reason: 'Resolved IP points to cloud metadata endpoint' };
+      }
+    }
+  } catch {
+    // If hostname is already an IP literal, resolve4 will fail — that's fine,
+    // the static checks above already covered it.
   }
 
   return { valid: true };
