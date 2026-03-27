@@ -6,7 +6,7 @@
  * in: GET /?limit&offset → PublishingQueue[]; POST body: {distributionAccountId, name?, timezone?, schedule: [{dayOfWeek, timeOfDay}]}
  * out: GET → {queues: PublishingQueue[], total: number}; POST → PublishingQueue (201)
  * err: 400 on missing distributionAccountId; 400 on invalid timezone; 400 on Zod schema failure; 500 on DB error
- * hazard: userId sourced from x-user-id header—empty userId passes DB query with no results (not an error, but silently returns empty list)
+ * hazard: (MITIGATED) userId sourced from x-user-id header—empty userId now returns 400 before reaching DB
  * hazard: POST schedule array accepts empty []—creates a queue with no slots, which is valid but may confuse callers expecting at least one time slot
  * edge: READS publishing_queues, queue_schedules, distribution_accounts tables
  * edge: WRITES publishing_queues, queue_schedules tables via QueueService.createQueue
@@ -52,6 +52,14 @@ const createQueueSchema = z.object({
 // GET /api/queue — List publishing queues for the authenticated user
 export const GET = withApiHandler(async (ctx) => {
   const { userId, request } = ctx;
+
+  if (!userId) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Missing authenticated user' },
+      { status: 400 },
+    );
+  }
+
   const { limit, offset } = parsePagination(request.nextUrl.searchParams);
 
   const supabase = createServiceClient();
@@ -73,9 +81,33 @@ export const GET = withApiHandler(async (ctx) => {
 export const POST = withApiHandler<z.infer<typeof createQueueSchema>>(async (ctx) => {
   const { userId, body } = ctx;
 
+  if (!userId) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Missing authenticated user' },
+      { status: 400 },
+    );
+  }
+
   const supabase = createServiceClient();
+
+  // Verify the distribution account belongs to this user
+  const { data: account, error: accountError } = await supabase
+    .from('distribution_accounts')
+    .select('id')
+    .eq('id', body.distributionAccountId)
+    .eq('user_id', userId)
+    .single();
+
+  if (accountError || !account) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Distribution account not found or not owned by user' },
+      { status: 400 },
+    );
+  }
+
   const queueService = new QueueService(supabase);
 
+  // Always use the authenticated userId — never trust the request body for ownership
   const queue = await queueService.createQueue({
     userId,
     distributionAccountId: body.distributionAccountId,

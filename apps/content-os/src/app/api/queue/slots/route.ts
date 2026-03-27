@@ -6,9 +6,9 @@
  * in: GET /?queueId&limit&offset → QueueSlot[]; POST body: {queueId, derivedAssetId, scheduledFor}; PATCH body: {slotId, scheduledFor?, derivedAssetId?, status?}
  * out: GET → {slots: QueueSlot[], total: number}; POST → QueueSlot (201); PATCH → QueueSlot (200)
  * err: 400 on missing required params; 400 on Zod schema failure; 404 on slot not found for PATCH; 500 on DB error
- * hazard: GET without queueId returns user's slots across all queues—no ownership check on queueId param; caller can query another user's queue slots if they guess the UUID
- * hazard: POST derivedAssetId not validated against approval status at route layer—unapproved assets can be manually slotted (service layer does not enforce this for direct fills)
- * hazard: PATCH status field accepts any QueueSlotStatus string—no transition guard, so 'published' can be set without an actual distribution job
+ * hazard: (MITIGATED) GET now filters slots via inner join on publishing_queues.user_id; queueId ownership verified before query
+ * hazard: (MITIGATED) POST validates derivedAssetId approval status before slotting; queue ownership verified
+ * hazard: (MITIGATED) PATCH enforces valid status transitions via VALID_STATUS_TRANSITIONS map; ownership verified via parent queue
  * edge: READS queue_slots, derived_assets (joined), publishing_queues tables
  * edge: WRITES queue_slots table (insert for POST, update for PATCH)
  * edge: CALLED_BY queue/page.tsx (slot management UI)
@@ -37,22 +37,50 @@ const updateSlotSchema = z.object({
 
 // GET /api/queue/slots — List queue slots with their linked asset info
 export const GET = withApiHandler(async (ctx) => {
-  const { request } = ctx;
+  const { userId, request } = ctx;
+
+  if (!userId) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Missing authenticated user' },
+      { status: 400 },
+    );
+  }
+
   const searchParams = request.nextUrl.searchParams;
   const queueId = searchParams.get('queueId');
   const { limit, offset } = parsePagination(searchParams);
 
   const supabase = createServiceClient();
 
+  // If a specific queueId is provided, verify ownership first
+  if (queueId) {
+    const { data: queue, error: queueError } = await supabase
+      .from('publishing_queues')
+      .select('id')
+      .eq('id', queueId)
+      .eq('user_id', userId)
+      .single();
+
+    if (queueError || !queue) {
+      return NextResponse.json(
+        { error: 'Bad Request', message: 'Queue not found or not owned by user' },
+        { status: 400 },
+      );
+    }
+  }
+
+  // Build query scoped to user's queues only
   let query = supabase
     .from('queue_slots')
     .select(
       `
       *,
-      derived_assets (id, title, body, asset_type, platform_hint)
+      derived_assets (id, title, body, asset_type, platform_hint),
+      publishing_queues!inner (user_id)
     `,
       { count: 'exact' },
     )
+    .eq('publishing_queues.user_id', userId)
     .gte('scheduled_for', new Date().toISOString())
     .order('scheduled_for', { ascending: true })
     .range(offset, offset + limit - 1);
@@ -75,9 +103,52 @@ export const GET = withApiHandler(async (ctx) => {
 
 // POST /api/queue/slots — Fill a slot with a derived asset
 export const POST = withApiHandler<z.infer<typeof fillSlotSchema>>(async (ctx) => {
-  const { body } = ctx;
+  const { userId, body } = ctx;
+
+  if (!userId) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Missing authenticated user' },
+      { status: 400 },
+    );
+  }
 
   const supabase = createServiceClient();
+
+  // Verify the queue belongs to the authenticated user
+  const { data: queue, error: queueError } = await supabase
+    .from('publishing_queues')
+    .select('id')
+    .eq('id', body.queueId)
+    .eq('user_id', userId)
+    .single();
+
+  if (queueError || !queue) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Queue not found or not owned by user' },
+      { status: 400 },
+    );
+  }
+
+  // Verify the derived asset exists and is approved
+  const { data: asset, error: assetError } = await supabase
+    .from('derived_assets')
+    .select('id, status')
+    .eq('id', body.derivedAssetId)
+    .single();
+
+  if (assetError || !asset) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Derived asset not found' },
+      { status: 400 },
+    );
+  }
+
+  if (asset.status !== 'approved') {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Only approved assets can be slotted for publishing' },
+      { status: 400 },
+    );
+  }
 
   const { data, error } = await supabase
     .from('queue_slots')
@@ -100,10 +171,68 @@ export const POST = withApiHandler<z.infer<typeof fillSlotSchema>>(async (ctx) =
   return NextResponse.json(mapSlot(data), { status: 201 });
 }, { schema: fillSlotSchema });
 
+// Valid status transitions: which statuses can move to which
+const VALID_STATUS_TRANSITIONS: Record<string, string[]> = {
+  empty: ['filled', 'skipped'],
+  filled: ['empty', 'published', 'skipped'],
+  published: [], // terminal — cannot be changed
+  skipped: ['empty', 'filled'],
+};
+
 // PATCH /api/queue/slots — Update an existing slot (reschedule, swap content, change status)
 export const PATCH = withApiHandler<z.infer<typeof updateSlotSchema>>(async (ctx) => {
-  const { body } = ctx;
+  const { userId, body } = ctx;
   const { slotId, ...updates } = body;
+
+  if (!userId) {
+    return NextResponse.json(
+      { error: 'Bad Request', message: 'Missing authenticated user' },
+      { status: 400 },
+    );
+  }
+
+  const supabase = createServiceClient();
+
+  // Fetch the existing slot and verify ownership via the parent queue
+  const { data: existing, error: fetchError } = await supabase
+    .from('queue_slots')
+    .select('id, status, publishing_queue_id, publishing_queues!inner (user_id)')
+    .eq('id', slotId)
+    .single();
+
+  if (fetchError || !existing) {
+    if (fetchError?.code === 'PGRST116' || !existing) {
+      return NextResponse.json(
+        { error: 'Not Found', message: 'Slot not found' },
+        { status: 404 },
+      );
+    }
+    throw fetchError;
+  }
+
+  // Ownership check: the parent queue must belong to the authenticated user
+  const queueOwner = (existing.publishing_queues as Record<string, unknown>)?.user_id;
+  if (queueOwner !== userId) {
+    return NextResponse.json(
+      { error: 'Not Found', message: 'Slot not found' },
+      { status: 404 },
+    );
+  }
+
+  // Status transition guard
+  if (updates.status !== undefined) {
+    const currentStatus = existing.status as string;
+    const allowed = VALID_STATUS_TRANSITIONS[currentStatus] ?? [];
+    if (!allowed.includes(updates.status)) {
+      return NextResponse.json(
+        {
+          error: 'Bad Request',
+          message: `Cannot transition slot from '${currentStatus}' to '${updates.status}'`,
+        },
+        { status: 400 },
+      );
+    }
+  }
 
   // Build only the fields that were provided
   const patch: Record<string, unknown> = {};
@@ -116,8 +245,6 @@ export const PATCH = withApiHandler<z.infer<typeof updateSlotSchema>>(async (ctx
   if (updates.status !== undefined) patch.status = updates.status;
   // Clear derived asset when status is explicitly reset to empty
   if (updates.status === 'empty') patch.derived_asset_id = null;
-
-  const supabase = createServiceClient();
 
   const { data, error } = await supabase
     .from('queue_slots')
