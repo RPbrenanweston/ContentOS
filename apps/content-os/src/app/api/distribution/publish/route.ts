@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { publish } from '@/lib/distribution/publisher';
 import type { PublishRequest } from '@/lib/distribution/publisher';
 import type { UniversalMedia } from '@/lib/platforms/types';
+import { InactiveAccountError } from '@/lib/errors';
 
 // ─── Request Body Schema ────────────────────────────────
 
@@ -108,7 +109,18 @@ export async function POST(request: Request) {
   };
 
   // 5. Execute fan-out publish
-  const response = await publish(publishRequest, user.id);
+  let response;
+  try {
+    response = await publish(publishRequest, user.id);
+  } catch (err) {
+    if (err instanceof InactiveAccountError) {
+      return NextResponse.json(
+        { error: 'Account is inactive. Please reconnect this channel before publishing.' },
+        { status: 422 },
+      );
+    }
+    throw err;
+  }
 
   // 6. Build IETF rate limit headers
   const rateLimitLimit = 100;
