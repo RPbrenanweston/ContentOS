@@ -44,6 +44,7 @@ import { GhostAdapter } from '@/infrastructure/distribution/platforms/ghost.adap
 import type { DistributionJobRepo } from '@/infrastructure/supabase/repositories/distribution-job.repo';
 import type { DistributionAccountRepo } from '@/infrastructure/supabase/repositories/distribution-account.repo';
 import type { PerformanceMetricRepo } from '@/infrastructure/supabase/repositories/performance-metric.repo';
+import { InactiveAccountError } from '@/lib/errors';
 
 // Register available adapters on module load
 registerAdapter(new LinkedInAdapter());
@@ -64,6 +65,11 @@ export class DistributionServiceImpl implements IDistributionService {
     const jobs: DistributionJob[] = [];
 
     for (const account of params.accounts) {
+      // Guard: reject inactive or disconnected accounts before creating jobs
+      if (!account.isActive) {
+        throw new InactiveAccountError(account.id);
+      }
+
       // Create job record
       const job = await this.jobRepo.create({
         derivedAssetId: params.asset.id,
