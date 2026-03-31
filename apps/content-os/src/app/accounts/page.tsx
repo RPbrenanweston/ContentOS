@@ -1,6 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { DistributionAccount, PlatformType } from '@/domain';
+import { GhostConnectButton } from '@/components/accounts/GhostConnectButton';
+import { BeehiivConnectButton } from '@/components/accounts/BeehiivConnectButton';
+import { MediumConnectButton } from '@/components/accounts/MediumConnectButton';
 
 // ─── Platform metadata ────────────────────────────────────
 
@@ -11,6 +14,7 @@ interface PlatformMeta {
   color: string;
   description: string;
   oauthUrl: string | null;
+  hasByok?: boolean;
 }
 
 const PLATFORMS: PlatformMeta[] = [
@@ -22,6 +26,9 @@ const PLATFORMS: PlatformMeta[] = [
   { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
   { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
+  { id: 'ghost',    label: 'Ghost',         icon: '\u25CE',       color: '#15171A', description: 'Blog & newsletter',                  oauthUrl: null, hasByok: true },
+  { id: 'beehiiv',  label: 'beehiiv',       icon: 'B',            color: '#F6C549', description: 'Newsletter platform',                oauthUrl: null, hasByok: true },
+  { id: 'medium',   label: 'Medium',        icon: 'M',            color: '#000000', description: 'Publishing platform',                oauthUrl: null, hasByok: true },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
@@ -265,7 +272,8 @@ export default async function AccountsPage({
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {PLATFORMS.map((platform) => {
                 const alreadyConnected = connectedPlatforms.has(platform.id);
-                const comingSoon = !platform.oauthUrl;
+                const hasByok = platform.hasByok === true;
+                const comingSoon = !platform.oauthUrl && !hasByok;
                 const disabled = alreadyConnected || comingSoon;
 
                 return (
@@ -316,6 +324,25 @@ export default async function AccountsPage({
                       >
                         Connected
                       </span>
+                    ) : hasByok ? (
+                      platform.id === 'ghost' ? (
+                        <GhostConnectButton />
+                      ) : platform.id === 'beehiiv' ? (
+                        <BeehiivConnectButton />
+                      ) : platform.id === 'medium' ? (
+                        <MediumConnectButton />
+                      ) : (
+                        <span
+                          className="text-xs font-medium text-center py-1.5 rounded-md"
+                          style={{
+                            backgroundColor: 'var(--card)',
+                            color: 'var(--muted)',
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          Coming soon
+                        </span>
+                      )
                     ) : comingSoon ? (
                       <span
                         className="text-xs font-medium text-center py-1.5 rounded-md"
