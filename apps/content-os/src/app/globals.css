@@ -48,6 +48,17 @@
   --theme-card-bg: #1E201D;
   --theme-card-border: #383C35;
   --theme-card-hover-border: #6B7067;
+
+  /* Short-name aliases used by accounts/connections components */
+  --card: #1E201D;
+  --card-border: #383C35;
+  --foreground: #E1E5DF;
+  --muted: #6B7067;
+  --muted-foreground: #6B7067;
+  --border: #383C35;
+  --success: #10B981;
+  --error: #FF453A;
+
   --theme-platform-linkedin: rgba(59, 130, 246, 0.15);
   --theme-platform-linkedin-text: #93C5FD;
   --theme-platform-x: rgba(107, 112, 103, 0.15);
@@ -92,6 +103,17 @@
   --theme-card-bg: #FFFFFF;
   --theme-card-border: #E0E2DC;
   --theme-card-hover-border: #C8CBC4;
+
+  /* Short-name aliases used by accounts/connections components */
+  --card: #FFFFFF;
+  --card-border: #E0E2DC;
+  --foreground: #111210;
+  --muted: #6B7067;
+  --muted-foreground: #6B7067;
+  --border: #E0E2DC;
+  --success: #10B981;
+  --error: #FF453A;
+
   --theme-platform-linkedin: rgba(59, 130, 246, 0.1);
   --theme-platform-linkedin-text: #2563EB;
   --theme-platform-x: rgba(0, 0, 0, 0.05);
