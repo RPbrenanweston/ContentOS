@@ -92,51 +92,89 @@ export async function GET(request: NextRequest) {
         'LinkedIn Account'
     }
 
-    // 4. Persist the account. The repo's encryptMetadata helper encrypts
-    //    access_token and refresh_token fields automatically.
+    // 4. Check for manageable LinkedIn org pages
     const supabase = createServiceClient()
-    const { reconnectAccountId } = cookiePayload
 
-    const encryptedMetadata = {
-      access_token: encryptToken(tokens.accessToken),
-      refresh_token: tokens.refreshToken ? encryptToken(tokens.refreshToken) : '',
-      expires_in: tokens.expiresIn,
-      token_type: tokens.tokenType,
-      scope: tokens.scope ?? '',
+    let orgEntities: { id: string; name: string; type: 'page'; externalId: string }[] = []
+    try {
+      const orgRes = await fetch(
+        'https://api.linkedin.com/v2/organizationAcls?q=roleAssignee&projection=(elements*(organization~(id,localizedName,logoV2),roleType,state))',
+        { headers: { Authorization: `Bearer ${tokens.accessToken}` } },
+      )
+      if (orgRes.ok) {
+        const orgData = await orgRes.json()
+        const elements = orgData.elements ?? []
+        orgEntities = elements
+          .filter((el: Record<string, unknown>) => el.state === 'APPROVED')
+          .map((el: Record<string, unknown>) => {
+            const org = el['organization~'] as Record<string, unknown> | undefined
+            const orgId = String(org?.id ?? '')
+            const orgName = String(org?.localizedName ?? 'Unknown Organization')
+            return { id: orgId, name: orgName, type: 'page' as const, externalId: orgId }
+          })
+          .filter((e: { id: string }) => e.id !== '')
+      }
+    } catch (orgError) {
+      // Org page fetch failed — fall back to personal-only
+      console.warn('[linkedin/callback] Org pages fetch failed, continuing with personal only:', orgError)
     }
 
-    if (reconnectAccountId) {
-      // Reconnect flow: update existing account with fresh tokens and reset failures
-      await supabase
-        .from('distribution_accounts')
-        .update({
-          metadata: encryptedMetadata,
-          is_active: true,
-          consecutive_failures: 0,
-          account_name: accountName,
-          external_account_id: externalAccountId,
+    // 5. If org pages exist, create a session for multi-entity selection
+    if (orgEntities.length > 0) {
+      const pendingEntities = [
+        { id: 'personal', name: accountName, type: 'personal' as const, externalId: externalAccountId },
+        ...orgEntities,
+      ]
+
+      const encryptedTokens = {
+        access_token: encryptToken(tokens.accessToken),
+        refresh_token: encryptToken(tokens.refreshToken ?? ''),
+        expires_in: String(tokens.expiresIn),
+        token_type: tokens.tokenType,
+        scope: tokens.scope ?? '',
+      }
+
+      const { data: session, error: sessionError } = await supabase
+        .from('connection_sessions')
+        .insert({
+          user_id: userId,
+          platform: 'linkedin',
+          tokens: encryptedTokens,
+          pending_entities: pendingEntities,
         })
-        .eq('id', reconnectAccountId)
-        .eq('user_id', userId)
-    } else {
-      // New connection flow: create a new account record
-      const accountRepo = new DistributionAccountRepo(supabase)
-      await accountRepo.create({
-        userId,
-        platform: 'linkedin',
-        accountName,
-        externalAccountId,
-        metadata: {
-          access_token: tokens.accessToken,
-          refresh_token: tokens.refreshToken ?? '',
-          expires_in: tokens.expiresIn,
-          token_type: tokens.tokenType,
-          scope: tokens.scope ?? '',
-        },
-      })
+        .select('id')
+        .single()
+
+      if (sessionError || !session) {
+        console.error('[linkedin/callback] Failed to create session:', sessionError)
+        // Fall through to single-account creation below
+      } else {
+        const response = NextResponse.redirect(
+          new URL(`/accounts/select?session=${session.id}`, request.url),
+        )
+        response.cookies.delete('oauth_state_linkedin')
+        return response
+      }
     }
 
-    // 5. Clear the state cookie and redirect to success
+    // 6. No org pages (or session creation failed) — create personal account directly
+    const accountRepo = new DistributionAccountRepo(supabase)
+
+    await accountRepo.create({
+      userId,
+      platform: 'linkedin',
+      accountName,
+      externalAccountId,
+      metadata: {
+        access_token: tokens.accessToken,
+        refresh_token: tokens.refreshToken ?? '',
+        expires_in: tokens.expiresIn,
+        token_type: tokens.tokenType,
+        scope: tokens.scope ?? '',
+      },
+    })
+
+    // 7. Clear the state cookie and redirect to success
     const response = NextResponse.redirect(
       new URL('/accounts?success=linkedin', request.url),
     )

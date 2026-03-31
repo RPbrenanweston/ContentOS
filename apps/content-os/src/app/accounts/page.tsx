@@ -14,17 +14,19 @@ interface PlatformMeta {
   color: string;
   description: string;
   oauthUrl: string | null;
+  hasByok?: boolean;
 }
 
 const PLATFORMS: PlatformMeta[] = [
   { id: 'x',         label: 'X / Twitter',  icon: '\uD835\uDD4F', color: '#000000', description: 'Short-form posts & threads',        oauthUrl: '/api/oauth/twitter/authorize' },
   { id: 'linkedin',  label: 'LinkedIn',      icon: 'in',           color: '#0077B5', description: 'Professional network posts',         oauthUrl: '/api/oauth/linkedin/authorize' },
   { id: 'instagram', label: 'Instagram',     icon: '\u25FB',       color: '#E1306C', description: 'Photos, Stories & Reels',            oauthUrl: null },
-  { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: null },
+  { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: '/api/oauth/youtube/authorize' },
   { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
-  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
+  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: '/api/oauth/facebook/authorize' },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
   { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
+  { id: 'reddit',    label: 'Reddit',        icon: '\u25C8',       color: '#FF4500', description: 'Communities & discussions',          oauthUrl: '/api/oauth/reddit/authorize' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
@@ -241,13 +243,16 @@ export default async function AccountsPage({
                           {healthy ? 'Active' : 'Failing'}
                         </span>
 
-                        {/* Reconnect (shown when unhealthy) */}
-                        {!healthy && (
-                          <ReconnectButton
-                            account={account}
-                            oauthUrl={PLATFORMS.find((p) => p.id === account.platform)?.oauthUrl ?? null}
-                          />
-                        )}
+                        {/* Health detail button */}
+                        <HealthButton
+                          accountId={account.id}
+                          accountName={
+                            account.platform_display_name ??
+                            account.platform_username ??
+                            account.platform
+                          }
+                          consecutiveFailures={account.consecutive_failures ?? 0}
+                        />
 
                         {/* Disconnect */}
                         <form
@@ -327,7 +332,7 @@ export default async function AccountsPage({
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {PLATFORMS.map((platform) => {
                 const alreadyConnected = connectedPlatforms.has(platform.id);
-                const comingSoon = !platform.oauthUrl;
+                const comingSoon = !platform.oauthUrl && !platform.hasByok;
                 const disabled = alreadyConnected || comingSoon;
                 const isRecommended =
                   connectedAccounts.length === 0 &&
@@ -394,6 +399,8 @@ export default async function AccountsPage({
                       >
                         Connected
                       </span>
+                    ) : platform.hasByok ? (
+                      <BlueskyConnectButton />
                     ) : comingSoon ? (
                       <span
                         className="text-xs font-medium text-center py-1.5 rounded-md"
