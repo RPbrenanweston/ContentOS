@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { DistributionAccount, PlatformType } from '@/domain';
+import { BlueskyConnectButton } from '@/components/accounts/BlueskyConnectButton';
 
 // ─── Platform metadata ────────────────────────────────────
 
@@ -11,6 +12,7 @@ interface PlatformMeta {
   color: string;
   description: string;
   oauthUrl: string | null;
+  hasByok?: boolean;
 }
 
 const PLATFORMS: PlatformMeta[] = [
@@ -21,7 +23,7 @@ const PLATFORMS: PlatformMeta[] = [
   { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
   { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
-  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
+  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null, hasByok: true },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
@@ -265,7 +267,7 @@ export default async function AccountsPage({
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
               {PLATFORMS.map((platform) => {
                 const alreadyConnected = connectedPlatforms.has(platform.id);
-                const comingSoon = !platform.oauthUrl;
+                const comingSoon = !platform.oauthUrl && !platform.hasByok;
                 const disabled = alreadyConnected || comingSoon;
 
                 return (
@@ -316,6 +318,8 @@ export default async function AccountsPage({
                       >
                         Connected
                       </span>
+                    ) : platform.hasByok ? (
+                      <BlueskyConnectButton />
                     ) : comingSoon ? (
                       <span
                         className="text-xs font-medium text-center py-1.5 rounded-md"
