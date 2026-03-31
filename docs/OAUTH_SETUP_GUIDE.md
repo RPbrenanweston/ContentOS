@@ -92,8 +92,9 @@ tweet.read, tweet.write, users.read, offline.access, media.write
 
 ### Notes
 - ContentOS uses **OAuth 2.0 with PKCE** (not OAuth 1.0a)
-- X requires at minimum **Basic** tier ($100/month) for tweet.write and media.write
-- The Free tier only allows tweet.read — posting will fail
+- The **Free tier** includes ~500 posts/month write access — sufficient for most content creators
+- X also offers **Pay-Per-Use** (launched Feb 2026) — pay per post/read, likely pennies/month for ContentOS usage
+- The Basic tier ($200/month) and Pro ($5,000/month) are overkill unless you need bulk read access
 - Token refresh is handled automatically by ContentOS
 
 ---
