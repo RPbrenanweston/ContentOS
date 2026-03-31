@@ -15,6 +15,7 @@ import { cookies } from 'next/headers'
 import { LinkedInAdapter } from '@/infrastructure/distribution/platforms/linkedin.adapter'
 import { createServiceClient } from '@/infrastructure/supabase/client'
 import { DistributionAccountRepo } from '@/infrastructure/supabase/repositories/distribution-account.repo'
+import { encryptToken } from '@/lib/token-encryption'
 
 /**
  * GET /api/webhooks/linkedin/callback
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let cookiePayload: { state: string; userId: string }
+    let cookiePayload: { state: string; userId: string; reconnectAccountId?: string | null }
     try {
       cookiePayload = JSON.parse(
         Buffer.from(storedStateCookie.value, 'base64').toString('utf8'),
@@ -94,21 +95,46 @@ export async function GET(request: NextRequest) {
     // 4. Persist the account. The repo's encryptMetadata helper encrypts
     //    access_token and refresh_token fields automatically.
     const supabase = createServiceClient()
-    const accountRepo = new DistributionAccountRepo(supabase)
+    const { reconnectAccountId } = cookiePayload
 
-    await accountRepo.create({
-      userId,
-      platform: 'linkedin',
-      accountName,
-      externalAccountId,
-      metadata: {
-        access_token: tokens.accessToken,
-        refresh_token: tokens.refreshToken ?? '',
-        expires_in: tokens.expiresIn,
-        token_type: tokens.tokenType,
-        scope: tokens.scope ?? '',
-      },
-    })
+    const encryptedMetadata = {
+      access_token: encryptToken(tokens.accessToken),
+      refresh_token: tokens.refreshToken ? encryptToken(tokens.refreshToken) : '',
+      expires_in: tokens.expiresIn,
+      token_type: tokens.tokenType,
+      scope: tokens.scope ?? '',
+    }
+
+    if (reconnectAccountId) {
+      // Reconnect flow: update existing account with fresh tokens and reset failures
+      await supabase
+        .from('distribution_accounts')
+        .update({
+          metadata: encryptedMetadata,
+          is_active: true,
+          consecutive_failures: 0,
+          account_name: accountName,
+          external_account_id: externalAccountId,
+        })
+        .eq('id', reconnectAccountId)
+        .eq('user_id', userId)
+    } else {
+      // New connection flow: create a new account record
+      const accountRepo = new DistributionAccountRepo(supabase)
+      await accountRepo.create({
+        userId,
+        platform: 'linkedin',
+        accountName,
+        externalAccountId,
+        metadata: {
+          access_token: tokens.accessToken,
+          refresh_token: tokens.refreshToken ?? '',
+          expires_in: tokens.expiresIn,
+          token_type: tokens.tokenType,
+          scope: tokens.scope ?? '',
+        },
+      })
+    }
 
     // 5. Clear the state cookie and redirect to success
     const response = NextResponse.redirect(

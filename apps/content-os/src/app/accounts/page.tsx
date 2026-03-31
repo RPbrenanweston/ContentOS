@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { DistributionAccount } from '@/domain/distribution';
 import type { Platform } from '@/domain/enums';
+import { ConnectButton } from '@/components/accounts/ConnectButton';
+import { ReconnectButton } from '@/components/accounts/ReconnectButton';
 
 // ─── Platform metadata ────────────────────────────────────
 
@@ -239,6 +241,14 @@ export default async function AccountsPage({
                           {healthy ? 'Active' : 'Failing'}
                         </span>
 
+                        {/* Reconnect (shown when unhealthy) */}
+                        {!healthy && (
+                          <ReconnectButton
+                            account={account}
+                            oauthUrl={PLATFORMS.find((p) => p.id === account.platform)?.oauthUrl ?? null}
+                          />
+                        )}
+
                         {/* Disconnect */}
                         <form
                           action={`/accounts/disconnect/${account.id}`}
@@ -396,16 +406,15 @@ export default async function AccountsPage({
                         Coming soon
                       </span>
                     ) : (
-                      <a
-                        href={platform.oauthUrl!}
-                        className="text-xs font-semibold text-center py-1.5 rounded-md transition-opacity hover:opacity-90"
-                        style={{
-                          backgroundColor: '#CBFF53',
-                          color: '#000000',
+                      <ConnectButton
+                        platform={{
+                          id: platform.id,
+                          label: platform.label,
+                          icon: platform.icon,
+                          color: platform.color,
+                          oauthUrl: platform.oauthUrl!,
                         }}
-                      >
-                        Connect
-                      </a>
+                      />
                     )}
                   </div>
                 );
