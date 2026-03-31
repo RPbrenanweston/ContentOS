@@ -54,3 +54,13 @@ export class ForbiddenError extends ContentOSError {
     super(message, 'FORBIDDEN', 403);
   }
 }
+
+export class InactiveAccountError extends ContentOSError {
+  constructor(public accountId: string) {
+    super(
+      `Cannot publish to an inactive or disconnected account: ${accountId}`,
+      'INACTIVE_ACCOUNT',
+      422,
+    );
+  }
+}
