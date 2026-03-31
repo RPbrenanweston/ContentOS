@@ -19,7 +19,7 @@ const PLATFORMS: PlatformMeta[] = [
   { id: 'instagram', label: 'Instagram',     icon: '\u25FB',       color: '#E1306C', description: 'Photos, Stories & Reels',            oauthUrl: null },
   { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: null },
   { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
-  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
+  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: '/api/oauth/facebook/authorize' },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
   { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
 ];
