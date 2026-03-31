@@ -1,12 +1,12 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import type { DistributionAccount, PlatformType } from '@/domain';
-import { BlueskyConnectButton } from '@/components/accounts/BlueskyConnectButton';
+import type { DistributionAccount } from '@/domain/distribution';
+import type { Platform } from '@/domain/enums';
 
 // ─── Platform metadata ────────────────────────────────────
 
 interface PlatformMeta {
-  id: PlatformType;
+  id: Platform;
   label: string;
   icon: string;
   color: string;
@@ -16,14 +16,15 @@ interface PlatformMeta {
 }
 
 const PLATFORMS: PlatformMeta[] = [
-  { id: 'twitter',   label: 'X / Twitter',  icon: '\uD835\uDD4F', color: '#000000', description: 'Short-form posts & threads',        oauthUrl: '/api/oauth/twitter/authorize' },
+  { id: 'x',         label: 'X / Twitter',  icon: '\uD835\uDD4F', color: '#000000', description: 'Short-form posts & threads',        oauthUrl: '/api/oauth/twitter/authorize' },
   { id: 'linkedin',  label: 'LinkedIn',      icon: 'in',           color: '#0077B5', description: 'Professional network posts',         oauthUrl: '/api/oauth/linkedin/authorize' },
   { id: 'instagram', label: 'Instagram',     icon: '\u25FB',       color: '#E1306C', description: 'Photos, Stories & Reels',            oauthUrl: null },
-  { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: null },
+  { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: '/api/oauth/youtube/authorize' },
   { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
-  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
+  { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: '/api/oauth/facebook/authorize' },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
-  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null, hasByok: true },
+  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
+  { id: 'reddit',    label: 'Reddit',        icon: '\u25C8',       color: '#FF4500', description: 'Communities & discussions',          oauthUrl: '/api/oauth/reddit/authorize' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
@@ -39,7 +40,7 @@ export default async function AccountsPage({
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { data: accounts } = user
+  const { data: rawAccounts } = user
     ? await supabase
         .from('distribution_accounts')
         .select('*')
@@ -48,7 +49,24 @@ export default async function AccountsPage({
         .order('created_at', { ascending: false })
     : { data: null };
 
-  const connectedAccounts: DistributionAccount[] = accounts ?? [];
+  const connectedAccounts: DistributionAccount[] = (rawAccounts ?? []).map(
+    (row: Record<string, unknown>) => ({
+      id: row.id as string,
+      userId: row.user_id as string,
+      platform: row.platform as Platform,
+      accountName: (row.account_name as string) ?? '',
+      externalAccountId: (row.external_account_id as string) ?? '',
+      profileImageUrl: (row.profile_image_url as string | null) ?? null,
+      platformAvatarUrl: (row.platform_avatar_url as string | null) ?? null,
+      platformDisplayName: (row.platform_display_name as string | null) ?? null,
+      platformUsername: (row.platform_username as string | null) ?? null,
+      consecutiveFailures: (row.consecutive_failures as number) ?? 0,
+      isActive: row.is_active as boolean,
+      metadata: (row.metadata as Record<string, unknown>) ?? {},
+      createdAt: row.created_at as string,
+      updatedAt: row.updated_at as string,
+    }),
+  );
   const connectedPlatforms = new Set(connectedAccounts.map((a) => a.platform));
 
   const params = await searchParams;
@@ -135,7 +153,7 @@ export default async function AccountsPage({
               <div className="space-y-3">
                 {connectedAccounts.map((account) => {
                   const meta = PLATFORMS.find((p) => p.id === account.platform);
-                  const healthy = account.consecutive_failures === 0;
+                  const healthy = account.consecutiveFailures === 0;
 
                   return (
                     <div
@@ -157,10 +175,10 @@ export default async function AccountsPage({
                             color: meta?.color ?? 'var(--foreground)',
                           }}
                         >
-                          {account.platform_avatar_url ? (
+                          {account.platformAvatarUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
-                              src={account.platform_avatar_url}
+                              src={account.platformAvatarUrl}
                               alt=""
                               className="w-10 h-10 rounded-lg object-cover"
                             />
@@ -174,16 +192,16 @@ export default async function AccountsPage({
                             className="text-sm font-medium"
                             style={{ color: 'var(--foreground)' }}
                           >
-                            {account.platform_display_name ??
-                              account.platform_username ??
+                            {account.platformDisplayName ??
+                              account.platformUsername ??
                               account.platform}
                           </p>
-                          {account.platform_username && (
+                          {account.platformUsername && (
                             <p
                               className="text-xs mt-0.5"
                               style={{ color: 'var(--muted)' }}
                             >
-                              @{account.platform_username}
+                              @{account.platformUsername}
                             </p>
                           )}
                           <p
@@ -191,7 +209,7 @@ export default async function AccountsPage({
                             style={{ color: 'var(--muted)' }}
                           >
                             Connected{' '}
-                            {new Date(account.created_at).toLocaleDateString(
+                            {new Date(account.createdAt).toLocaleDateString(
                               'en-US',
                               { month: 'short', day: 'numeric', year: 'numeric' },
                             )}
@@ -223,6 +241,17 @@ export default async function AccountsPage({
                           {healthy ? 'Active' : 'Failing'}
                         </span>
 
+                        {/* Health detail button */}
+                        <HealthButton
+                          accountId={account.id}
+                          accountName={
+                            account.platform_display_name ??
+                            account.platform_username ??
+                            account.platform
+                          }
+                          consecutiveFailures={account.consecutive_failures ?? 0}
+                        />
+
                         {/* Disconnect */}
                         <form
                           action={`/accounts/disconnect/${account.id}`}
@@ -244,24 +273,58 @@ export default async function AccountsPage({
             </div>
           )}
 
-          {/* ── Connect Platform Grid ── */}
-          <div>
-            <h2
-              className="text-sm font-semibold mb-4"
-              style={{ color: 'var(--foreground)' }}
-            >
-              {connectedAccounts.length > 0
-                ? 'Add channel'
-                : 'Connect your first channel'}
-            </h2>
-            {connectedAccounts.length === 0 && (
+          {/* ── Empty State ── */}
+          {connectedAccounts.length === 0 && (
+            <div className="mb-10 text-center py-8">
+              {/* Platform icon preview */}
+              <div className="flex items-center justify-center gap-4 mb-6">
+                {(['x', 'linkedin', 'instagram'] as const).map((pid) => {
+                  const pm = PLATFORMS.find((p) => p.id === pid);
+                  if (!pm) return null;
+                  return (
+                    <div
+                      key={pid}
+                      className="w-12 h-12 rounded-xl flex items-center justify-center text-lg font-bold"
+                      style={{
+                        backgroundColor: `${pm.color}15`,
+                        color: pm.color,
+                      }}
+                    >
+                      {pm.icon}
+                    </div>
+                  );
+                })}
+              </div>
+              <h2
+                className="text-lg font-semibold mb-2"
+                style={{ color: 'var(--foreground)' }}
+              >
+                Connect your channels
+              </h2>
               <p
-                className="text-sm mb-6"
+                className="text-sm mb-2"
                 style={{ color: 'var(--muted)' }}
               >
-                Connect where your audience lives. Write once here, and
-                distribute everywhere.
+                Write once here. Your content reaches everywhere it needs to go.
               </p>
+              <p
+                className="text-xs"
+                style={{ color: 'var(--muted)', opacity: 0.7 }}
+              >
+                Start with X or LinkedIn below
+              </p>
+            </div>
+          )}
+
+          {/* ── Connect Platform Grid ── */}
+          <div>
+            {connectedAccounts.length > 0 && (
+              <h2
+                className="text-sm font-semibold mb-4"
+                style={{ color: 'var(--foreground)' }}
+              >
+                Add channel
+              </h2>
             )}
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -269,17 +332,33 @@ export default async function AccountsPage({
                 const alreadyConnected = connectedPlatforms.has(platform.id);
                 const comingSoon = !platform.oauthUrl && !platform.hasByok;
                 const disabled = alreadyConnected || comingSoon;
+                const isRecommended =
+                  connectedAccounts.length === 0 &&
+                  (platform.id === 'x' || platform.id === 'linkedin');
 
                 return (
                   <div
                     key={platform.id}
-                    className="rounded-lg p-4 flex flex-col gap-3"
+                    className="relative rounded-lg p-4 flex flex-col gap-3"
                     style={{
                       backgroundColor: 'var(--card)',
-                      border: '1px solid var(--card-border)',
+                      border: isRecommended
+                        ? '1.5px solid #CBFF53'
+                        : '1px solid var(--card-border)',
                       opacity: disabled ? 0.45 : 1,
                     }}
                   >
+                    {isRecommended && (
+                      <span
+                        className="absolute -top-2.5 left-3 px-2 py-0.5 rounded text-[10px] font-semibold"
+                        style={{
+                          backgroundColor: '#CBFF53',
+                          color: '#000000',
+                        }}
+                      >
+                        Start here
+                      </span>
+                    )}
                     {/* Icon + name */}
                     <div className="flex items-center gap-3">
                       <div
