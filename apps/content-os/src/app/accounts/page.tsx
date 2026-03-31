@@ -23,6 +23,7 @@ const PLATFORMS: PlatformMeta[] = [
   { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: '/api/oauth/facebook/authorize' },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
   { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
+  { id: 'reddit',    label: 'Reddit',        icon: '\u25C8',       color: '#FF4500', description: 'Communities & discussions',          oauthUrl: '/api/oauth/reddit/authorize' },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
