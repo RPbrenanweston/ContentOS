@@ -25,6 +25,8 @@ import type {
   PlatformMetrics,
   OAuthTokenResponse,
 } from '../platform-adapter';
+import { refreshXToken } from '@/lib/platforms/twitter/oauth';
+import { createClient } from '@supabase/supabase-js';
 
 export class XAdapter implements PlatformAdapter {
   readonly platform: Platform = 'x';
@@ -113,6 +115,49 @@ export class XAdapter implements PlatformAdapter {
     };
   }
 
+  /**
+   * Create a Supabase service client for token refresh operations.
+   * Uses the service role key to bypass RLS.
+   */
+  private getSupabaseServiceClient() {
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+    const serviceKey = process.env.SUPABASE_SERVICE_KEY ?? '';
+    return createClient(url, serviceKey);
+  }
+
+  /**
+   * Attempt a fetch. If it returns 401 and an accountId is available,
+   * refresh the token and retry once with the new access token.
+   */
+  private async fetchWithTokenRefresh(
+    url: string,
+    init: RequestInit,
+    credentials: PlatformCredentials,
+  ): Promise<Response> {
+    const response = await fetch(url, init);
+
+    if (response.status === 401 && credentials.platformAccountId) {
+      // Attempt token refresh
+      const supabase = this.getSupabaseServiceClient();
+      const newAccessToken = await refreshXToken(
+        credentials.platformAccountId,
+        supabase,
+      );
+
+      // Retry with the new token
+      const retryInit = {
+        ...init,
+        headers: {
+          ...(init.headers as Record<string, string>),
+          Authorization: `Bearer ${newAccessToken}`,
+        },
+      };
+      return fetch(url, retryInit);
+    }
+
+    return response;
+  }
+
   async createPost(
     credentials: PlatformCredentials,
     params: PlatformPostParams,
@@ -123,14 +168,18 @@ export class XAdapter implements PlatformAdapter {
     }
 
     // Single tweet
-    const response = await fetch('https://api.x.com/2/tweets', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${credentials.accessToken}`,
-        'Content-Type': 'application/json',
+    const response = await this.fetchWithTokenRefresh(
+      'https://api.x.com/2/tweets',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${credentials.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text: params.text }),
       },
-      body: JSON.stringify({ text: params.text }),
-    });
+      credentials,
+    );
 
     if (!response.ok) {
       const err = await response.text();
@@ -204,10 +253,14 @@ export class XAdapter implements PlatformAdapter {
     credentials: PlatformCredentials,
     externalPostId: string,
   ): Promise<void> {
-    const response = await fetch(`https://api.x.com/2/tweets/${externalPostId}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${credentials.accessToken}` },
-    });
+    const response = await this.fetchWithTokenRefresh(
+      `https://api.x.com/2/tweets/${externalPostId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${credentials.accessToken}` },
+      },
+      credentials,
+    );
 
     if (!response.ok) {
       throw new Error(`X delete failed: ${response.status}`);
@@ -218,9 +271,10 @@ export class XAdapter implements PlatformAdapter {
     credentials: PlatformCredentials,
     externalPostId: string,
   ): Promise<PlatformMetrics> {
-    const response = await fetch(
+    const response = await this.fetchWithTokenRefresh(
       `https://api.x.com/2/tweets/${externalPostId}?tweet.fields=public_metrics`,
       { headers: { Authorization: `Bearer ${credentials.accessToken}` } },
+      credentials,
     );
 
     if (!response.ok) {
@@ -243,9 +297,11 @@ export class XAdapter implements PlatformAdapter {
 
   async validateCredentials(credentials: PlatformCredentials): Promise<boolean> {
     try {
-      const response = await fetch('https://api.x.com/2/users/me', {
-        headers: { Authorization: `Bearer ${credentials.accessToken}` },
-      });
+      const response = await this.fetchWithTokenRefresh(
+        'https://api.x.com/2/users/me',
+        { headers: { Authorization: `Bearer ${credentials.accessToken}` } },
+        credentials,
+      );
       return response.ok;
     } catch {
       return false;
