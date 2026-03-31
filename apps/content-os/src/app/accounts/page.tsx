@@ -16,7 +16,7 @@ interface PlatformMeta {
 const PLATFORMS: PlatformMeta[] = [
   { id: 'twitter',   label: 'X / Twitter',  icon: '\uD835\uDD4F', color: '#000000', description: 'Short-form posts & threads',        oauthUrl: '/api/oauth/twitter/authorize' },
   { id: 'linkedin',  label: 'LinkedIn',      icon: 'in',           color: '#0077B5', description: 'Professional network posts',         oauthUrl: '/api/oauth/linkedin/authorize' },
-  { id: 'instagram', label: 'Instagram',     icon: '\u25FB',       color: '#E1306C', description: 'Photos, Stories & Reels',            oauthUrl: null },
+  { id: 'instagram', label: 'Instagram',     icon: '\u25FB',       color: '#E1306C', description: 'Photos, Stories & Reels',            oauthUrl: '/api/oauth/instagram/authorize' },
   { id: 'youtube',   label: 'YouTube',       icon: '\u25B6',       color: '#FF0000', description: 'Video content & Shorts',             oauthUrl: null },
   { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
   { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: null },
