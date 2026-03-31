@@ -2,6 +2,10 @@
 
 export type ContentType = 'blog' | 'image' | 'video' | 'audio' | 'podcast_episode';
 export type ContentStatus = 'draft' | 'processing' | 'ready' | 'published' | 'archived';
+
+// Aliases used by UI components that reference the domain/enums naming convention
+export type ContentNodeType = ContentType;
+export type ContentNodeStatus = ContentStatus;
 export type EpisodeType = 'full' | 'trailer' | 'bonus';
 export type ShowType = 'episodic' | 'serial';
 
@@ -12,7 +16,8 @@ export type SegmentType =
 export type AssetType =
   | 'social_post' | 'clip' | 'carousel' | 'audiogram'
   | 'quote_image' | 'thread' | 'newsletter_block' | 'blog_excerpt'
-  | 'transcript_snippet' | 'show_notes_summary';
+  | 'transcript_snippet' | 'show_notes_summary'
+  | 'blog_summary' | 'email_draft';
 
 export type AssetStatus = 'draft' | 'approved' | 'scheduled' | 'published' | 'failed';
 
@@ -23,8 +28,14 @@ export type PlatformType =
   | 'threads' | 'tiktok' | 'youtube' | 'bluesky'
   | 'reddit' | 'medium' | 'substack' | 'ghost' | 'beehiiv';
 
+// Alias used by components that import Platform from @/domain
+export type Platform = PlatformType;
+
 export type DistributionStatus =
   | 'pending' | 'scheduled' | 'processing' | 'published' | 'failed' | 'cancelled';
+
+// Alias used by components that import JobStatus from @/domain
+export type JobStatus = DistributionStatus;
 
 export type MediaJobType =
   | 'normalize' | 'trim' | 'add_intro_outro' | 'extract_clip'
@@ -190,6 +201,58 @@ export interface MediaProcessingJob {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+// ─── Queue / Scheduling Types ───────────────────────────
+
+export type DayOfWeek =
+  | 'monday' | 'tuesday' | 'wednesday' | 'thursday'
+  | 'friday' | 'saturday' | 'sunday';
+
+export type QueueSlotStatus = 'empty' | 'filled' | 'published' | 'skipped';
+
+export interface QueueSchedule {
+  id: string;
+  publishingQueueId: string;
+  dayOfWeek: DayOfWeek;
+  timeOfDay: string;
+  isActive: boolean;
+  createdAt: string;
+}
+
+export interface PublishingQueue {
+  id: string;
+  userId: string;
+  distributionAccountId: string;
+  name: string;
+  timezone: string;
+  isActive: boolean;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  schedules?: QueueSchedule[];
+  accountName?: string;
+  platform?: string;
+}
+
+export interface QueueSlot {
+  id: string;
+  publishingQueueId: string;
+  queueScheduleId?: string;
+  derivedAssetId?: string;
+  scheduledFor: string;
+  status: QueueSlotStatus;
+  distributionJobId?: string;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+  asset?: {
+    id: string;
+    title?: string;
+    body: string;
+    assetType: string;
+    platformHint?: string;
+  };
 }
 
 // ─── Helpers ────────────────────────────────────────────

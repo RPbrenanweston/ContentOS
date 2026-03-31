@@ -211,7 +211,7 @@ export const PATCH = withApiHandler<z.infer<typeof updateSlotSchema>>(async (ctx
   }
 
   // Ownership check: the parent queue must belong to the authenticated user
-  const queueOwner = (existing.publishing_queues as Record<string, unknown>)?.user_id;
+  const queueOwner = (existing.publishing_queues as unknown as Record<string, unknown>)?.user_id;
   if (queueOwner !== userId) {
     return NextResponse.json(
       { error: 'Not Found', message: 'Slot not found' },
