@@ -51,7 +51,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    let cookiePayload: { state: string; userId: string }
+    let cookiePayload: { state: string; userId: string; reconnectAccountId?: string | null }
     try {
       cookiePayload = JSON.parse(
         Buffer.from(storedStateCookie.value, 'base64').toString('utf8'),
