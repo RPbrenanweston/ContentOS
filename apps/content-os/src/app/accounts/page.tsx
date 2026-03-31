@@ -239,6 +239,17 @@ export default async function AccountsPage({
                           {healthy ? 'Active' : 'Failing'}
                         </span>
 
+                        {/* Health detail button */}
+                        <HealthButton
+                          accountId={account.id}
+                          accountName={
+                            account.platform_display_name ??
+                            account.platform_username ??
+                            account.platform
+                          }
+                          consecutiveFailures={account.consecutive_failures ?? 0}
+                        />
+
                         {/* Disconnect */}
                         <form
                           action={`/accounts/disconnect/${account.id}`}
