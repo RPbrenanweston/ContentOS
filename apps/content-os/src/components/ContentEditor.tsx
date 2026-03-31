@@ -34,6 +34,7 @@ export default function ContentEditor({
   );
   const [status, setStatus] = useState(initialData?.status ?? 'draft');
   const [saving, setSaving] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [authError, setAuthError] = useState(false);
   const [nodeId, setNodeId] = useState<string | null>(initialData?.id ?? null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -65,6 +66,7 @@ export default function ContentEditor({
       setSaving('saving');
 
       try {
+        setAuthError(false);
         if (nodeId) {
           const res = await fetch(`/api/content/${nodeId}`, {
             method: 'PUT',
@@ -75,6 +77,10 @@ export default function ContentEditor({
               body: fields.body,
             }),
           });
+          if (res.status === 401) {
+            setAuthError(true);
+            throw new Error('Unauthorized');
+          }
           if (!res.ok) throw new Error('Save failed');
           const { data } = await res.json();
           setSaving('saved');
@@ -90,6 +96,10 @@ export default function ContentEditor({
               body: fields.body,
             }),
           });
+          if (res.status === 401) {
+            setAuthError(true);
+            throw new Error('Unauthorized');
+          }
           if (!res.ok) throw new Error('Create failed');
           const { data } = await res.json();
           setNodeId(data.id);
@@ -227,9 +237,11 @@ export default function ContentEditor({
 
           <SaveIndicator state={saving} />
 
-          <span className="text-xs font-medium" style={{ color: '#dc2626' }}>
-            Valid authentication required
-          </span>
+          {authError && (
+            <span className="text-xs font-medium" style={{ color: '#dc2626' }}>
+              Sign in required — <a href="/auth/login" style={{ textDecoration: 'underline' }}>Log in</a>
+            </span>
+          )}
 
           <button
             onClick={handleManualSave}
