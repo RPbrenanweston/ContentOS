@@ -2,6 +2,8 @@ import crypto from 'node:crypto';
 import { AUTH_URL, TOKEN_URL, SCOPES } from './config';
 import type { TokenSet } from '../types';
 import { PlatformError } from '../types';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import { encryptToken, decryptToken } from '../../token-encryption';
 
 // ─── PKCE S256 Helpers ─────────────────────────────────────
 
@@ -96,6 +98,107 @@ export async function exchangeCodeForTokens(params: {
 }
 
 // ─── Token Refresh ─────────────────────────────────────────
+
+/**
+ * High-level token refresh for a distribution account.
+ *
+ * 1. Fetches the account row from distribution_accounts
+ * 2. Decrypts the stored refresh_token
+ * 3. Calls X token refresh endpoint
+ * 4. Encrypts and persists the new token pair + resets consecutive_failures
+ * 5. Returns the new plaintext access_token
+ *
+ * Throws TokenRefreshError on any failure.
+ */
+export class TokenRefreshError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message);
+    this.name = 'TokenRefreshError';
+  }
+}
+
+export async function refreshXToken(
+  accountId: string,
+  supabase: SupabaseClient,
+): Promise<string> {
+  // 1. Fetch the account row
+  const { data: account, error: fetchError } = await supabase
+    .from('distribution_accounts')
+    .select('*')
+    .eq('id', accountId)
+    .single();
+
+  if (fetchError || !account) {
+    throw new TokenRefreshError(
+      `Failed to fetch distribution account ${accountId}`,
+      fetchError,
+    );
+  }
+
+  const metadata = account.metadata as Record<string, unknown> | null;
+  const encryptedRefreshToken = metadata?.refresh_token;
+
+  if (typeof encryptedRefreshToken !== 'string' || encryptedRefreshToken.length === 0) {
+    throw new TokenRefreshError(
+      `No refresh_token stored for account ${accountId}`,
+    );
+  }
+
+  // 2. Decrypt the stored refresh token
+  let plainRefreshToken: string;
+  try {
+    plainRefreshToken = decryptToken(encryptedRefreshToken);
+  } catch (err) {
+    throw new TokenRefreshError(
+      `Failed to decrypt refresh_token for account ${accountId}`,
+      err,
+    );
+  }
+
+  // 3. Call X token refresh endpoint
+  const clientId = process.env.X_CLIENT_ID ?? '';
+
+  let tokenSet: TokenSet;
+  try {
+    tokenSet = await refreshAccessToken({
+      refreshToken: plainRefreshToken,
+      clientId,
+    });
+  } catch (err) {
+    throw new TokenRefreshError(
+      `X token refresh API call failed for account ${accountId}`,
+      err,
+    );
+  }
+
+  // 4. Encrypt and persist the new tokens + reset failures
+  const updatedMetadata: Record<string, unknown> = {
+    ...(metadata ?? {}),
+    access_token: encryptToken(tokenSet.accessToken),
+    refresh_token: encryptToken(tokenSet.refreshToken ?? ''),
+    expires_at: tokenSet.expiresAt,
+    scope: tokenSet.scope,
+  };
+
+  const { error: updateError } = await supabase
+    .from('distribution_accounts')
+    .update({
+      metadata: updatedMetadata,
+      consecutive_failures: 0,
+      last_verified_at: new Date().toISOString(),
+    })
+    .eq('id', accountId);
+
+  if (updateError) {
+    throw new TokenRefreshError(
+      `Failed to persist refreshed tokens for account ${accountId}`,
+      updateError,
+    );
+  }
+
+  // 5. Return the new plaintext access token
+  return tokenSet.accessToken;
+}
 
 /**
  * Refresh an access token. Twitter issues single-use refresh tokens,

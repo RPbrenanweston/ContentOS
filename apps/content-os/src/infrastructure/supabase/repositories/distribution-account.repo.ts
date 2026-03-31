@@ -142,4 +142,24 @@ export class DistributionAccountRepo {
 
     if (error) throw error;
   }
+
+  /**
+   * Update the encrypted metadata for a distribution account
+   * and reset consecutive_failures to 0.
+   *
+   * Token fields (access_token, refresh_token, oauth_token) are
+   * encrypted before persistence.
+   */
+  async updateMetadata(id: string, metadata: Record<string, unknown>): Promise<void> {
+    const { error } = await this.db
+      .from('distribution_accounts')
+      .update({
+        metadata: encryptMetadata(metadata),
+        consecutive_failures: 0,
+        last_verified_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    if (error) throw error;
+  }
 }
