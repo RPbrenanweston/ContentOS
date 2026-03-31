@@ -4,6 +4,11 @@ import type { DistributionAccount } from '@/domain/distribution';
 import type { Platform } from '@/domain/enums';
 import { ConnectButton } from '@/components/accounts/ConnectButton';
 import { ReconnectButton } from '@/components/accounts/ReconnectButton';
+import { HealthButton } from '@/components/accounts/HealthButton';
+import { BlueskyConnectButton } from '@/components/accounts/BlueskyConnectButton';
+import { GhostConnectButton } from '@/components/accounts/GhostConnectButton';
+import { BeehiivConnectButton } from '@/components/accounts/BeehiivConnectButton';
+import { MediumConnectButton } from '@/components/accounts/MediumConnectButton';
 
 // ─── Platform metadata ────────────────────────────────────
 
@@ -25,8 +30,11 @@ const PLATFORMS: PlatformMeta[] = [
   { id: 'tiktok',    label: 'TikTok',        icon: '\u266A',       color: '#000000', description: 'Short-form video',                   oauthUrl: null },
   { id: 'facebook',  label: 'Facebook',      icon: 'f',            color: '#1877F2', description: 'Pages, groups & stories',            oauthUrl: '/api/oauth/facebook/authorize' },
   { id: 'threads',   label: 'Threads',       icon: '@',            color: '#000000', description: 'Text-based conversations',           oauthUrl: null },
-  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null },
+  { id: 'bluesky',   label: 'Bluesky',       icon: '\u2601',       color: '#0085FF', description: 'Decentralized social',               oauthUrl: null, hasByok: true },
   { id: 'reddit',    label: 'Reddit',        icon: '\u25C8',       color: '#FF4500', description: 'Communities & discussions',          oauthUrl: '/api/oauth/reddit/authorize' },
+  { id: 'ghost',     label: 'Ghost',         icon: '\u25CE',       color: '#15171A', description: 'Blog & newsletter',                  oauthUrl: null, hasByok: true },
+  { id: 'beehiiv',   label: 'beehiiv',       icon: 'B',            color: '#F6C549', description: 'Newsletter platform',                oauthUrl: null, hasByok: true },
+  { id: 'medium',    label: 'Medium',        icon: 'M',            color: '#000000', description: 'Publishing platform',                oauthUrl: null, hasByok: true },
 ];
 
 // ─── Page ─────────────────────────────────────────────────
@@ -247,11 +255,11 @@ export default async function AccountsPage({
                         <HealthButton
                           accountId={account.id}
                           accountName={
-                            account.platform_display_name ??
-                            account.platform_username ??
+                            account.platformDisplayName ??
+                            account.platformUsername ??
                             account.platform
                           }
-                          consecutiveFailures={account.consecutive_failures ?? 0}
+                          consecutiveFailures={account.consecutiveFailures ?? 0}
                         />
 
                         {/* Disconnect */}
@@ -400,7 +408,26 @@ export default async function AccountsPage({
                         Connected
                       </span>
                     ) : platform.hasByok ? (
-                      <BlueskyConnectButton />
+                      platform.id === 'bluesky' ? (
+                        <BlueskyConnectButton />
+                      ) : platform.id === 'ghost' ? (
+                        <GhostConnectButton />
+                      ) : platform.id === 'beehiiv' ? (
+                        <BeehiivConnectButton />
+                      ) : platform.id === 'medium' ? (
+                        <MediumConnectButton />
+                      ) : (
+                        <span
+                          className="text-xs font-medium text-center py-1.5 rounded-md"
+                          style={{
+                            backgroundColor: 'var(--card)',
+                            color: 'var(--muted)',
+                            border: '1px solid var(--border)',
+                          }}
+                        >
+                          Coming soon
+                        </span>
+                      )
                     ) : comingSoon ? (
                       <span
                         className="text-xs font-medium text-center py-1.5 rounded-md"
