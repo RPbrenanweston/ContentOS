@@ -54,6 +54,7 @@ export type Platform =
   | 'youtube'
   | 'tiktok'
   | 'instagram'
+  | 'facebook'
   | 'newsletter'
   | 'bluesky'
   | 'threads'
