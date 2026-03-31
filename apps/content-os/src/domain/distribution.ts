@@ -23,6 +23,10 @@ export interface DistributionAccount {
   accountName: string;
   externalAccountId: string;
   profileImageUrl: string | null;
+  platformAvatarUrl: string | null;
+  platformDisplayName: string | null;
+  platformUsername: string | null;
+  consecutiveFailures: number;
   isActive: boolean;
   metadata: Record<string, unknown>;
   createdAt: string;
