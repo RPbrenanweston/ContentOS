@@ -26,6 +26,10 @@ type DistributionAccountRow = {
   account_name: string;
   external_account_id: string;
   profile_image_url: string | null;
+  platform_avatar_url: string | null;
+  platform_display_name: string | null;
+  platform_username: string | null;
+  consecutive_failures: number;
   is_active: boolean;
   metadata: Record<string, unknown>;
   created_at: string;
@@ -77,6 +81,10 @@ function toEntity(row: DistributionAccountRow): DistributionAccount {
     accountName: row.account_name,
     externalAccountId: row.external_account_id,
     profileImageUrl: row.profile_image_url,
+    platformAvatarUrl: row.platform_avatar_url,
+    platformDisplayName: row.platform_display_name,
+    platformUsername: row.platform_username,
+    consecutiveFailures: row.consecutive_failures,
     isActive: row.is_active,
     metadata: row.metadata ? decryptMetadata(row.metadata) : row.metadata,
     createdAt: row.created_at,

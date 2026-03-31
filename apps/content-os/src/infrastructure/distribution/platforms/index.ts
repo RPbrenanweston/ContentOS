@@ -9,6 +9,7 @@ import { SubstackAdapter } from './substack.adapter';
 import { BeehiivAdapter } from './beehiiv.adapter';
 import { GhostAdapter } from './ghost.adapter';
 import { MediumAdapter } from './medium.adapter';
+import { YouTubeAdapter } from './youtube.adapter';
 
 // Register all adapters at module load time
 registerAdapter(new LinkedInAdapter());
@@ -21,6 +22,7 @@ registerAdapter(new SubstackAdapter());
 registerAdapter(new BeehiivAdapter());
 registerAdapter(new GhostAdapter());
 registerAdapter(new MediumAdapter());
+registerAdapter(new YouTubeAdapter());
 
 export { LinkedInAdapter } from './linkedin.adapter';
 export { RedditAdapter } from './reddit.adapter';
@@ -32,3 +34,4 @@ export { SubstackAdapter } from './substack.adapter';
 export { BeehiivAdapter } from './beehiiv.adapter';
 export { GhostAdapter } from './ghost.adapter';
 export { MediumAdapter } from './medium.adapter';
+export { YouTubeAdapter } from './youtube.adapter';
