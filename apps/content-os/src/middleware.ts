@@ -12,13 +12,10 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Skip health check — no auth required for liveness probes
-  if (request.nextUrl.pathname === '/api/health') {
-    return NextResponse.next()
-  }
+  const { pathname } = request.nextUrl
 
-  // Only protect API routes
-  if (!request.nextUrl.pathname.startsWith('/api/')) {
+  // Skip health check — no auth required for liveness probes
+  if (pathname === '/api/health') {
     return NextResponse.next()
   }
 
@@ -59,22 +56,29 @@ export async function middleware(request: NextRequest) {
     },
   })
 
+  // ----- SESSION REFRESH (runs on ALL matched routes) -----
+  // This keeps the auth cookie alive during normal page navigation.
+  // For non-API routes we just refresh and pass through — no blocking.
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Non-API routes: refresh cookies, no auth gate
+  if (!pathname.startsWith('/api/')) {
+    return response
+  }
+
+  // ----- API ROUTE PROTECTION (only /api/* past this point) -----
   // Prefer explicit Authorization header (API clients, service-to-service)
   // Fall back to cookie-based session (browser clients)
   const authHeader = request.headers.get('authorization')
-  let user = null
+  let apiUser = user
 
   if (authHeader?.startsWith('Bearer ')) {
     const token = authHeader.slice(7)
     const { data } = await supabase.auth.getUser(token)
-    user = data.user
-  } else {
-    // Cookie-based: session already loaded via createServerClient above
-    const { data } = await supabase.auth.getUser()
-    user = data.user
+    apiUser = data.user
   }
 
-  if (!user) {
+  if (!apiUser) {
     return NextResponse.json(
       { error: 'Unauthorized', message: 'Valid authentication required' },
       { status: 401 }
@@ -83,10 +87,7 @@ export async function middleware(request: NextRequest) {
 
   // Stamp the verified user ID on the FORWARDED REQUEST headers so downstream
   // route handlers can read it via request.headers.get('x-user-id').
-  // BUG FIX: Previously this was set on response.headers, which only sends the
-  // header back to the browser — route handlers never saw it, causing userId to
-  // be empty string and all writes to fail silently.
-  requestHeaders.set('x-user-id', user.id)
+  requestHeaders.set('x-user-id', apiUser.id)
 
   // Rebuild the response with the updated request headers
   const finalResponse = NextResponse.next({
@@ -104,5 +105,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    // Match all routes EXCEPT static files and images
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 }

@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   },
   transpilePackages: ['@org/ai-core'],
   serverExternalPackages: ['@supabase/supabase-js'],
+  turbopack: {
+    root: __dirname,
+  },
   experimental: {
     serverActions: {
       bodySizeLimit: '100mb',
