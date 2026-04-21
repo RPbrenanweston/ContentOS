@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>ContentOS Capture</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      body {
+        width: 300px;
+        padding: 12px;
+        margin: 0;
+      }
+      h1 {
+        font-size: 13px;
+        margin: 0 0 8px;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+      }
+      label {
+        display: block;
+        font-size: 11px;
+        color: #888;
+        margin: 8px 0 4px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 6px 8px;
+        font-size: 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .row {
+        display: flex;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      button {
+        flex: 1;
+        padding: 6px 8px;
+        font-size: 12px;
+        border: 1px solid #333;
+        background: transparent;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      button.primary {
+        background: #111;
+        color: white;
+        border-color: #111;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .status {
+        margin-top: 10px;
+        font-size: 11px;
+        color: #666;
+        min-height: 14px;
+      }
+      .status.ok {
+        color: #0a7;
+      }
+      .status.err {
+        color: #c33;
+      }
+      .hint {
+        font-size: 10px;
+        color: #999;
+        margin-top: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>ContentOS Capture</h1>
+
+    <label for="baseUrl">Base URL</label>
+    <input id="baseUrl" type="url" placeholder="http://localhost:3000" />
+
+    <label for="pat">Personal Access Token</label>
+    <input id="pat" type="password" placeholder="PAT or token" />
+    <div class="hint">Phase 1: bearer-token auth is a stub. See README.</div>
+
+    <div class="row">
+      <button id="save">Save config</button>
+      <button id="capture" class="primary">Capture tab</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

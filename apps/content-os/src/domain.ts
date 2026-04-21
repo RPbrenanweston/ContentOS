@@ -270,3 +270,126 @@ export interface Chapter {
   url?: string;
   image?: string;
 }
+
+// ─── Inspiration (Phase 1) ──────────────────────────────
+// NOTE: this flat file is the module that wins `@/domain` resolution under
+// `moduleResolution: "bundler"` because it sits alongside the `domain/` folder.
+// The richer camelCase definitions live in `src/domain/inspiration.ts`; the
+// types below are mirrored so downstream services/interfaces can import via
+// `@/domain` today without needing to resolve the flat-file vs folder split.
+
+export type InspirationSourceType =
+  | 'article'
+  | 'tweet'
+  | 'youtube'
+  | 'substack'
+  | 'linkedin'
+  | 'pdf'
+  | 'image'
+  | 'manual';
+
+export type InspirationStatus =
+  | 'pending'
+  | 'fetching'
+  | 'processing'
+  | 'ready'
+  | 'error';
+
+export type InspirationCapturedVia =
+  | 'share_sheet'
+  | 'extension'
+  | 'manual'
+  | 'email';
+
+export type InspirationHighlightType =
+  | 'key_idea'
+  | 'hook'
+  | 'quote'
+  | 'structure_note'
+  | 'tonal_marker'
+  | 'vocabulary_note'
+  | 'user_highlight';
+
+export interface InspirationItem {
+  id: string;
+  userId: string;
+  sourceUrl: string | null;
+  sourceUrlNormalized: string | null;
+  sourceType: InspirationSourceType;
+  title: string | null;
+  author: string | null;
+  authorHandle: string | null;
+  publishedAt: string | null;
+  capturedAt: string;
+  capturedVia: InspirationCapturedVia | null;
+  bodyMarkdown: string | null;
+  bodyHtml: string | null;
+  mediaUrl: string | null;
+  raw: Record<string, unknown> | null;
+  status: InspirationStatus;
+  error: string | null;
+  userRating: number | null;
+  tags: string[];
+  archivedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface InspirationHighlight {
+  id: string;
+  inspirationItemId: string;
+  userId: string;
+  highlightType: InspirationHighlightType;
+  content: string;
+  rationale: string | null;
+  sourceOffset: number | null;
+  position: number;
+  userCreated: boolean;
+  createdAt: string;
+}
+
+export interface ContentInspirationRef {
+  contentNodeId: string;
+  inspirationItemId: string;
+  highlightId: string | null;
+  userId: string;
+  insertedAt: string;
+}
+
+export interface CreateInspirationItemParams {
+  userId: string;
+  sourceUrl?: string;
+  sourceUrlNormalized?: string;
+  sourceType: InspirationSourceType;
+  title?: string;
+  author?: string;
+  authorHandle?: string;
+  publishedAt?: string;
+  capturedVia?: InspirationCapturedVia;
+  bodyMarkdown?: string;
+  bodyHtml?: string;
+  mediaUrl?: string;
+  raw?: Record<string, unknown>;
+  status?: InspirationStatus;
+  tags?: string[];
+}
+
+export interface UpdateInspirationItemParams {
+  title?: string;
+  userRating?: number | null;
+  tags?: string[];
+  archivedAt?: string | null;
+  status?: InspirationStatus;
+  error?: string | null;
+}
+
+export interface CreateInspirationHighlightParams {
+  inspirationItemId: string;
+  userId: string;
+  highlightType: InspirationHighlightType;
+  content: string;
+  rationale?: string;
+  sourceOffset?: number;
+  position?: number;
+  userCreated?: boolean;
+}

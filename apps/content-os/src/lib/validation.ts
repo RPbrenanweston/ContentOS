@@ -102,3 +102,78 @@ export const listContentNodesSchema = z.object({
   page: z.coerce.number().positive().optional().default(1),
   limit: z.coerce.number().positive().max(100).optional().default(20),
 });
+
+// =====================================================
+// Inspiration schemas (Phase 1)
+// =====================================================
+
+const inspirationSourceTypeEnum = z.enum([
+  'article',
+  'tweet',
+  'youtube',
+  'substack',
+  'linkedin',
+  'pdf',
+  'image',
+  'manual',
+]);
+
+const inspirationCapturedViaEnum = z.enum([
+  'share_sheet',
+  'extension',
+  'manual',
+  'email',
+]);
+
+const inspirationHighlightTypeEnum = z.enum([
+  'key_idea',
+  'hook',
+  'quote',
+  'structure_note',
+  'tonal_marker',
+  'vocabulary_note',
+  'user_highlight',
+]);
+
+export const captureInspirationSchema = z
+  .object({
+    url: z.string().url().optional(),
+    text: z.string().min(1).optional(),
+    title: z.string().max(1000).optional(),
+    sourceType: inspirationSourceTypeEnum.optional(),
+    capturedVia: inspirationCapturedViaEnum,
+  })
+  .refine((data) => Boolean(data.url) || Boolean(data.text), {
+    message: 'At least one of `url` or `text` must be provided',
+    path: ['url'],
+  });
+
+export const listInspirationSchema = z.object({
+  sourceType: inspirationSourceTypeEnum.optional(),
+  tag: z.string().optional(),
+  rating: z.coerce.number().int().min(-1).max(2).optional(),
+  q: z.string().optional(),
+  after: z.string().datetime().optional(),
+  page: z.coerce.number().positive().optional().default(1),
+  limit: z.coerce.number().positive().max(100).optional().default(20),
+});
+
+export const updateInspirationSchema = z.object({
+  userRating: z.number().int().min(-1).max(2).nullable().optional(),
+  tags: z.array(z.string()).optional(),
+  archivedAt: z.string().datetime().nullable().optional(),
+  title: z.string().max(1000).optional(),
+});
+
+export const createHighlightSchema = z.object({
+  highlightType: inspirationHighlightTypeEnum,
+  content: z.string().min(1),
+  rationale: z.string().optional(),
+  sourceOffset: z.number().int().nonnegative().optional(),
+});
+
+export const updateHighlightSchema = z.object({
+  content: z.string().min(1).optional(),
+  rationale: z.string().nullable().optional(),
+  highlightType: inspirationHighlightTypeEnum.optional(),
+});

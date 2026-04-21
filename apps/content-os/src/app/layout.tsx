@@ -14,11 +14,13 @@ import type { Metadata } from 'next';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { SidebarNav } from '@/components/ui/sidebar-nav';
 import { ErrorBoundary } from '@/components/error-boundary';
+import { QuickCaptureModalProvider } from '@/components/QuickCaptureModalProvider';
 import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Content OS',
   description: 'Write once, reach everywhere — a creation optimizer for authentic creators',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -68,6 +70,7 @@ export default function RootLayout({
             </ErrorBoundary>
           </main>
         </div>
+        <QuickCaptureModalProvider />
       </body>
     </html>
   );

@@ -1,0 +1,9 @@
+{
+  "name": "@org/contentos-extension",
+  "version": "0.0.1",
+  "private": true,
+  "description": "ContentOS browser extension (Manifest V3) — save current tab to your inspiration library",
+  "scripts": {
+    "build": "echo 'No build step — load the extension folder directly via chrome://extensions (Developer mode → Load unpacked).'"
+  }
+}

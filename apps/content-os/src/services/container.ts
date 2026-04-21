@@ -33,12 +33,18 @@ import { AIDecompositionService } from '@/services/decomposition.service';
 import { AIAssetGeneratorService } from '@/services/asset-generator.service';
 import { FFmpegMediaService } from '@/services/media.service';
 import { DistributionServiceImpl } from '@/services/distribution.service';
+import { InspirationFetchServiceImpl } from '@/services/inspiration-fetch.service';
+import { AIInspirationDecompositionService } from '@/services/inspiration-decomposition.service';
 import { getAIClient } from '@/lib/ai';
 import type { ITranscriptService } from '@/services/interfaces/transcript.service';
 import type { IDecompositionService } from '@/services/interfaces/decomposition.service';
 import type { IAssetGeneratorService } from '@/services/interfaces/asset-generator.service';
 import type { IMediaService } from '@/services/interfaces/media.service';
 import type { IDistributionService } from '@/services/interfaces/distribution.service';
+import type {
+  IInspirationFetchService,
+  IInspirationDecompositionService,
+} from '@/services/interfaces/inspiration';
 
 export interface ServiceContainer {
   contentNodeRepo: ContentNodeRepo;
@@ -53,6 +59,8 @@ export interface ServiceContainer {
   assetGeneratorService: IAssetGeneratorService;
   mediaService: IMediaService;
   distributionService: IDistributionService;
+  inspirationFetchService: IInspirationFetchService;
+  inspirationDecompositionService: IInspirationDecompositionService;
 }
 
 let cachedContainer: ServiceContainer | null = null;
@@ -83,6 +91,8 @@ export function getServices(supabase: SupabaseClient): ServiceContainer {
     assetGeneratorService: new AIAssetGeneratorService(getAIClient(), assetRepo),
     mediaService: new FFmpegMediaService(),
     distributionService: new DistributionServiceImpl(jobRepo, accountRepo, metricRepo),
+    inspirationFetchService: new InspirationFetchServiceImpl(),
+    inspirationDecompositionService: new AIInspirationDecompositionService(getAIClient()),
   };
 
   return cachedContainer;
